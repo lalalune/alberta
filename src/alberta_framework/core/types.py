@@ -662,6 +662,24 @@ class DemonType(enum.Enum):
     CONTROL = "control"
 
 
+class TraceMode(enum.Enum):
+    """Eligibility trace accumulation mode.
+
+    ACCUMULATING: Standard accumulating traces (Sutton & Barto, default).
+        ``e_t = gamma * lambda * e_{t-1} + grad_t``
+
+    REPLACING: Replacing traces (Singh & Sutton 1996).
+        For each parameter element, if the current gradient is nonzero,
+        replace the trace with the gradient; otherwise decay the old trace.
+        ``e_t[i] = grad_t[i]  if grad_t[i] != 0  else  gamma * lambda * e_{t-1}[i]``
+
+    For gamma*lambda=0 both modes produce identical results (trace = gradient).
+    """
+
+    ACCUMULATING = "accumulating"
+    REPLACING = "replacing"
+
+
 @chex.dataclass(frozen=True)
 class GVFSpec:
     """One GVF demon's question functions (Sutton et al. 2011).

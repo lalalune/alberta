@@ -42,6 +42,7 @@ from alberta_framework.core.optimizers import Bounder
 from alberta_framework.core.types import (
     DemonType,
     GVFSpec,
+    TraceMode,
     create_horde_spec,
 )
 
@@ -255,6 +256,7 @@ class SARSAAgent:
         head_optimizer: AnyOptimizer | None = None,
         prediction_demons: list[GVFSpec] | None = None,
         lamda: float = 0.0,
+        trace_mode: TraceMode = TraceMode.ACCUMULATING,
     ):
         """Initialize the SARSA agent.
 
@@ -273,6 +275,7 @@ class SARSAAgent:
                 learn alongside Q-heads. These are appended after the
                 control demons in the Horde.
             lamda: Trace decay for control demon heads (default: 0.0)
+            trace_mode: Eligibility trace mode (ACCUMULATING or REPLACING)
         """
         self._sarsa_config = sarsa_config
         self._hidden_sizes = hidden_sizes
@@ -298,6 +301,7 @@ class SARSAAgent:
             leaky_relu_slope=leaky_relu_slope,
             use_layer_norm=use_layer_norm,
             head_optimizer=head_optimizer,
+            trace_mode=trace_mode,
         )
 
     @property
@@ -368,6 +372,11 @@ class SARSAAgent:
         if pred_demons_cfg is not None:
             prediction_demons = [GVFSpec.from_config(d) for d in pred_demons_cfg]
 
+        trace_mode_str = config.pop("trace_mode", None)
+        trace_mode = (
+            TraceMode(trace_mode_str) if trace_mode_str is not None else TraceMode.ACCUMULATING
+        )
+
         return cls(
             sarsa_config=sarsa_config,
             hidden_sizes=tuple(config.pop("hidden_sizes")),
@@ -376,6 +385,7 @@ class SARSAAgent:
             normalizer=normalizer,
             head_optimizer=head_optimizer,
             prediction_demons=prediction_demons,
+            trace_mode=trace_mode,
             **config,
         )
 

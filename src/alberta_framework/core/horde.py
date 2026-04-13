@@ -40,7 +40,7 @@ from alberta_framework.core.normalizers import (
     WelfordNormalizerState,
 )
 from alberta_framework.core.optimizers import Bounder
-from alberta_framework.core.types import HordeSpec
+from alberta_framework.core.types import HordeSpec, TraceMode
 
 # =============================================================================
 # Types
@@ -149,6 +149,7 @@ class HordeLearner:
         leaky_relu_slope: float = 0.01,
         use_layer_norm: bool = True,
         head_optimizer: AnyOptimizer | None = None,
+        trace_mode: TraceMode = TraceMode.ACCUMULATING,
     ):
         """Initialize the Horde learner.
 
@@ -163,6 +164,7 @@ class HordeLearner:
             leaky_relu_slope: Negative slope for LeakyReLU (default: 0.01)
             use_layer_norm: Whether to apply parameterless layer normalization
             head_optimizer: Optional separate optimizer for heads
+            trace_mode: Eligibility trace mode (ACCUMULATING or REPLACING)
         """
         self._horde_spec = horde_spec
         self._hidden_sizes = hidden_sizes
@@ -170,6 +172,7 @@ class HordeLearner:
         self._sparsity = sparsity
         self._leaky_relu_slope = leaky_relu_slope
         self._use_layer_norm = use_layer_norm
+        self._trace_mode = trace_mode
 
         # Compute per-head gamma*lambda products
         per_head_gl = tuple(
@@ -190,6 +193,7 @@ class HordeLearner:
             use_layer_norm=use_layer_norm,
             head_optimizer=head_optimizer,
             per_head_gamma_lamda=per_head_gl,
+            trace_mode=trace_mode,
         )
 
     @property
@@ -220,6 +224,7 @@ class HordeLearner:
         learner_config.pop("gamma", None)
         learner_config.pop("lamda", None)
         learner_config.pop("per_head_gamma_lamda", None)
+        # trace_mode is managed by HordeLearner, already in learner_config
 
         return {
             "type": "HordeLearner",
@@ -259,6 +264,11 @@ class HordeLearner:
             optimizer_from_config(head_opt_cfg) if head_opt_cfg is not None else None
         )
 
+        trace_mode_str = config.pop("trace_mode", None)
+        trace_mode = (
+            TraceMode(trace_mode_str) if trace_mode_str is not None else TraceMode.ACCUMULATING
+        )
+
         return cls(
             horde_spec=horde_spec,
             hidden_sizes=tuple(config.pop("hidden_sizes")),
@@ -266,6 +276,7 @@ class HordeLearner:
             bounder=bounder,
             normalizer=normalizer,
             head_optimizer=head_optimizer,
+            trace_mode=trace_mode,
             **config,
         )
 

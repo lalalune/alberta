@@ -46,6 +46,7 @@ from alberta_framework.core.types import (
     LMSState,
     MLPParams,
     ObGDState,
+    TraceMode,
 )
 
 
@@ -259,6 +260,7 @@ class MultiHeadMLPLearner:
         use_layer_norm: bool = True,
         head_optimizer: AnyOptimizer | None = None,
         per_head_gamma_lamda: tuple[float, ...] | None = None,
+        trace_mode: TraceMode = TraceMode.ACCUMULATING,
     ):
         """Initialize the multi-head MLP learner.
 
@@ -286,6 +288,10 @@ class MultiHeadMLPLearner:
                 for trace decay instead of the global ``gamma * lamda``.
                 Length must equal ``n_heads``. Used by ``HordeLearner``
                 to assign per-demon discount/trace parameters.
+            trace_mode: Eligibility trace mode. ``ACCUMULATING`` (default)
+                uses standard ``e_t = gl * e_{t-1} + grad``.
+                ``REPLACING`` sets the trace to the gradient where the
+                gradient is nonzero, decaying the old trace elsewhere.
         """
         self._n_heads = n_heads
         self._hidden_sizes = hidden_sizes
@@ -299,6 +305,7 @@ class MultiHeadMLPLearner:
         self._leaky_relu_slope = leaky_relu_slope
         self._use_layer_norm = use_layer_norm
         self._per_head_gl: tuple[float, ...] | None = per_head_gamma_lamda
+        self._trace_mode = trace_mode
 
         # Validate trunk trace constraint: gamma*lamda > 0 is only safe
         # when there is no trunk (linear baseline). With a trunk, the VJP
@@ -356,6 +363,7 @@ class MultiHeadMLPLearner:
             "per_head_gamma_lamda": (
                 list(self._per_head_gl) if self._per_head_gl is not None else None
             ),
+            "trace_mode": self._trace_mode.value,
         }
         return config
 
@@ -394,6 +402,11 @@ class MultiHeadMLPLearner:
         if per_head_gl is not None:
             per_head_gl = tuple(per_head_gl)
 
+        trace_mode_str = config.pop("trace_mode", None)
+        trace_mode = (
+            TraceMode(trace_mode_str) if trace_mode_str is not None else TraceMode.ACCUMULATING
+        )
+
         return cls(
             n_heads=config.pop("n_heads"),
             hidden_sizes=tuple(config.pop("hidden_sizes")),
@@ -402,6 +415,7 @@ class MultiHeadMLPLearner:
             normalizer=normalizer,
             head_optimizer=head_optimizer,
             per_head_gamma_lamda=per_head_gl,
+            trace_mode=trace_mode,
             **config,
         )
 
@@ -595,6 +609,7 @@ class MultiHeadMLPLearner:
         """
         n_heads = self._n_heads
         gamma_lamda = jnp.array(self._gamma * self._lamda, dtype=jnp.float32)
+        replacing = self._trace_mode == TraceMode.REPLACING
 
         # 1. Handle NaN targets
         active_mask = ~jnp.isnan(targets)  # (n_heads,)
@@ -666,7 +681,13 @@ class MultiHeadMLPLearner:
 
         for i in range(n_trunk_layers):
             # Weight trace (index 2*i)
-            new_wt = gamma_lamda * state.trunk_traces[2 * i] + trunk_weight_grads[i]
+            w_grad_i = trunk_weight_grads[i]
+            old_wt = state.trunk_traces[2 * i]
+            if replacing:
+                # Replacing: use grad where nonzero, else decay old trace
+                new_wt = jnp.where(w_grad_i != 0.0, w_grad_i, gamma_lamda * old_wt)
+            else:
+                new_wt = gamma_lamda * old_wt + w_grad_i
             new_trunk_traces.append(new_wt)
             w_step, new_w_opt = self._optimizer.update_from_gradient(
                 state.trunk_optimizer_states[2 * i], new_wt, error=None
@@ -675,7 +696,12 @@ class MultiHeadMLPLearner:
             new_trunk_opt_states.append(new_w_opt)
 
             # Bias trace (index 2*i + 1)
-            new_bt = gamma_lamda * state.trunk_traces[2 * i + 1] + trunk_bias_grads[i]
+            b_grad_i = trunk_bias_grads[i]
+            old_bt = state.trunk_traces[2 * i + 1]
+            if replacing:
+                new_bt = jnp.where(b_grad_i != 0.0, b_grad_i, gamma_lamda * old_bt)
+            else:
+                new_bt = gamma_lamda * old_bt + b_grad_i
             new_trunk_traces.append(new_bt)
             b_step, new_b_opt = self._optimizer.update_from_gradient(
                 state.trunk_optimizer_states[2 * i + 1], new_bt, error=None
@@ -684,6 +710,7 @@ class MultiHeadMLPLearner:
             new_trunk_opt_states.append(new_b_opt)
 
         # Trunk bounding (pseudo_error=1.0 since error is in gradient)
+        # Scale traces by the bounding factor for consistency with future updates
         trunk_bounding_metric = jnp.array(1.0, dtype=jnp.float32)
         if self._bounder is not None:
             trunk_params_flat: list[Array] = []
@@ -694,6 +721,7 @@ class MultiHeadMLPLearner:
                 tuple(trunk_steps), jnp.array(1.0), tuple(trunk_params_flat)
             )
             trunk_steps = list(bounded_trunk_steps)
+            new_trunk_traces = [trunk_bounding_metric * t for t in new_trunk_traces]
 
         # Apply trunk updates (no error multiply -- error already in gradient)
         new_trunk_weights: list[Array] = []
@@ -734,8 +762,12 @@ class MultiHeadMLPLearner:
                 if self._per_head_gl is not None
                 else gamma_lamda
             )
-            new_w_trace = head_gl * old_w_trace + w_grad
-            new_b_trace = head_gl * old_b_trace + b_grad
+            if replacing:
+                new_w_trace = jnp.where(w_grad != 0.0, w_grad, head_gl * old_w_trace)
+                new_b_trace = jnp.where(b_grad != 0.0, b_grad, head_gl * old_b_trace)
+            else:
+                new_w_trace = head_gl * old_w_trace + w_grad
+                new_b_trace = head_gl * old_b_trace + b_grad
 
             # Error for this head (masked to 0 for inactive)
             error_i = jnp.where(
@@ -751,12 +783,15 @@ class MultiHeadMLPLearner:
                 old_b_opt, new_b_trace, error=error_i
             )
 
-            # Head bounding
+            # Head bounding — scale traces by the bounding factor so that
+            # future trace-based updates reflect the effective step magnitude
             if self._bounder is not None:
-                bounded_head_steps, _ = self._bounder.bound(
+                bounded_head_steps, bound_scale = self._bounder.bound(
                     (w_step, b_step), error_i, (head_w, head_b)
                 )
                 w_step, b_step = bounded_head_steps
+                new_w_trace = bound_scale * new_w_trace
+                new_b_trace = bound_scale * new_b_trace
 
             # Apply: param += error_i * step
             new_w = head_w + error_i * w_step

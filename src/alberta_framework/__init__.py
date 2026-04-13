@@ -168,6 +168,7 @@ from alberta_framework.core.types import (
     TDLearnerState,
     TDTimeStep,
     TimeStep,
+    TraceMode,
     agent_age_s,
     agent_uptime_s,
     create_autotdidbd_state,
@@ -255,6 +256,7 @@ __all__ = [
     "StepSizeTrackingConfig",
     "Target",
     "TimeStep",
+    "TraceMode",
     "UpdateResult",
     # Types - MLP
     "BatchedMLPResult",

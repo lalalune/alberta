@@ -31,8 +31,8 @@ Formalize rlsecd's multi-head predictions as GVF demons (Sutton et al. 2011, "Ho
 - [ ] Per-parameter eligibility trace arrays on `MultiHeadMLPLearner` (matching weight shapes in each layer)
 - [ ] TD(λ) update rule: `e_t = γ_t * λ * e_{t-1} + ∇_θ q̂(s,a)` integrated with Optimizer/Bounder composition
 - [ ] Trace decay λ configurable per demon (Horde §4: λ is an "answer function")
-- [ ] Accumulating vs replacing traces option
-- [ ] Integration with ObGD bounding — traces must respect bounding scale factor
+- [x] Accumulating vs replacing traces option (`TraceMode` enum, replacing traces in `MultiHeadMLPLearner`)
+- [x] Integration with ObGD bounding — traces scaled by bounding factor after trunk and head bounding
 - [ ] Test: TD(λ=0) reduces to existing single-step MLP update
 - [ ] Test: linear MLP (`hidden_sizes=()`) with traces matches `TDLinearLearner` results
 
