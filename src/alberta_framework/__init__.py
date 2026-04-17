@@ -40,7 +40,7 @@ References
 - Streaming Deep Reinforcement Learning Finally Works (Elsayed et al., 2024)
 """
 
-__version__ = "0.16.0"
+__version__ = "0.17.1"
 
 # Checkpoint utilities
 from alberta_framework.core.checkpoints import (
