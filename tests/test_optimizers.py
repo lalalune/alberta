@@ -4,7 +4,14 @@ import chex
 import jax.numpy as jnp
 import pytest
 
-from alberta_framework import IDBD, LMS, Autostep, ObGD
+from alberta_framework import (
+    IDBD,
+    LMS,
+    Autostep,
+    AutostepGTDLambda,
+    ObGD,
+    optimizer_from_config,
+)
 
 
 class TestLMS:
@@ -233,6 +240,165 @@ class TestAutostep:
         # v[2]/v[0] should be closer to (3/1)^2 = 9 than to (3/1) = 3
         ratio = float(v[2]) / float(jnp.maximum(v[0], 1e-10))
         assert ratio > 4.0  # Well above linear (3), closer to quadratic (9)
+
+
+class TestAutostepGTDLambda:
+    """Tests for the Autostep-for-GTD(lambda) optimizer.
+
+    Reference: Kearney, Veeriah, Travnik, Pilarski, Sutton 2019,
+    "Learning Feature Relevance Through Step Size Adaptation in
+    Temporal-Difference Learning". The Step 1 supervised limit (gamma=0,
+    lamda=0, rho=1) reduces to standard Autostep, so this class
+    primarily pins shape/finite/JIT/config behaviour and the supervised
+    numerical-equivalence guarantee.
+    """
+
+    def test_init_creates_correct_state(self):
+        """init should produce per-weight step-sizes, traces, normalizers, and z."""
+        optimizer = AutostepGTDLambda(initial_step_size=0.02, meta_step_size=0.005)
+        state = optimizer.init(feature_dim=7)
+
+        chex.assert_shape(state.step_sizes, (7,))
+        chex.assert_shape(state.traces, (7,))
+        chex.assert_shape(state.normalizers, (7,))
+        chex.assert_shape(state.eligibility_traces, (7,))
+        chex.assert_trees_all_close(state.step_sizes, jnp.full(7, 0.02))
+        chex.assert_trees_all_close(state.traces, jnp.zeros(7))
+        chex.assert_trees_all_close(state.normalizers, jnp.zeros(7))
+        chex.assert_trees_all_close(state.eligibility_traces, jnp.zeros(7))
+        assert state.meta_step_size == pytest.approx(0.005)
+        assert state.tau == pytest.approx(10000.0)
+        assert state.trace_decay == pytest.approx(0.0)
+
+    def test_update_returns_correct_shapes_and_finite(self, sample_observation):
+        """update should return correctly shaped, finite deltas across multiple steps."""
+        optimizer = AutostepGTDLambda()
+        state = optimizer.init(feature_dim=len(sample_observation))
+
+        for _ in range(5):
+            result = optimizer.update(state, jnp.array(1.0), sample_observation)
+            chex.assert_shape(result.weight_delta, sample_observation.shape)
+            chex.assert_shape(result.new_state.step_sizes, sample_observation.shape)
+            chex.assert_shape(
+                result.new_state.eligibility_traces, sample_observation.shape
+            )
+            chex.assert_tree_all_finite(result.weight_delta)
+            chex.assert_tree_all_finite(result.bias_delta)
+            chex.assert_tree_all_finite(result.new_state)
+            state = result.new_state
+
+    def test_jit_compiles(self):
+        """update should compile under jax.jit."""
+        import jax
+
+        optimizer = AutostepGTDLambda(initial_step_size=0.01, meta_step_size=0.01)
+        state = optimizer.init(feature_dim=4)
+        update_jit = jax.jit(optimizer.update)
+        observation = jnp.array([0.1, -0.5, 1.0, 2.0], dtype=jnp.float32)
+
+        result = update_jit(state, jnp.array(1.0, dtype=jnp.float32), observation)
+
+        chex.assert_tree_all_finite(result.weight_delta)
+        chex.assert_tree_all_finite(result.new_state)
+
+    def test_supervised_matches_autostep_numerically(self):
+        """gamma=lambda=0 supervised case matches Autostep within 1e-5 over 10 steps.
+
+        Pins the Step 1 footnote-11 closure: Autostep-for-GTD(lambda) in the
+        supervised limit (the Step 1 baseline) is the same algorithm as
+        Autostep on the weight, bias, trace, normalizer, and step-size paths.
+        """
+        autostep = Autostep(initial_step_size=0.03, meta_step_size=0.02, tau=2000.0)
+        gtd = AutostepGTDLambda(
+            initial_step_size=0.03, meta_step_size=0.02, tau=2000.0, trace_decay=0.0
+        )
+
+        feature_dim = 6
+        state_a = autostep.init(feature_dim=feature_dim)
+        state_g = gtd.init(feature_dim=feature_dim)
+
+        observations = jnp.array(
+            [
+                [1.0, 0.5, -0.25, 0.75, -1.0, 0.0],
+                [0.2, -0.4, 0.6, -0.8, 1.2, -0.3],
+                [-1.5, 0.9, 0.1, -0.7, 0.4, 1.1],
+                [0.6, 1.3, -0.5, 0.0, 0.2, -0.9],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [-0.3, 0.7, 1.4, -1.1, 0.05, 0.8],
+                [0.45, -0.55, 0.65, -0.75, 0.85, -0.95],
+                [1.1, -0.4, 0.3, 0.6, -0.2, 0.5],
+                [0.0, 0.5, -0.5, 1.0, -1.0, 0.25],
+                [0.8, -0.6, 0.4, -0.2, 0.1, -0.9],
+            ],
+            dtype=jnp.float32,
+        )
+        errors = jnp.array(
+            [1.5, -0.7, 0.4, 1.0, -1.2, 0.6, -0.3, 0.8, -0.5, 0.9],
+            dtype=jnp.float32,
+        )
+
+        for x, e in zip(observations, errors, strict=True):
+            res_a = autostep.update(state_a, e, x)
+            res_g = gtd.update(state_g, e, x)
+            chex.assert_trees_all_close(
+                res_g.weight_delta, res_a.weight_delta, atol=1e-5, rtol=1e-5
+            )
+            chex.assert_trees_all_close(
+                res_g.bias_delta, res_a.bias_delta, atol=1e-5
+            )
+            chex.assert_trees_all_close(
+                res_g.new_state.step_sizes,
+                res_a.new_state.step_sizes,
+                atol=1e-5,
+                rtol=1e-5,
+            )
+            chex.assert_trees_all_close(
+                res_g.new_state.traces,
+                res_a.new_state.traces,
+                atol=1e-5,
+                rtol=1e-5,
+            )
+            chex.assert_trees_all_close(
+                res_g.new_state.normalizers,
+                res_a.new_state.normalizers,
+                atol=1e-5,
+                rtol=1e-5,
+            )
+            state_a = res_a.new_state
+            state_g = res_g.new_state
+
+    def test_config_round_trip(self):
+        """to_config / optimizer_from_config should roundtrip."""
+        opt = AutostepGTDLambda(
+            initial_step_size=0.02, meta_step_size=0.05, tau=4000.0, trace_decay=0.7
+        )
+        config = opt.to_config()
+        assert config["type"] == "AutostepGTDLambda"
+        restored = optimizer_from_config(config)
+        assert isinstance(restored, AutostepGTDLambda)
+        assert restored._initial_step_size == 0.02
+        assert restored._meta_step_size == 0.05
+        assert restored._tau == 4000.0
+        assert restored._trace_decay == 0.7
+
+    def test_eligibility_trace_accumulates_with_lambda(self):
+        """With trace_decay > 0 the eligibility trace should accumulate."""
+        optimizer = AutostepGTDLambda(
+            initial_step_size=0.01, meta_step_size=0.01, trace_decay=0.5
+        )
+        state = optimizer.init(feature_dim=3)
+        observation = jnp.array([1.0, 0.5, -0.25], dtype=jnp.float32)
+
+        result1 = optimizer.update(state, jnp.array(1.0), observation)
+        chex.assert_trees_all_close(
+            result1.new_state.eligibility_traces, observation, atol=1e-6
+        )
+
+        result2 = optimizer.update(result1.new_state, jnp.array(1.0), observation)
+        expected = 0.5 * observation + observation
+        chex.assert_trees_all_close(
+            result2.new_state.eligibility_traces, expected, atol=1e-6
+        )
 
 
 class TestObGD:

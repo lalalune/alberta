@@ -107,6 +107,46 @@ class AutostepState:
 
 
 @chex.dataclass(frozen=True)
+class AutostepGTDLambdaState:
+    """State for the Autostep-for-GTD(lambda) optimizer.
+
+    Implements the supervised limit of the Autostep-style normalized
+    GTD(lambda) update from Kearney, Veeriah, Travnik, Pilarski & Sutton 2019,
+    "Learning Feature Relevance Through Step Size Adaptation in
+    Temporal-Difference Learning". The optimizer carries an eligibility trace
+    ``z_i`` and a per-decision importance-sampling ratio so the same code path
+    handles both linear supervised learning (``gamma=0``, ``lamda=0``,
+    ``rho=1``) and GTD(lambda) prediction.
+
+    Attributes:
+        step_sizes: Per-weight step-sizes ``alpha_i``
+        traces: Per-weight h-traces for gradient correlation ``h_i``
+        normalizers: Self-regulated meta-gradient normalizers ``v_i``
+        eligibility_traces: GTD(lambda) eligibility traces ``z_i``
+        meta_step_size: Meta learning rate ``mu``
+        tau: Time constant for normalizer adaptation
+        trace_decay: Eligibility trace decay ``lamda``
+            (``0`` recovers Autostep)
+        bias_step_size: Step-size for the bias term
+        bias_trace: Trace for the bias term
+        bias_normalizer: Normalizer for the bias meta-gradient
+        bias_eligibility_trace: Bias eligibility trace
+    """
+
+    step_sizes: Float[Array, " feature_dim"]
+    traces: Float[Array, " feature_dim"]
+    normalizers: Float[Array, " feature_dim"]
+    eligibility_traces: Float[Array, " feature_dim"]
+    meta_step_size: Float[Array, ""]
+    tau: Float[Array, ""]
+    trace_decay: Float[Array, ""]
+    bias_step_size: Float[Array, ""]
+    bias_trace: Float[Array, ""]
+    bias_normalizer: Float[Array, ""]
+    bias_eligibility_trace: Float[Array, ""]
+
+
+@chex.dataclass(frozen=True)
 class IDBDParamState:
     """Per-parameter IDBD state for use with arbitrary-shape parameters.
 
@@ -201,7 +241,9 @@ class LearnerState:
 
     weights: Float[Array, " feature_dim"]
     bias: Float[Array, ""]
-    optimizer_state: LMSState | IDBDState | AutostepState | ObGDState
+    optimizer_state: (
+        LMSState | IDBDState | AutostepState | AutostepGTDLambdaState | ObGDState
+    )
     normalizer_state: AnyNormalizerState | None = None
     step_count: Int[Array, ""] = None  # type: ignore[assignment]
     birth_timestamp: float = 0.0
@@ -556,6 +598,40 @@ def create_autostep_state(
         bias_step_size=jnp.array(initial_step_size, dtype=jnp.float32),
         bias_trace=jnp.array(0.0, dtype=jnp.float32),
         bias_normalizer=jnp.array(0.0, dtype=jnp.float32),
+    )
+
+
+def create_autostep_gtd_state(
+    feature_dim: int,
+    initial_step_size: float = 0.01,
+    meta_step_size: float = 0.01,
+    tau: float = 10000.0,
+    trace_decay: float = 0.0,
+) -> AutostepGTDLambdaState:
+    """Create initial Autostep-for-GTD(lambda) optimizer state.
+
+    Args:
+        feature_dim: Dimension of the feature vector
+        initial_step_size: Initial per-weight step-size
+        meta_step_size: Meta learning rate ``mu``
+        tau: Time constant for normalizer adaptation
+        trace_decay: Eligibility trace decay ``lamda`` (0 recovers Autostep)
+
+    Returns:
+        Initial AutostepGTDLambda state
+    """
+    return AutostepGTDLambdaState(
+        step_sizes=jnp.full(feature_dim, initial_step_size, dtype=jnp.float32),
+        traces=jnp.zeros(feature_dim, dtype=jnp.float32),
+        normalizers=jnp.zeros(feature_dim, dtype=jnp.float32),
+        eligibility_traces=jnp.zeros(feature_dim, dtype=jnp.float32),
+        meta_step_size=jnp.array(meta_step_size, dtype=jnp.float32),
+        tau=jnp.array(tau, dtype=jnp.float32),
+        trace_decay=jnp.array(trace_decay, dtype=jnp.float32),
+        bias_step_size=jnp.array(initial_step_size, dtype=jnp.float32),
+        bias_trace=jnp.array(0.0, dtype=jnp.float32),
+        bias_normalizer=jnp.array(0.0, dtype=jnp.float32),
+        bias_eligibility_trace=jnp.array(0.0, dtype=jnp.float32),
     )
 
 

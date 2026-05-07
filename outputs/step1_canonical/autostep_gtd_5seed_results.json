@@ -1,0 +1,60 @@
+{
+  "config": {
+    "stream": "AlbertaPlanStep1",
+    "feature_dim": 20,
+    "num_relevant": 5,
+    "drift_rate_w": 0.001,
+    "drift_rate_b": 0.001,
+    "noise_std": 1.0,
+    "normalizer": "EMA(decay=0.99)",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "burn_in_steps": 1000,
+    "measurement_steps": 4000
+  },
+  "wall_clock_s": 2.92311692237854,
+  "results": {
+    "LMS": {
+      "optimizer": "LMS",
+      "per_seed": [
+        1.1565498113632202,
+        1.1181867122650146,
+        1.1714320182800293,
+        1.1555190086364746,
+        1.1486873626708984
+      ],
+      "mean_mse": 1.1500749826431274,
+      "stderr": 0.008793381244042671
+    },
+    "Autostep": {
+      "optimizer": "Autostep",
+      "per_seed": [
+        1.2585035562515259,
+        1.2061387300491333,
+        1.2809783220291138,
+        1.2486006021499634,
+        1.244213342666626
+      ],
+      "mean_mse": 1.2476869106292725,
+      "stderr": 0.012174706796504089
+    },
+    "AutostepGTDLambda": {
+      "optimizer": "AutostepGTDLambda",
+      "per_seed": [
+        1.2585035562515259,
+        1.2061387300491333,
+        1.2809783220291138,
+        1.2486006021499634,
+        1.244213342666626
+      ],
+      "mean_mse": 1.2476869106292725,
+      "stderr": 0.012174706796504089
+    }
+  },
+  "notes": "Preliminary 5-seed probe. The Step 1 supervised limit of Autostep-for-GTD(lambda) (Kearney et al. 2019, gamma=lambda=0, rho=1) reduces algebraically to Autostep, so the two columns are expected to coincide within numerical noise. Use the full 30-seed step1_full_baselines.py sweep for paper-grade evidence."
+}

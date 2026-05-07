@@ -14,7 +14,7 @@ References:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 import chex
 import jax.numpy as jnp
@@ -22,6 +22,7 @@ from jax import Array
 from jaxtyping import Float
 
 from alberta_framework.core.types import (
+    AutostepGTDLambdaState,
     AutostepParamState,
     AutostepState,
     AutoTDIDBDState,
@@ -225,13 +226,16 @@ class OptimizerUpdate:
 
     weight_delta: Float[Array, " feature_dim"]
     bias_delta: Float[Array, ""]
-    new_state: LMSState | IDBDState | AutostepState | ObGDState | IDBDParamState
+    new_state: (
+        LMSState | IDBDState | AutostepState | AutostepGTDLambdaState | ObGDState
+        | IDBDParamState
+    )
     metrics: dict[str, Array]
 
 
 class Optimizer[
     StateT: (
-        LMSState, IDBDState, AutostepState, ObGDState,
+        LMSState, IDBDState, AutostepState, AutostepGTDLambdaState, ObGDState,
         AutostepParamState, IDBDParamState,
     )
 ](ABC):
@@ -987,6 +991,110 @@ class Autostep(Optimizer[AutostepState]):
         )
 
 
+class AutostepGTDLambda(Optimizer[AutostepGTDLambdaState]):
+    """Autostep-for-GTD(lambda) supervised-limit optimizer.
+
+    Kearney et al. (2019) apply Autostep-style normalized meta-descent in a
+    GTD(lambda) setting. Step 1 uses the supervised limit, where ``rho=1`` and
+    ``gamma=0``; this wrapper keeps an eligibility-trace state so the public
+    name is explicit while reusing the vetted Autostep linear update.
+    """
+
+    def __init__(
+        self,
+        initial_step_size: float = 0.01,
+        meta_step_size: float = 0.01,
+        tau: float = 10000.0,
+        trace_decay: float = 0.0,
+    ):
+        """Initialize Autostep-for-GTD(lambda).
+
+        Args:
+            initial_step_size: Initial per-weight step-size
+            meta_step_size: Meta learning rate for adapting step-sizes
+            tau: Time constant for Autostep normalizer adaptation
+            trace_decay: Eligibility trace decay; ``0`` recovers supervised
+                Autostep exactly.
+        """
+        self._base = Autostep(
+            initial_step_size=initial_step_size,
+            meta_step_size=meta_step_size,
+            tau=tau,
+        )
+        self._initial_step_size = initial_step_size
+        self._meta_step_size = meta_step_size
+        self._tau = tau
+        self._trace_decay = trace_decay
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize configuration to dict."""
+        return {
+            "type": "AutostepGTDLambda",
+            "initial_step_size": self._initial_step_size,
+            "meta_step_size": self._meta_step_size,
+            "tau": self._tau,
+            "trace_decay": self._trace_decay,
+        }
+
+    def init(self, feature_dim: int) -> AutostepGTDLambdaState:
+        """Initialize optimizer state."""
+        base_state = self._base.init(feature_dim)
+        return AutostepGTDLambdaState(
+            step_sizes=base_state.step_sizes,
+            traces=base_state.traces,
+            normalizers=base_state.normalizers,
+            eligibility_traces=jnp.zeros(feature_dim, dtype=jnp.float32),
+            meta_step_size=base_state.meta_step_size,
+            tau=base_state.tau,
+            trace_decay=jnp.array(self._trace_decay, dtype=jnp.float32),
+            bias_step_size=base_state.bias_step_size,
+            bias_trace=base_state.bias_trace,
+            bias_normalizer=base_state.bias_normalizer,
+            bias_eligibility_trace=jnp.array(0.0, dtype=jnp.float32),
+        )
+
+    def update(
+        self,
+        state: AutostepGTDLambdaState,
+        error: Array,
+        observation: Array,
+    ) -> OptimizerUpdate:
+        """Compute one supervised-limit Autostep-for-GTD(lambda) update."""
+        eligibility = state.trace_decay * state.eligibility_traces + observation
+        bias_eligibility = state.trace_decay * state.bias_eligibility_trace + 1.0
+        base_state = AutostepState(
+            step_sizes=state.step_sizes,
+            traces=state.traces,
+            normalizers=state.normalizers,
+            meta_step_size=state.meta_step_size,
+            tau=state.tau,
+            bias_step_size=state.bias_step_size,
+            bias_trace=state.bias_trace,
+            bias_normalizer=state.bias_normalizer,
+        )
+        base_update = self._base.update(base_state, error, eligibility)
+        new_base_state = cast(AutostepState, base_update.new_state)
+        new_state = AutostepGTDLambdaState(
+            step_sizes=new_base_state.step_sizes,
+            traces=new_base_state.traces,
+            normalizers=new_base_state.normalizers,
+            eligibility_traces=eligibility,
+            meta_step_size=new_base_state.meta_step_size,
+            tau=new_base_state.tau,
+            trace_decay=state.trace_decay,
+            bias_step_size=new_base_state.bias_step_size,
+            bias_trace=new_base_state.bias_trace,
+            bias_normalizer=new_base_state.bias_normalizer,
+            bias_eligibility_trace=bias_eligibility,
+        )
+        return OptimizerUpdate(
+            weight_delta=base_update.weight_delta,
+            bias_delta=base_update.bias_delta,
+            new_state=new_state,
+            metrics=base_update.metrics,
+        )
+
+
 class ObGD(Optimizer[ObGDState]):
     """Observation-bounded Gradient Descent optimizer.
 
@@ -1565,6 +1673,7 @@ _OPTIMIZER_REGISTRY: dict[str, type] = {
     "LMS": LMS,
     "IDBD": IDBD,
     "Autostep": Autostep,
+    "AutostepGTDLambda": AutostepGTDLambda,
     "ObGD": ObGD,
 }
 

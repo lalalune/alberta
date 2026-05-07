@@ -7,11 +7,13 @@ from alberta_framework import (
     LMS,
     AGCBounding,
     Autostep,
+    AutostepGTDLambda,
     EMANormalizer,
     MLPLearner,
     MultiHeadMLPLearner,
     ObGD,
     ObGDBounding,
+    StreamingBatchNormalizer,
     WelfordNormalizer,
     bounder_from_config,
     normalizer_from_config,
@@ -55,6 +57,21 @@ class TestOptimizerConfig:
         assert isinstance(restored, Autostep)
         assert restored._initial_step_size == 0.01
         assert restored._tau == 5000.0
+
+    def test_autostep_gtd_lambda_round_trip(self):
+        opt = AutostepGTDLambda(
+            initial_step_size=0.01,
+            meta_step_size=0.02,
+            tau=5000.0,
+            trace_decay=0.3,
+        )
+        config = opt.to_config()
+        assert config["type"] == "AutostepGTDLambda"
+
+        restored = optimizer_from_config(config)
+        assert isinstance(restored, AutostepGTDLambda)
+        assert restored._initial_step_size == 0.01
+        assert restored._trace_decay == 0.3
 
     def test_obgd_round_trip(self):
         opt = ObGD(step_size=0.5, kappa=3.0, gamma=0.99, lamda=0.9)
@@ -129,6 +146,16 @@ class TestNormalizerConfig:
         restored = normalizer_from_config(config)
         assert isinstance(restored, WelfordNormalizer)
         assert restored._epsilon == 1e-7
+
+    def test_streaming_batch_round_trip(self):
+        n = StreamingBatchNormalizer(momentum=0.97, epsilon=1e-5)
+        config = n.to_config()
+        assert config["type"] == "StreamingBatchNormalizer"
+
+        restored = normalizer_from_config(config)
+        assert isinstance(restored, StreamingBatchNormalizer)
+        assert restored._momentum == 0.97
+        assert restored._epsilon == 1e-5
 
     def test_unknown_normalizer_raises(self):
         with pytest.raises(ValueError, match="Unknown normalizer"):
