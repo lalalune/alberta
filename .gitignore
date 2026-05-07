@@ -92,16 +92,24 @@ __jax_cache__/
 # Local development
 *.local
 .python-version
+data/
 
 # Documentation builds
 docs/_build/
 site/
 
-# Experiment outputs
-outputs/
+# Experiment outputs (default ignored)
+outputs/*
+!outputs/step1_canonical/
+!outputs/step2_canonical/
+!outputs/daemon_throughput/
 results/
 logs/
 *.png
 *.pdf
 !docs/*.png
 !docs/*.pdf
+!outputs/step1_canonical/*.png
+!outputs/step1_canonical/*.pdf
+!outputs/step2_canonical/*.png
+!outputs/step2_canonical/*.pdf
