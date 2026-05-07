@@ -204,6 +204,47 @@ actor) which is a follow-up item, not a hyperparameter fix.
    compare; if AC eventually catches up, the recommendation reverts to
    "needs more steps", not "needs MLP actor".
 
+## Per-seed 10-seed comparison data
+
+Cartpole/0 (mean of last-half episode returns per seed):
+
+| Seed | actor_critic_default | actor_critic_tuned | q_autostep | sarsa |
+|---:|---:|---:|---:|---:|
+| 0 | 28.67 | 78.50 | 75.72 | 102.11 |
+| 1 | 103.12 | 69.33 | 65.55 | 29.88 |
+| 2 | 42.12 | 81.27 | 93.22 | 106.89 |
+| 3 | 82.93 | 69.00 | 80.35 | 101.67 |
+| 4 | 28.62 | 82.55 | 29.23 | 33.93 |
+| 5 | 101.42 | 89.70 | 107.22 | 108.62 |
+| 6 | 56.64 | 68.43 | 29.62 | 98.00 |
+| 7 | 100.50 | 88.09 | 52.74 | 29.56 |
+| 8 | 28.70 | 77.83 | 34.76 | 29.22 |
+| 9 | 39.92 | 76.83 | 130.38 | 31.12 |
+| **mean** | **61.26** | **78.15** | **69.88** | **67.10** |
+| **std** | **30.67** | **7.21** | **32.50** | **36.48** |
+
+Catch/0 (total regret over 300 episodes):
+
+| Seed | actor_critic_default | actor_critic_tuned | q_autostep | sarsa |
+|---:|---:|---:|---:|---:|
+| 0 | 454 | 486 | 380 | 438 |
+| 1 | 480 | 486 | 358 | 282 |
+| 2 | 478 | 482 | 386 | 374 |
+| 3 | 496 | 476 | 430 | 364 |
+| 4 | 500 | 492 | 332 | 328 |
+| 5 | 470 | 474 | 420 | 354 |
+| 6 | 448 | 474 | 370 | 324 |
+| 7 | 484 | 498 | 276 | 280 |
+| 8 | 438 | 488 | 342 | 438 |
+| 9 | 484 | 468 | 412 | 402 |
+| **mean** | **473.20** | **482.40** | **370.60** | **358.40** |
+| **std** | **19.48** | **8.85** | **44.07** | **53.81** |
+
+The actor-critic configs both occupy a narrow regret band ~470-490
+(catches ~5-25% of episodes), while Q/SARSA range 276-438 (catches
+40-70%). The tuned config compresses the actor-critic distribution
+relative to the legacy default but does not move its mode.
+
 ## Reproducible commands
 
 Cartpole/0 sweep (5 seeds x 21 configs):
