@@ -43,12 +43,26 @@ References
 __version__ = "0.17.1"
 
 # Checkpoint utilities
+# Baseline optimizers
+from alberta_framework.core.baseline_optimizers import (
+    NADALINE,
+    AdaGain,
+    AdaGainState,
+    Adam,
+    AdamParamState,
+    AdamState,
+    NadalineState,
+    RMSprop,
+    RMSpropParamState,
+    RMSpropState,
+)
 from alberta_framework.core.checkpoints import (
     checkpoint_exists,
     load_checkpoint,
     load_checkpoint_metadata,
     save_checkpoint,
 )
+from alberta_framework.core.cumulant_discovery import CumulantDiscovery
 
 # Diagnostics
 from alberta_framework.core.diagnostics import (
@@ -57,6 +71,7 @@ from alberta_framework.core.diagnostics import (
     compute_feature_sensitivity,
     relevance_to_dict,
 )
+from alberta_framework.core.feature_discovery import FixedBudgetFeatureLearner
 
 # Horde / GVF (Step 3)
 from alberta_framework.core.horde import (
@@ -64,14 +79,30 @@ from alberta_framework.core.horde import (
     HordeLearner,
     HordeLearningResult,
     HordeUpdateResult,
+    MixedHorde,
+    MixedHordeLearningResult,
+    MixedHordeState,
     run_horde_learning_loop,
     run_horde_learning_loop_batched,
+    run_horde_learning_loop_final_state,
+    run_mixed_horde_learning_loop,
+)
+
+# Horde Actor-Critic (Step 4)
+from alberta_framework.core.horde_actor_critic import (
+    HordeActorCriticAgent,
+    HordeActorCriticArrayResult,
+    HordeActorCriticConfig,
+    HordeActorCriticState,
+    HordeActorCriticUpdateResult,
+    run_horde_actor_critic_from_arrays,
 )
 
 # Core types
 # Learners
 # Initializers
 from alberta_framework.core.initializers import sparse_init
+from alberta_framework.core.interaction_features import FixedBudgetInteractionLearner
 from alberta_framework.core.learners import (
     LinearLearner,
     MLPLearner,
@@ -105,10 +136,13 @@ from alberta_framework.core.normalizers import (
     EMANormalizer,
     EMANormalizerState,
     Normalizer,
+    StreamingBatchNormalizer,
+    StreamingBatchNormalizerState,
     WelfordNormalizer,
     WelfordNormalizerState,
     normalizer_from_config,
 )
+from alberta_framework.core.off_policy_td import OffPolicyTDLinearLearner
 
 # Optimizers
 from alberta_framework.core.optimizers import (
@@ -117,6 +151,7 @@ from alberta_framework.core.optimizers import (
     TDIDBD,
     AGCBounding,
     Autostep,
+    AutostepGTDLambda,
     AutoTDIDBD,
     Bounder,
     ObGD,
@@ -140,8 +175,49 @@ from alberta_framework.core.sarsa import (
     run_sarsa_continuing,
     run_sarsa_episode,
     run_sarsa_from_arrays,
+    run_sarsa_from_arrays_final_state,
 )
+
+# UPGD (Step 2)
+from alberta_framework.core.upgd import (
+    UPGDLearner,
+    UPGDLearningResult,
+    UPGDState,
+    UPGDUpdateResult,
+    run_upgd_arrays,
+    run_upgd_loop,
+)
+from alberta_framework.steps.step2 import (
+    Step2HybridConfig,
+    make_step2_hybrid_learner,
+)
+
+# Production Step 1-4 pipeline. Keep this optional at package-import time so
+# core Step 1/2 learners and research scripts remain usable while pipeline
+# dependencies are under active development.
+try:
+    from alberta_framework.pipeline import (
+        AlbertaPipeline,
+        AlbertaPipelineArrayResult,
+        AlbertaPipelineConfig,
+        AlbertaPipelineSmokeResult,
+        AlbertaPipelineState,
+        AlbertaPipelineStepResult,
+        ControlMode,
+        CumulantFn,
+        HordeActorCriticPipelineConfig,
+        Step2FeatureConfig,
+        Step2Mode,
+        Step2UPGDConfig,
+        make_alberta_pipeline,
+        run_pipeline_smoke,
+    )
+
+    _pipeline_available = True
+except ImportError:
+    _pipeline_available = False
 from alberta_framework.core.types import (
+    AutostepGTDLambdaState,
     AutostepParamState,
     AutostepState,
     AutoTDIDBDState,
@@ -180,6 +256,24 @@ from alberta_framework.core.types import (
 # Streams - base
 from alberta_framework.streams.base import ScanStream
 
+# Streams - Step 2 feature discovery
+from alberta_framework.streams.feature_discovery import (
+    InteractionFeatureDiscoveryState,
+    InteractionFeatureDiscoveryStream,
+    NonlinearFeatureDiscoveryState,
+    NonlinearFeatureDiscoveryStream,
+    collect_feature_discovery_stream,
+)
+from alberta_framework.streams.out_of_class import (
+    CompositionalState,
+    CompositionalStream,
+    FrequencyMismatchState,
+    FrequencyMismatchStream,
+    OutOfClassPolynomialState,
+    OutOfClassPolynomialStream,
+)
+from alberta_framework.streams.partial_observation import MaskMode, PartialObservationWrapper
+
 # Streams - synthetic
 from alberta_framework.streams.synthetic import (
     AbruptChangeState,
@@ -213,6 +307,7 @@ from alberta_framework.utils.metrics import (
     compute_tracking_error,
     extract_metric,
 )
+from alberta_framework.utils.nexting import multi_channel_horizon_returns
 from alberta_framework.utils.timing import Timer, format_duration
 
 # Gymnasium streams (optional)
@@ -238,6 +333,7 @@ __all__ = [
     "__version__",
     # Types - Supervised Learning
     "AutostepParamState",
+    "AutostepGTDLambdaState",
     "AutostepState",
     "BatchedLearningResult",
     "IDBDParamState",
@@ -247,6 +343,7 @@ __all__ = [
     "NormalizerHistory",
     "AnyNormalizerState",
     "EMANormalizerState",
+    "StreamingBatchNormalizerState",
     "WelfordNormalizerState",
     "NormalizerTrackingConfig",
     "ObGDState",
@@ -274,9 +371,21 @@ __all__ = [
     "create_obgd_state",
     "create_tdidbd_state",
     "create_autotdidbd_state",
+    # Baseline optimizers
+    "AdaGain",
+    "AdaGainState",
+    "Adam",
+    "AdamParamState",
+    "AdamState",
+    "NADALINE",
+    "NadalineState",
+    "RMSprop",
+    "RMSpropParamState",
+    "RMSpropState",
     # Optimizers - Supervised Learning
     "AGCBounding",
     "Autostep",
+    "AutostepGTDLambda",
     "Bounder",
     "IDBD",
     "LMS",
@@ -295,6 +404,7 @@ __all__ = [
     # Normalizers
     "Normalizer",
     "EMANormalizer",
+    "StreamingBatchNormalizer",
     "WelfordNormalizer",
     "normalizer_from_config",
     # Learners - Supervised Learning
@@ -315,6 +425,19 @@ __all__ = [
     "multi_head_metrics_to_dicts",
     "run_multi_head_learning_loop",
     "run_multi_head_learning_loop_batched",
+    # Learners - UPGD (Step 2)
+    "CumulantDiscovery",
+    "FixedBudgetFeatureLearner",
+    "FixedBudgetInteractionLearner",
+    "OffPolicyTDLinearLearner",
+    "Step2HybridConfig",
+    "UPGDLearner",
+    "UPGDLearningResult",
+    "UPGDState",
+    "UPGDUpdateResult",
+    "make_step2_hybrid_learner",
+    "run_upgd_arrays",
+    "run_upgd_loop",
     # GVF / Horde (Step 3)
     "BatchedHordeResult",
     "DemonType",
@@ -323,9 +446,21 @@ __all__ = [
     "HordeLearningResult",
     "HordeSpec",
     "HordeUpdateResult",
+    "MixedHorde",
+    "MixedHordeLearningResult",
+    "MixedHordeState",
     "create_horde_spec",
     "run_horde_learning_loop",
     "run_horde_learning_loop_batched",
+    "run_horde_learning_loop_final_state",
+    "run_mixed_horde_learning_loop",
+    # Horde Actor-Critic (Step 4)
+    "HordeActorCriticAgent",
+    "HordeActorCriticArrayResult",
+    "HordeActorCriticConfig",
+    "HordeActorCriticState",
+    "HordeActorCriticUpdateResult",
+    "run_horde_actor_critic_from_arrays",
     # SARSA (Step 4a)
     "SARSAAgent",
     "SARSAArrayResult",
@@ -337,11 +472,27 @@ __all__ = [
     "run_sarsa_continuing",
     "run_sarsa_episode",
     "run_sarsa_from_arrays",
+    "run_sarsa_from_arrays_final_state",
     # Learners - TD Learning
     "TDLinearLearner",
     "run_td_learning_loop",
     # Streams - protocol
     "ScanStream",
+    # Streams - Step 2 feature discovery
+    "InteractionFeatureDiscoveryState",
+    "InteractionFeatureDiscoveryStream",
+    "NonlinearFeatureDiscoveryState",
+    "NonlinearFeatureDiscoveryStream",
+    "collect_feature_discovery_stream",
+    # Streams - Step 2 out-of-class
+    "CompositionalState",
+    "CompositionalStream",
+    "FrequencyMismatchState",
+    "FrequencyMismatchStream",
+    "OutOfClassPolynomialState",
+    "OutOfClassPolynomialStream",
+    "MaskMode",
+    "PartialObservationWrapper",
     # Streams - synthetic
     "AbruptChangeState",
     "AbruptChangeStream",
@@ -371,6 +522,7 @@ __all__ = [
     "compute_running_mean",
     "compute_tracking_error",
     "extract_metric",
+    "multi_channel_horizon_returns",
     # Checkpoint utilities
     "checkpoint_exists",
     "load_checkpoint",
@@ -398,4 +550,22 @@ if _gymnasium_available:
         "make_epsilon_greedy_policy",
         "make_gymnasium_stream",
         "make_random_policy",
+    ]
+
+if _pipeline_available:
+    __all__ += [
+        "AlbertaPipeline",
+        "AlbertaPipelineArrayResult",
+        "AlbertaPipelineConfig",
+        "AlbertaPipelineSmokeResult",
+        "AlbertaPipelineState",
+        "AlbertaPipelineStepResult",
+        "ControlMode",
+        "CumulantFn",
+        "HordeActorCriticPipelineConfig",
+        "Step2FeatureConfig",
+        "Step2Mode",
+        "Step2UPGDConfig",
+        "make_alberta_pipeline",
+        "run_pipeline_smoke",
     ]

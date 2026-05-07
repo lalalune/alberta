@@ -22,10 +22,11 @@ for Learning Knowledge from Unsupervised Sensorimotor Interaction"
 
 import functools
 import time
-from typing import Any
+from typing import Any, cast
 
 import chex
 import jax
+import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
 
@@ -102,6 +103,26 @@ class BatchedHordeResult:
     states: MultiHeadMLPState
     per_demon_metrics: Float[Array, "n_seeds num_steps n_demons 3"]
     td_errors: Float[Array, "n_seeds num_steps n_demons"]
+
+
+@chex.dataclass(frozen=True)
+class MixedHordeState:
+    """State for a mixed shared/independent Horde."""
+
+    shared_state: MultiHeadMLPState | None
+    independent_state: Any | None
+    step_count: Array = None  # type: ignore[assignment]
+    birth_timestamp: float = 0.0
+    uptime_s: float = 0.0
+
+
+@chex.dataclass(frozen=True)
+class MixedHordeLearningResult:
+    """Result from a mixed Horde scan-based learning loop."""
+
+    state: MixedHordeState
+    per_demon_metrics: Float[Array, "num_steps n_demons 3"]
+    td_errors: Float[Array, "num_steps n_demons"]
 
 
 # =============================================================================
@@ -353,6 +374,342 @@ class HordeLearner:
             trunk_bounding_metric=result.trunk_bounding_metric,
         )
 
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def update_with_discounts(
+        self,
+        state: MultiHeadMLPState,
+        observation: Array,
+        cumulants: Array,
+        next_observation: Array,
+        discounts: Array,
+    ) -> HordeUpdateResult:
+        """Update Horde with explicit per-demon transition discounts.
+
+        This is the same TD update as :meth:`update`, except callers supply the
+        effective discount vector for this transition. It lets control adapters
+        zero the value head at episode boundaries while keeping the Horde's
+        fixed GVF metadata and per-head trace decay intact.
+
+        Args:
+            state: Current state.
+            observation: Input feature vector, shape ``(feature_dim,)``.
+            cumulants: Per-demon pseudo-rewards, shape ``(n_demons,)``.
+                NaN = inactive demon.
+            next_observation: Next feature vector, shape ``(feature_dim,)``.
+            discounts: Effective per-demon discounts for this transition,
+                shape ``(n_demons,)``.
+
+        Returns:
+            HordeUpdateResult with updated state and TD metrics.
+        """
+        next_preds = self._learner.predict(state, next_observation)
+        discounts = jnp.asarray(discounts, dtype=jnp.float32)
+        targets = cumulants + discounts * next_preds
+        result = self._learner.update(state, observation, targets)
+
+        return HordeUpdateResult(  # type: ignore[call-arg]
+            state=result.state,
+            predictions=result.predictions,
+            td_errors=result.errors,
+            td_targets=targets,
+            per_demon_metrics=result.per_head_metrics,
+            trunk_bounding_metric=result.trunk_bounding_metric,
+        )
+
+
+# =============================================================================
+# Mixed Horde
+# =============================================================================
+
+
+class MixedHorde:
+    """Route demons to shared or independent Horde implementations.
+
+    Demons with ``gamma * lambda == 0`` use the shared-trunk
+    :class:`HordeLearner`; demons with temporal traces use
+    ``IndependentDemonHorde`` so nonlinear trunk traces remain forward-view
+    correct. Public predictions, targets, and metrics are returned in the
+    original demon order.
+    """
+
+    def __init__(
+        self,
+        horde_spec: HordeSpec,
+        hidden_sizes: tuple[int, ...] = (128, 128),
+        optimizer: AnyOptimizer | None = None,
+        step_size: float = 1.0,
+        bounder: Bounder | None = None,
+        normalizer: (
+            Normalizer[EMANormalizerState] | Normalizer[WelfordNormalizerState] | None
+        ) = None,
+        sparsity: float = 0.9,
+        leaky_relu_slope: float = 0.01,
+        use_layer_norm: bool = True,
+        head_optimizer: AnyOptimizer | None = None,
+        trace_mode: TraceMode = TraceMode.ACCUMULATING,
+    ):
+        from alberta_framework.core.independent_demon_horde import (
+            IndependentDemonHorde,
+        )
+
+        self._horde_spec = horde_spec
+        self._hidden_sizes = hidden_sizes
+        self._optimizer = optimizer
+        self._step_size = step_size
+        self._bounder = bounder
+        self._normalizer = normalizer
+        self._sparsity = sparsity
+        self._leaky_relu_slope = leaky_relu_slope
+        self._use_layer_norm = use_layer_norm
+        self._head_optimizer = head_optimizer
+        self._trace_mode = trace_mode
+
+        self._shared_indices = tuple(
+            i for i, d in enumerate(horde_spec.demons) if float(d.gamma * d.lamda) == 0.0
+        )
+        self._independent_indices = tuple(
+            i for i, d in enumerate(horde_spec.demons) if float(d.gamma * d.lamda) != 0.0
+        )
+
+        common_kwargs: dict[str, Any] = {
+            "hidden_sizes": hidden_sizes,
+            "optimizer": optimizer,
+            "step_size": step_size,
+            "bounder": bounder,
+            "normalizer": normalizer,
+            "sparsity": sparsity,
+            "leaky_relu_slope": leaky_relu_slope,
+            "use_layer_norm": use_layer_norm,
+            "head_optimizer": head_optimizer,
+            "trace_mode": trace_mode,
+        }
+        self._shared_horde = (
+            HordeLearner(
+                horde_spec=self._subset_spec(self._shared_indices),
+                **common_kwargs,
+            )
+            if self._shared_indices
+            else None
+        )
+        self._independent_horde = (
+            IndependentDemonHorde(
+                horde_spec=self._subset_spec(self._independent_indices),
+                **common_kwargs,
+            )
+            if self._independent_indices
+            else None
+        )
+
+    @property
+    def horde_spec(self) -> HordeSpec:
+        """The full HordeSpec in original demon order."""
+        return self._horde_spec
+
+    @property
+    def n_demons(self) -> int:
+        """Number of demons."""
+        return len(self._horde_spec.demons)
+
+    @property
+    def shared_indices(self) -> tuple[int, ...]:
+        """Original demon indices routed to the shared Horde."""
+        return self._shared_indices
+
+    @property
+    def independent_indices(self) -> tuple[int, ...]:
+        """Original demon indices routed to independent demons."""
+        return self._independent_indices
+
+    @property
+    def shared_horde(self) -> HordeLearner | None:
+        """Shared-trunk learner, if any demons route there."""
+        return self._shared_horde
+
+    @property
+    def independent_horde(self) -> Any | None:
+        """Independent-demon learner, if any demons route there."""
+        return self._independent_horde
+
+    def _subset_spec(self, indices: tuple[int, ...]) -> HordeSpec:
+        return HordeSpec(
+            demons=tuple(self._horde_spec.demons[i] for i in indices),
+            gammas=self._horde_spec.gammas[jnp.asarray(indices, dtype=jnp.int32)],
+            lamdas=self._horde_spec.lamdas[jnp.asarray(indices, dtype=jnp.int32)],
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize learner configuration to dict."""
+        return {
+            "type": "MixedHorde",
+            "horde_spec": self._horde_spec.to_config(),
+            "hidden_sizes": list(self._hidden_sizes),
+            "optimizer": (
+                self._optimizer.to_config() if self._optimizer is not None else None
+            ),
+            "bounder": (
+                self._bounder.to_config() if self._bounder is not None else None
+            ),
+            "normalizer": (
+                self._normalizer.to_config() if self._normalizer is not None else None
+            ),
+            "head_optimizer": (
+                self._head_optimizer.to_config()
+                if self._head_optimizer is not None
+                else None
+            ),
+            "step_size": self._step_size,
+            "sparsity": self._sparsity,
+            "leaky_relu_slope": self._leaky_relu_slope,
+            "use_layer_norm": self._use_layer_norm,
+            "trace_mode": self._trace_mode.value,
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> "MixedHorde":
+        """Reconstruct from config dict."""
+        from alberta_framework.core.normalizers import normalizer_from_config
+        from alberta_framework.core.optimizers import (
+            bounder_from_config,
+            optimizer_from_config,
+        )
+
+        config = dict(config)
+        config.pop("type", None)
+        horde_spec = HordeSpec.from_config(config.pop("horde_spec"))
+        opt_cfg = config.pop("optimizer", None)
+        optimizer = optimizer_from_config(opt_cfg) if opt_cfg is not None else None
+        bounder_cfg = config.pop("bounder", None)
+        bounder = bounder_from_config(bounder_cfg) if bounder_cfg is not None else None
+        normalizer_cfg = config.pop("normalizer", None)
+        normalizer = (
+            normalizer_from_config(normalizer_cfg) if normalizer_cfg is not None else None
+        )
+        head_opt_cfg = config.pop("head_optimizer", None)
+        head_optimizer = (
+            optimizer_from_config(head_opt_cfg) if head_opt_cfg is not None else None
+        )
+        trace_mode_str = config.pop("trace_mode", None)
+        trace_mode = (
+            TraceMode(trace_mode_str) if trace_mode_str is not None else TraceMode.ACCUMULATING
+        )
+        return cls(
+            horde_spec=horde_spec,
+            hidden_sizes=tuple(config.pop("hidden_sizes")),
+            optimizer=optimizer,
+            bounder=bounder,
+            normalizer=normalizer,
+            head_optimizer=head_optimizer,
+            trace_mode=trace_mode,
+            **config,
+        )
+
+    def init(self, feature_dim: int, key: Array) -> MixedHordeState:
+        """Initialize mixed Horde state."""
+        if self._shared_horde is not None and self._independent_horde is not None:
+            shared_key, independent_key = jax.random.split(key)
+        else:
+            shared_key = independent_key = key
+        shared_state = (
+            self._shared_horde.init(feature_dim, shared_key)
+            if self._shared_horde is not None
+            else None
+        )
+        independent_state = (
+            self._independent_horde.init(feature_dim, independent_key)
+            if self._independent_horde is not None
+            else None
+        )
+        return MixedHordeState(
+            shared_state=shared_state,
+            independent_state=independent_state,
+            step_count=jnp.array(0, dtype=jnp.int32),
+            birth_timestamp=time.time(),
+            uptime_s=0.0,
+        )
+
+    def predict(self, state: MixedHordeState, observation: Array) -> Array:
+        """Compute predictions in original demon order."""
+        preds = jnp.full((self.n_demons,), jnp.nan, dtype=jnp.float32)
+        if self._shared_horde is not None:
+            shared_state = cast(MultiHeadMLPState, state.shared_state)
+            shared_preds = self._shared_horde.predict(shared_state, observation)
+            preds = preds.at[jnp.asarray(self._shared_indices, dtype=jnp.int32)].set(
+                shared_preds
+            )
+        if self._independent_horde is not None:
+            independent_preds = self._independent_horde.predict(
+                state.independent_state, observation
+            )
+            preds = preds.at[
+                jnp.asarray(self._independent_indices, dtype=jnp.int32)
+            ].set(independent_preds)
+        return preds
+
+    def update(
+        self,
+        state: MixedHordeState,
+        observation: Array,
+        cumulants: Array,
+        next_observation: Array,
+    ) -> HordeUpdateResult:
+        """Update routed demons and return outputs in original demon order."""
+        predictions = jnp.full((self.n_demons,), jnp.nan, dtype=jnp.float32)
+        td_errors = jnp.full((self.n_demons,), jnp.nan, dtype=jnp.float32)
+        td_targets = jnp.full((self.n_demons,), jnp.nan, dtype=jnp.float32)
+        per_demon_metrics = jnp.full((self.n_demons, 3), jnp.nan, dtype=jnp.float32)
+        trunk_bounding_metric = jnp.array(1.0, dtype=jnp.float32)
+        new_shared_state = state.shared_state
+        new_independent_state = state.independent_state
+
+        if self._shared_horde is not None:
+            idx = jnp.asarray(self._shared_indices, dtype=jnp.int32)
+            shared_result = self._shared_horde.update(
+                cast(MultiHeadMLPState, state.shared_state),
+                observation,
+                cumulants[idx],
+                next_observation,
+            )
+            new_shared_state = shared_result.state
+            predictions = predictions.at[idx].set(shared_result.predictions)
+            td_errors = td_errors.at[idx].set(shared_result.td_errors)
+            td_targets = td_targets.at[idx].set(shared_result.td_targets)
+            per_demon_metrics = per_demon_metrics.at[idx].set(
+                shared_result.per_demon_metrics
+            )
+            trunk_bounding_metric = shared_result.trunk_bounding_metric
+
+        if self._independent_horde is not None:
+            idx = jnp.asarray(self._independent_indices, dtype=jnp.int32)
+            independent_result = self._independent_horde.update(
+                state.independent_state,
+                observation,
+                cumulants[idx],
+                next_observation,
+            )
+            new_independent_state = independent_result.state
+            predictions = predictions.at[idx].set(independent_result.predictions)
+            td_errors = td_errors.at[idx].set(independent_result.td_errors)
+            td_targets = td_targets.at[idx].set(independent_result.td_targets)
+            per_demon_metrics = per_demon_metrics.at[idx].set(
+                independent_result.per_demon_metrics
+            )
+
+        new_state = MixedHordeState(
+            shared_state=new_shared_state,
+            independent_state=new_independent_state,
+            step_count=state.step_count + 1,
+            birth_timestamp=state.birth_timestamp,
+            uptime_s=state.uptime_s,
+        )
+        return HordeUpdateResult(
+            state=new_state,
+            predictions=predictions,
+            td_errors=td_errors,
+            td_targets=td_targets,
+            per_demon_metrics=per_demon_metrics,
+            trunk_bounding_metric=trunk_bounding_metric,
+        )
+
 
 # =============================================================================
 # Learning Loops
@@ -402,6 +759,72 @@ def run_horde_learning_loop(
         state=final_state,
         per_demon_metrics=per_demon_metrics,
         td_errors=td_errors,
+    )
+
+
+def run_mixed_horde_learning_loop(
+    horde: MixedHorde,
+    state: MixedHordeState,
+    observations: Array,
+    cumulants: Array,
+    next_observations: Array,
+) -> MixedHordeLearningResult:
+    """Run a mixed Horde learning loop using ``jax.lax.scan``."""
+
+    def step_fn(
+        carry: MixedHordeState,
+        inputs: tuple[Array, Array, Array],
+    ) -> tuple[MixedHordeState, tuple[Array, Array]]:
+        obs, cums, next_obs = inputs
+        result = horde.update(carry, obs, cums, next_obs)
+        return result.state, (result.per_demon_metrics, result.td_errors)
+
+    t0 = time.time()
+    final_state, (per_demon_metrics, td_errors) = jax.lax.scan(
+        step_fn, state, (observations, cumulants, next_observations)
+    )
+    elapsed = time.time() - t0
+    final_state = final_state.replace(  # type: ignore[attr-defined]
+        uptime_s=final_state.uptime_s + elapsed
+    )
+    return MixedHordeLearningResult(  # type: ignore[call-arg]
+        state=final_state,
+        per_demon_metrics=per_demon_metrics,
+        td_errors=td_errors,
+    )
+
+
+def run_horde_learning_loop_final_state(
+    horde: HordeLearner,
+    state: MultiHeadMLPState,
+    observations: Array,
+    cumulants: Array,
+    next_observations: Array,
+) -> MultiHeadMLPState:
+    """Run a Horde scan and return only the final learner state.
+
+    Throughput benchmarks use this helper to avoid materializing the full
+    metrics trace when only the final state is needed.
+    """
+
+    def step_fn(
+        carry: MultiHeadMLPState,
+        inputs: tuple[Array, Array, Array],
+    ) -> tuple[MultiHeadMLPState, None]:
+        obs, cums, next_obs = inputs
+        result = horde.update(carry, obs, cums, next_obs)
+        return result.state, None
+
+    t0 = time.time()
+    final_state, _ = jax.lax.scan(
+        step_fn,
+        state,
+        (observations, cumulants, next_observations),
+    )
+    elapsed = time.time() - t0
+    return cast(
+        MultiHeadMLPState,
+        final_state.replace(uptime_s=final_state.uptime_s + elapsed),  # type: ignore[attr-defined]
     )
 
 

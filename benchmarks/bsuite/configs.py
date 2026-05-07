@@ -111,6 +111,168 @@ CONFIGS: dict[str, AgentConfig] = {
             "learning_rate": 1e-3,
         },
     ),
+    "sarsa": AgentConfig(
+        agent_type="sarsa",
+        label="SARSA Autostep+ObGD",
+        kwargs={
+            **STANDARD,
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "epsilon": 0.05,
+        },
+    ),
+    "sarsa_bottleneck": AgentConfig(
+        agent_type="sarsa",
+        label="SARSA Autostep+ObGD (16,16)",
+        kwargs={
+            **BOTTLENECK_SMALL,
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "epsilon": 0.05,
+        },
+    ),
+    "actor_critic": AgentConfig(
+        agent_type="actor_critic",
+        label="Actor-Critic Horde Autostep+ObGD (tuned)",
+        # Tuned defaults from docs/research/step4_actor_critic_diagnosis.md.
+        # Lower softmax temperature (0.5) and disabled actor-side ObGD
+        # bounding (kappa=1e9) produce a 4x reduction in cartpole/0
+        # seed variance and +16.9 mean episode return vs the previous
+        # temperature=1.0, kappa=2.0 default. The Horde critic still
+        # uses ObGD bounding internally; only the actor bounder is
+        # relaxed.
+        kwargs={
+            **STANDARD,
+            "implementation": "horde_core",
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 1e9,
+            "normalizer_decay": 0.99,
+            "temperature": 0.5,
+            "actor_step_size": 0.03,
+            "actor_lamda": 0.9,
+            "critic_lamda": 0.0,
+        },
+    ),
+    "actor_critic_legacy_default": AgentConfig(
+        agent_type="actor_critic",
+        label="Actor-Critic Horde Autostep+ObGD (legacy default)",
+        # Pre-diagnosis default retained for reproducing the original
+        # outputs/bsuite/step4_catch_cartpole_10seed/step4.md numbers.
+        kwargs={
+            **STANDARD,
+            "implementation": "horde_core",
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "temperature": 1.0,
+            "actor_step_size": 0.03,
+            "actor_lamda": 0.9,
+            "critic_lamda": 0.0,
+        },
+    ),
+    "actor_critic_mlp": AgentConfig(
+        agent_type="actor_critic",
+        label="Actor-Critic MLP adapter Autostep+ObGD",
+        kwargs={
+            **STANDARD,
+            "implementation": "mlp",
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "temperature": 1.0,
+            "actor_step_size": 0.1,
+        },
+    ),
+    "actor_critic_bottleneck": AgentConfig(
+        agent_type="actor_critic",
+        label="Actor-Critic Horde Autostep+ObGD (16,16)",
+        kwargs={
+            **BOTTLENECK_SMALL,
+            "implementation": "horde_core",
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 1e9,
+            "normalizer_decay": 0.99,
+            "temperature": 0.5,
+            "actor_step_size": 0.03,
+            "actor_lamda": 0.9,
+            "critic_lamda": 0.0,
+        },
+    ),
+    "actor_critic_linear": AgentConfig(
+        agent_type="actor_critic",
+        label="Actor-Critic linear core LMS+ObGD",
+        kwargs={
+            "hidden_sizes": (),
+            "implementation": "linear_core",
+            "optimizer_name": "lms",
+            "step_size": 0.03,
+            "kappa": 2.0,
+            "discount": 0.99,
+            "temperature": 1.0,
+            "actor_step_size": 0.01,
+        },
+    ),
+    "horde_ac": AgentConfig(
+        agent_type="horde_ac",
+        label="Horde-AC Autostep+ObGD (32,)+aux{0.0,0.5,0.9}",
+        kwargs={
+            **BOTTLENECK_TINY,
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "discount": 0.99,
+            "temperature": 1.0,
+            "actor_step_size": 0.03,
+            "actor_lamda": 0.9,
+            "critic_lamda": 0.0,
+            "aux_gammas": (0.0, 0.5, 0.9),
+        },
+    ),
+    "horde_ac_history": AgentConfig(
+        agent_type="horde_ac",
+        label="Horde-AC history Autostep+ObGD (32,)+aux{0.0,0.5,0.9}",
+        kwargs={
+            **BOTTLENECK_TINY,
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "normalizer_decay": 0.99,
+            "discount": 0.99,
+            "temperature": 1.0,
+            "actor_step_size": 0.03,
+            "actor_lamda": 0.9,
+            "critic_lamda": 0.0,
+            "aux_gammas": (0.0, 0.5, 0.9),
+            "use_history_features": True,
+            "history_decay_rates": (0.5, 0.9, 0.99),
+            "history_include_raw": True,
+        },
+    ),
 }
 
 
@@ -135,5 +297,11 @@ SECONDARY_EXPERIMENTS = [
 
 ALL_EXPERIMENTS = PRIMARY_EXPERIMENTS + SECONDARY_EXPERIMENTS
 
-STANDARD_AGENTS = ["autostep", "lms", "adam"]
-BOTTLENECK_AGENTS = ["autostep_bottleneck", "lms_bottleneck", "adam_bottleneck"]
+STANDARD_AGENTS = ["autostep", "lms", "adam", "sarsa", "actor_critic"]
+BOTTLENECK_AGENTS = [
+    "autostep_bottleneck",
+    "lms_bottleneck",
+    "adam_bottleneck",
+    "sarsa_bottleneck",
+    "actor_critic_bottleneck",
+]
