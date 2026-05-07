@@ -396,6 +396,42 @@ class TestAgentFactories:
         action = agent.select_action(ts)
         assert 0 <= action < 3
 
+    def test_horde_ac_creates_agent_with_aux_demons(self) -> None:
+        """horde_actor_critic.default_agent attaches 3 auxiliary demons by default."""
+        from benchmarks.bsuite.agents import horde_actor_critic
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = horde_actor_critic.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+        )
+
+        assert agent.n_aux == 3
+
+        ts = dm_env.restart(np.zeros(10, dtype=np.float32))
+        action = agent.select_action(ts)
+        assert 0 <= action < 3
+
+    def test_horde_ac_history_features_change_feature_dim(self) -> None:
+        """Enabling history features should expand the critic feature dim."""
+        from benchmarks.bsuite.agents import horde_actor_critic
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = horde_actor_critic.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            use_history_features=True,
+            history_decay_rates=(0.5, 0.9, 0.99),
+        )
+
+        # 10 raw + 10 channels * 3 decays = 40
+        assert agent._history_extractor is not None
+        assert agent._history_extractor.feature_dim() == 40
+
 
 # ---------------------------------------------------------------------------
 # Integration: smoke test with ContinuingWrapper
@@ -477,6 +513,55 @@ class TestIntegration:
             action_spec=env.action_spec(),
             seed=42,
             hidden_sizes=(16,),
+        )
+
+        ts = env.reset()
+        for _ in range(100):
+            action = agent.select_action(ts)
+            new_ts = env.step(action)
+            agent.update(ts, action, new_ts)
+            ts = new_ts
+
+        assert agent.step_count == 100
+
+    def test_horde_ac_smoke_100_steps(self) -> None:
+        """Run Horde actor-critic adapter for 100 steps on continuing stub env."""
+        from benchmarks.bsuite.agents import horde_actor_critic
+
+        inner = StubEpisodicEnv(episode_length=5)
+        env = ContinuingWrapper(inner, mode="continuing")
+
+        agent = horde_actor_critic.default_agent(
+            obs_spec=env.observation_spec(),
+            action_spec=env.action_spec(),
+            seed=42,
+            hidden_sizes=(16,),
+        )
+
+        ts = env.reset()
+        for _ in range(100):
+            action = agent.select_action(ts)
+            new_ts = env.step(action)
+            agent.update(ts, action, new_ts)
+            ts = new_ts
+
+        assert agent.step_count == 100
+        assert agent.n_aux == 3
+
+    def test_horde_ac_history_smoke_100_steps(self) -> None:
+        """Horde actor-critic with history features survives episode boundaries."""
+        from benchmarks.bsuite.agents import horde_actor_critic
+
+        inner = StubEpisodicEnv(episode_length=5)
+        env = ContinuingWrapper(inner, mode="continuing")
+
+        agent = horde_actor_critic.default_agent(
+            obs_spec=env.observation_spec(),
+            action_spec=env.action_spec(),
+            seed=42,
+            hidden_sizes=(16,),
+            use_history_features=True,
+            history_decay_rates=(0.5, 0.9),
         )
 
         ts = env.reset()

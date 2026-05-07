@@ -19,26 +19,54 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib
 import logging
+import sys
 import warnings
 from pathlib import Path
 from typing import Any
 
-import bsuite
-from bsuite import sweep
-from bsuite.baselines import experiment
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+for import_path in (PROJECT_ROOT / "src", PROJECT_ROOT):
+    if str(import_path) not in sys.path:
+        sys.path.insert(0, str(import_path))
 
-from alberta_framework import Timer
-from benchmarks.bsuite.agents import adam_dqn, autostep_dqn, lms_dqn
-from benchmarks.bsuite.configs import CONFIGS
-from benchmarks.bsuite.wrappers import ContinuingWrapper
+from alberta_framework import Timer  # noqa: E402
+from benchmarks.bsuite._bsuite_path import (  # noqa: E402
+    add_bsuite_to_path,
+    bsuite_missing_message,
+)
+from benchmarks.bsuite.agents import (  # noqa: E402
+    actor_critic,
+    adam_dqn,
+    autostep_dqn,
+    horde_actor_critic,
+    lms_dqn,
+    sarsa,
+)
+from benchmarks.bsuite.configs import CONFIGS  # noqa: E402
+from benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
 
 logger = logging.getLogger(__name__)
+
+add_bsuite_to_path()
+try:
+    bsuite: Any = importlib.import_module("bsuite")
+    sweep: Any = importlib.import_module("bsuite.sweep")
+    experiment: Any = importlib.import_module("bsuite.baselines.experiment")
+except ModuleNotFoundError as exc:
+    if exc.name == "bsuite":
+        raise ModuleNotFoundError(bsuite_missing_message()) from exc
+    raise
+
 
 AGENT_FACTORIES = {
     "autostep": autostep_dqn.default_agent,
     "lms": lms_dqn.default_agent,
     "adam": adam_dqn.default_agent,
+    "sarsa": sarsa.default_agent,
+    "actor_critic": actor_critic.default_agent,
+    "horde_ac": horde_actor_critic.default_agent,
 }
 
 
@@ -56,7 +84,8 @@ def make_agent(
     Parameters
     ----------
     agent_type : str
-        One of 'autostep', 'lms', 'adam'.
+        One of 'autostep', 'lms', 'adam', 'sarsa', 'actor_critic', or
+        'horde_ac'.
     obs_spec : dm_env.specs.Array
         Observation spec from the environment.
     action_spec : dm_env.specs.DiscreteArray
@@ -92,7 +121,7 @@ def make_agent(
 
     # Add common kwargs
     kwargs["seed"] = seed
-    if actual_type != "adam":
+    if actual_type not in {"adam", "actor_critic", "sarsa", "horde_ac"}:
         kwargs["log_representation"] = log_representation
         kwargs["log_interval"] = log_interval
 

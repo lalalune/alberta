@@ -42,8 +42,19 @@ References
 
 __version__ = "0.17.1"
 
-# Checkpoint utilities
 # Baseline optimizers
+from alberta_framework.core.actor_critic import (
+    ActorCriticAgent,
+    ActorCriticConfig,
+    ActorCriticState,
+    ActorCriticUpdateResult,
+    ContinuousActorCriticAgent,
+    ContinuousActorCriticConfig,
+    ContinuousActorCriticState,
+    ContinuousActorCriticUpdateResult,
+    run_actor_critic_from_arrays,
+    run_continuous_actor_critic_from_arrays,
+)
 from alberta_framework.core.baseline_optimizers import (
     NADALINE,
     AdaGain,
@@ -56,11 +67,17 @@ from alberta_framework.core.baseline_optimizers import (
     RMSpropParamState,
     RMSpropState,
 )
+
+# Checkpoint utilities
 from alberta_framework.core.checkpoints import (
     checkpoint_exists,
     load_checkpoint,
     load_checkpoint_metadata,
     save_checkpoint,
+)
+from alberta_framework.core.continual_backprop import (
+    CBPMultiHeadMLPLearner,
+    ContinualBackpropConfig,
 )
 from alberta_framework.core.cumulant_discovery import CumulantDiscovery
 
@@ -71,7 +88,28 @@ from alberta_framework.core.diagnostics import (
     compute_feature_sensitivity,
     relevance_to_dict,
 )
-from alberta_framework.core.feature_discovery import FixedBudgetFeatureLearner
+from alberta_framework.core.diffeml import (
+    BOOLEAN_INPUTS,
+    DiffEMLGateSelector,
+    DiffEMLLearner,
+    EMLTreeLearner,
+    EMLTreeState,
+    boolean_truth_table,
+    build_eml_template_bank,
+    eml_operator,
+    eml_threshold_gate_library,
+    evaluate_eml_template_bank,
+    mask_from_truth_table,
+    run_diffeml_learning_loop,
+    run_eml_tree_learning_loop,
+    stable_eml_operator,
+)
+from alberta_framework.core.feature_discovery import (
+    FixedBudgetFeatureLearner,
+    run_feature_discovery_arrays,
+    run_feature_discovery_loop,
+)
+from alberta_framework.core.history_features import HistoryFeatureExtractor
 
 # Horde / GVF (Step 3)
 from alberta_framework.core.horde import (
@@ -102,13 +140,19 @@ from alberta_framework.core.horde_actor_critic import (
 # Learners
 # Initializers
 from alberta_framework.core.initializers import sparse_init
-from alberta_framework.core.interaction_features import FixedBudgetInteractionLearner
+from alberta_framework.core.interaction_features import (
+    FixedBudgetInteractionLearner,
+    run_interaction_feature_arrays,
+)
 from alberta_framework.core.learners import (
     LinearLearner,
     MLPLearner,
     MLPUpdateResult,
     TDLinearLearner,
     TDUpdateResult,
+    TrueOnlineTDLearner,
+    TrueOnlineTDState,
+    TrueOnlineTDUpdateResult,
     UpdateResult,
     metrics_to_dicts,
     run_learning_loop,
@@ -116,6 +160,7 @@ from alberta_framework.core.learners import (
     run_mlp_learning_loop,
     run_mlp_learning_loop_batched,
     run_td_learning_loop,
+    run_true_online_td_loop,
 )
 
 # Multi-head learner
@@ -162,6 +207,10 @@ from alberta_framework.core.optimizers import (
     bounder_from_config,
     optimizer_from_config,
 )
+from alberta_framework.core.resource_manager import (
+    GeneratorMetaResourceManager,
+    LearnedResourceManager,
+)
 
 # SARSA (Step 4a)
 from alberta_framework.core.sarsa import (
@@ -186,6 +235,22 @@ from alberta_framework.core.upgd import (
     UPGDUpdateResult,
     run_upgd_arrays,
     run_upgd_loop,
+)
+from alberta_framework.security import (
+    N_SECURITY_ACTIONS,
+    SECURITY_ACTION_NAMES,
+    SECURITY_GYM_ACTION_NAMES,
+    SecurityAction,
+    SecurityFeatureSchema,
+    SecurityRewardWeights,
+    SecurityRolloutStep,
+    ThroughputMeter,
+    coerce_security_action,
+    security_gym_action_name,
+    security_gym_action_reward,
+    security_reward,
+    to_security_gym_action,
+    validate_security_rollout,
 )
 from alberta_framework.steps.step2 import (
     Step2HybridConfig,
@@ -284,6 +349,8 @@ from alberta_framework.streams.synthetic import (
     CyclicTarget,
     DynamicScaleShiftState,
     DynamicScaleShiftStream,
+    HiddenStateAR2State,
+    HiddenStateAR2Stream,
     PeriodicChangeState,
     PeriodicChangeStream,
     PeriodicChangeTarget,
@@ -366,6 +433,8 @@ __all__ = [
     "TDLearnerState",
     "TDTimeStep",
     "TDUpdateResult",
+    "TrueOnlineTDState",
+    "TrueOnlineTDUpdateResult",
     "agent_age_s",
     "agent_uptime_s",
     "create_obgd_state",
@@ -429,15 +498,38 @@ __all__ = [
     "CumulantDiscovery",
     "FixedBudgetFeatureLearner",
     "FixedBudgetInteractionLearner",
+    "GeneratorMetaResourceManager",
+    "HistoryFeatureExtractor",
+    "LearnedResourceManager",
     "OffPolicyTDLinearLearner",
     "Step2HybridConfig",
+    "CBPMultiHeadMLPLearner",
+    "ContinualBackpropConfig",
     "UPGDLearner",
     "UPGDLearningResult",
     "UPGDState",
     "UPGDUpdateResult",
     "make_step2_hybrid_learner",
+    "run_feature_discovery_arrays",
+    "run_feature_discovery_loop",
+    "run_interaction_feature_arrays",
     "run_upgd_arrays",
     "run_upgd_loop",
+    # Differentiable EML
+    "BOOLEAN_INPUTS",
+    "DiffEMLGateSelector",
+    "DiffEMLLearner",
+    "EMLTreeLearner",
+    "EMLTreeState",
+    "boolean_truth_table",
+    "build_eml_template_bank",
+    "eml_operator",
+    "eml_threshold_gate_library",
+    "evaluate_eml_template_bank",
+    "mask_from_truth_table",
+    "run_diffeml_learning_loop",
+    "run_eml_tree_learning_loop",
+    "stable_eml_operator",
     # GVF / Horde (Step 3)
     "BatchedHordeResult",
     "DemonType",
@@ -461,6 +553,17 @@ __all__ = [
     "HordeActorCriticState",
     "HordeActorCriticUpdateResult",
     "run_horde_actor_critic_from_arrays",
+    # Actor-Critic (Step 4)
+    "ActorCriticAgent",
+    "ActorCriticConfig",
+    "ActorCriticState",
+    "ActorCriticUpdateResult",
+    "ContinuousActorCriticAgent",
+    "ContinuousActorCriticConfig",
+    "ContinuousActorCriticState",
+    "ContinuousActorCriticUpdateResult",
+    "run_actor_critic_from_arrays",
+    "run_continuous_actor_critic_from_arrays",
     # SARSA (Step 4a)
     "SARSAAgent",
     "SARSAArrayResult",
@@ -475,7 +578,9 @@ __all__ = [
     "run_sarsa_from_arrays_final_state",
     # Learners - TD Learning
     "TDLinearLearner",
+    "TrueOnlineTDLearner",
     "run_td_learning_loop",
+    "run_true_online_td_loop",
     # Streams - protocol
     "ScanStream",
     # Streams - Step 2 feature discovery
@@ -508,6 +613,8 @@ __all__ = [
     "RandomWalkState",
     "RandomWalkStream",
     "RandomWalkTarget",
+    "HiddenStateAR2State",
+    "HiddenStateAR2Stream",
     "ScaleDriftState",
     "ScaleDriftStream",
     "ScaledStreamState",
@@ -533,6 +640,21 @@ __all__ = [
     "compute_feature_relevance",
     "compute_feature_sensitivity",
     "relevance_to_dict",
+    # Security integration
+    "N_SECURITY_ACTIONS",
+    "SECURITY_ACTION_NAMES",
+    "SECURITY_GYM_ACTION_NAMES",
+    "SecurityAction",
+    "SecurityFeatureSchema",
+    "SecurityRewardWeights",
+    "SecurityRolloutStep",
+    "ThroughputMeter",
+    "coerce_security_action",
+    "security_gym_action_name",
+    "security_gym_action_reward",
+    "security_reward",
+    "to_security_gym_action",
+    "validate_security_rollout",
     # Timing
     "Timer",
     "format_duration",
