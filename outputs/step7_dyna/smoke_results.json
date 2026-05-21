@@ -1,0 +1,41 @@
+{
+  "schema": "alberta.step7.dyna_sample_efficiency.v1",
+  "claim_scope": "one_state_average_reward_dyna_sample_efficiency",
+  "config": {
+    "seeds": 1,
+    "steps": 2,
+    "final_window": 1,
+    "planning_steps": 1,
+    "planning_warmup_steps": 1,
+    "q_step_size": 0.04,
+    "average_reward_step_size": 0.01,
+    "model_step_size": 0.08,
+    "epsilon_start": 0.2,
+    "epsilon_end": 0.05,
+    "epsilon_decay_steps": 2
+  },
+  "elapsed_s": 10.148951053619385,
+  "aggregate": {
+    "mean_real_only_final_window_reward": 0.0,
+    "mean_dyna_final_window_reward": 0.0,
+    "mean_reward_improvement": 0.0,
+    "stderr_reward_improvement": 0.0,
+    "mean_q_gap_improvement": 0.01982058584690094,
+    "reward_win_count": 0,
+    "q_gap_win_count": 1,
+    "mean_dyna_planning_accepted": 2.0,
+    "passed": false
+  },
+  "per_seed": [
+    {
+      "seed": 0,
+      "real_only_final_window_reward": 0.0,
+      "dyna_final_window_reward": 0.0,
+      "real_only_q_gap": 0.08079999685287476,
+      "dyna_q_gap": 0.1006205826997757,
+      "real_only_average_reward": 0.00989999994635582,
+      "dyna_average_reward": -0.012577572837471962,
+      "dyna_planning_accepted": 2
+    }
+  ]
+}

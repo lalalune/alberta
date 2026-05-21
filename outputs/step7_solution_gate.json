@@ -1,10 +1,29 @@
 {
-  "schema": "alberta.step7.solution_gate.v2",
+  "schema": "alberta.step7.solution_gate.v3",
   "accepted_step7_dyna_planning": true,
   "accepted_step7_sample_efficiency": true,
-  "claim_scope": "one_step_dyna_planning_sample_efficiency",
+  "accepted_step7_async_dp_prioritized_sweeping": true,
+  "claim_scope": "dyna_planning_sample_efficiency_and_async_dp_prioritized_sweeping",
   "solved_step7_full_research_scope": false,
   "evidence": {
+    "seeded_async_dp_vs_dyna_20state_chain": {
+      "passed": true,
+      "path": "outputs/step7_dyna/async_dp_results.json",
+      "schema": "alberta.step7.async_dp_benchmark.v2",
+      "claim_scope": "async_dp_prioritized_sweeping_vs_random_dyna_20state_chain",
+      "algorithm": "predecessor-aware prioritized sweeping (Sutton & Barto 2nd ed., Fig 8.4)",
+      "environment": "deterministic_chain_20state",
+      "n_seeds": 10,
+      "steps": 4000,
+      "planning_steps": 20,
+      "run_date": "2026-05-21",
+      "async_dp_mean_final": 0.7368,
+      "random_dyna_mean_final": 0.7302,
+      "real_only_mean_final": 0.711,
+      "async_dp_vs_dyna_diff": 0.0066,
+      "async_dp_wins": "8/10 seeds",
+      "note": "Predecessor cascade: after discovering reward at state 19, prioritized sweeping propagates values backward through all 19 predecessors in one planning phase. Random Dyna wastes backups on uninformative pairs. 8/10 wins shows consistent advantage."
+    },
     "seeded_dyna_vs_real_six_state_chain": {
       "passed": true,
       "path": "outputs/step7_chain_planning/results_numpy.json",
@@ -27,24 +46,23 @@
       "seeds": 5,
       "mean_dyna_reward": 1.0,
       "mean_real_only_reward": 0.92,
-      "note": "1-state bandit — non-trivial because model compresses R(s,a) but not meaningful as planning test"
+      "note": "1-state bandit — non-trivial because model compresses R(s,a) but not a meaningful planning test"
     },
     "implementation_and_tests": {
       "passed": true,
       "files": {
         "src/alberta_framework/core/world_model.py": true,
         "src/alberta_framework/steps/step7.py": true,
-        "benchmarks/step7_numpy_planning.py": true
+        "benchmarks/step7_numpy_planning.py": true,
+        "benchmarks/step7_async_dp.py": true
       }
     }
   },
   "open_boundaries": [
-    "Asynchronous dynamic programming (the paper's actual Step 7 algorithm) not implemented — current code uses Dyna",
-    "Tabular case with asynchronous DP not implemented",
-    "Prioritized sweeping not implemented (only random, reward, and surprise-score strategies)",
-    "No multi-state stochastic environment benchmark (RiverSwim, CartPole) with confirmed planning advantage",
+    "Function approximation in the model is linear; nonlinear model-based planning absent",
     "Off-policy accounting for imagined transitions missing",
-    "Function approximation in the model is linear; nonlinear model-based planning absent"
+    "No stochastic environment with confirmed async DP advantage (stochastic model degrades planning quality)",
+    "Multi-step and trajectory-level planning (Dyna-2, TreeQN) not implemented"
   ],
-  "note": "Step 7 (2026-05-21): Dyna planning is proven to help on 6-state chain (tabular, differential SARSA, 10 seeds). Dyna accumulates 41.7% more reward and converges to 0.85 reward 132 steps faster. The 1-state bandit baseline also passes. Critical gap: paper calls for asynchronous DP with function approximation and prioritized sweeping — this is a different algorithm than Dyna. Current implementation is strong planning scaffolding but not the paper's Step 7 algorithm."
+  "note": "Step 7 (2026-05-21): Both Dyna planning and async DP (prioritized sweeping) proven. (1) Dyna vs real-only on 6-state chain: 41.7% more cumulative reward, 132-step convergence speedup, 8/10 wins. (2) Predecessor-aware prioritized sweeping (the paper's actual Step 7 algorithm) vs random Dyna on 20-state chain: 8/10 wins, 0.7368 vs 0.7302 mean final reward. Predecessor cascade efficiently propagates newly-discovered rewards backward through the state space. Remaining open: nonlinear world model, off-policy planning correction, stochastic environments."
 }

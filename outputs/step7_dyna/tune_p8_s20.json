@@ -1,0 +1,81 @@
+{
+  "schema": "alberta.step7.dyna_sample_efficiency.v1",
+  "claim_scope": "one_state_average_reward_dyna_sample_efficiency",
+  "config": {
+    "seeds": 5,
+    "steps": 20,
+    "final_window": 10,
+    "planning_steps": 8,
+    "planning_warmup_steps": 1,
+    "q_step_size": 0.04,
+    "average_reward_step_size": 0.01,
+    "model_step_size": 0.08,
+    "epsilon_start": 0.2,
+    "epsilon_end": 0.05,
+    "epsilon_decay_steps": 20
+  },
+  "elapsed_s": 43.011781215667725,
+  "aggregate": {
+    "mean_real_only_final_window_reward": 0.8800000071525573,
+    "mean_dyna_final_window_reward": 0.9600000143051147,
+    "mean_reward_improvement": 0.08000000715255737,
+    "stderr_reward_improvement": 0.0734846887145832,
+    "mean_q_gap_improvement": 3.75466068983078,
+    "reward_win_count": 2,
+    "q_gap_win_count": 5,
+    "mean_dyna_planning_accepted": 160.0,
+    "passed": true
+  },
+  "per_seed": [
+    {
+      "seed": 0,
+      "real_only_final_window_reward": 1.0,
+      "dyna_final_window_reward": 0.9000000357627869,
+      "real_only_q_gap": 1.2339694499969482,
+      "dyna_q_gap": 4.834156036376953,
+      "real_only_average_reward": 0.1580345183610916,
+      "dyna_average_reward": 0.5834672451019287,
+      "dyna_planning_accepted": 160
+    },
+    {
+      "seed": 1,
+      "real_only_final_window_reward": 1.0,
+      "dyna_final_window_reward": 1.0,
+      "real_only_q_gap": 1.390650987625122,
+      "dyna_q_gap": 4.637109756469727,
+      "real_only_average_reward": 0.17383138835430145,
+      "dyna_average_reward": 0.5813775062561035,
+      "dyna_planning_accepted": 160
+    },
+    {
+      "seed": 2,
+      "real_only_final_window_reward": 0.800000011920929,
+      "dyna_final_window_reward": 1.0,
+      "real_only_q_gap": 0.9071404337882996,
+      "dyna_q_gap": 4.870208263397217,
+      "real_only_average_reward": 0.138619527220726,
+      "dyna_average_reward": 0.6144043803215027,
+      "dyna_planning_accepted": 160
+    },
+    {
+      "seed": 3,
+      "real_only_final_window_reward": 0.6000000238418579,
+      "dyna_final_window_reward": 0.9000000357627869,
+      "real_only_q_gap": 0.8603106737136841,
+      "dyna_q_gap": 5.146659851074219,
+      "real_only_average_reward": 0.14455462992191315,
+      "dyna_average_reward": 0.7210640907287598,
+      "dyna_planning_accepted": 160
+    },
+    {
+      "seed": 4,
+      "real_only_final_window_reward": 1.0,
+      "dyna_final_window_reward": 1.0,
+      "real_only_q_gap": 1.390650987625122,
+      "dyna_q_gap": 5.067892074584961,
+      "real_only_average_reward": 0.17383138835430145,
+      "dyna_average_reward": 0.6334865093231201,
+      "dyna_planning_accepted": 160
+    }
+  ]
+}
