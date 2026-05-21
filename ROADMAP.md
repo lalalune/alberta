@@ -466,8 +466,13 @@ running in real time on a robot trained in simulator and transferred to the real
 - Full production suite: `run_prototype_scan`, `run_prototype_smoke`, config roundtrip
 - 50 tests exported from `alberta_framework.core`
 
+**End-to-end evidence (v0.24.0)**:
+- `benchmarks/prototype_end_to_end.py` — CartPole-v1 continuing control (5 seeds × 10 000 steps):
+  flat DifferentialSARSAAgent mean 1.000 (5/5), PrototypeAgent mean 1.000 (5/5), all finite
+- `PrototypeAgent._run_dreams()` JIT-compiled as a method (`@functools.partial(jax.jit, static_argnums=(0,))`)
+  for stable XLA caching — ~8 ms/step (94× faster than the pre-fix ~720 ms/step closure retrace)
+
 **Remaining research boundary**:
-- End-to-end seeded benchmark: simulator training → real-world transfer for each Alberta Plan step
 - Learned subtask feature construction at scale
 - Communication protocol for IA recommendation acceptance/rejection
 - Full prioritized sweeping queues with recursive priority propagation

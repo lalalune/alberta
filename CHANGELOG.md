@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-05-21
+
+### Added
+
+- **PrototypeAgent end-to-end benchmark** — 5-seed CartPole-v1 continuing
+  control benchmark proves all 12 integrated steps run correctly; both flat
+  DifferentialSARSAAgent and PrototypeAgent achieve mean reward 1.000 (5/5 seeds
+  positive) with no NaN weights (`benchmarks/prototype_end_to_end.py`,
+  results in `outputs/prototype_end_to_end/`)
+
+### Fixed
+
+- **PrototypeAgent dreaming JIT regression** — guarded dreaming scan closure
+  was redefined on every `update()` call, causing JAX to retrace the XLA
+  computation graph each step (~720 ms/step); extracted to
+  `PrototypeAgent._run_dreams()` with `@functools.partial(jax.jit, static_argnums=(0,))`
+  reducing to ~8 ms/step (94× speedup)
+
 ## [0.23.0] - 2026-05-21
 
 ### Added

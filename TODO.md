@@ -224,7 +224,7 @@ Artifacts:
       auto-subtask specs, feature_to_subtask_specs, serialization, dreaming mechanics, 200-step
       fineness
 - [x] Exported from `alberta_framework.core` public API
-- [ ] End-to-end benchmark on continuous gym task showing value from each added component
+- [x] End-to-end benchmark on continuous gym task showing value from each added component
 - [ ] Real robot / sim-to-real demonstration
 
 ## Infrastructure
