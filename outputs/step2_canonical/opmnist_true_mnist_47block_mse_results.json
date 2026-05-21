@@ -1,0 +1,1360 @@
+{
+  "aggregate": {
+    "permuted_mnist_like": {
+      "best_expert_regret": {
+        "final_window_accuracy": {
+          "best_expert_counts": {
+            "mlp_h128": 1
+          },
+          "failures": 0,
+          "mean_regret_positive_favors_best_expert": -0.008899986743927002,
+          "metric": "final_window_accuracy",
+          "stderr": 0.0,
+          "ties_or_beats_best": 1,
+          "values": [
+            -0.008899986743927002
+          ]
+        },
+        "final_window_mse": {
+          "best_expert_counts": {
+            "mlp_h64": 1
+          },
+          "failures": 0,
+          "mean_regret_positive_favors_best_expert": -0.0037949830293655396,
+          "metric": "final_window_mse",
+          "stderr": 0.0,
+          "ties_or_beats_best": 1,
+          "values": [
+            -0.0037949830293655396
+          ]
+        },
+        "online_mean_accuracy": {
+          "best_expert_counts": {
+            "mlp_h128": 1
+          },
+          "failures": 0,
+          "mean_regret_positive_favors_best_expert": -0.007968439716312004,
+          "metric": "online_mean_accuracy",
+          "stderr": 0.0,
+          "ties_or_beats_best": 1,
+          "values": [
+            -0.007968439716312004
+          ]
+        },
+        "online_mean_mse": {
+          "best_expert_counts": {
+            "mlp_h128": 1
+          },
+          "failures": 0,
+          "mean_regret_positive_favors_best_expert": -0.003857135310121322,
+          "metric": "online_mean_mse",
+          "stderr": 0.0,
+          "ties_or_beats_best": 1,
+          "values": [
+            -0.003857135310121322
+          ]
+        },
+        "test_accuracy": {
+          "best_expert_counts": {
+            "dynamic_sparse": 1
+          },
+          "failures": 1,
+          "mean_regret_positive_favors_best_expert": 0.03697233853187967,
+          "metric": "test_accuracy",
+          "stderr": 0.0,
+          "ties_or_beats_best": 0,
+          "values": [
+            0.03697233853187967
+          ]
+        },
+        "test_mse": {
+          "best_expert_counts": {
+            "dynamic_sparse": 1
+          },
+          "failures": 1,
+          "mean_regret_positive_favors_best_expert": 0.003567386537473252,
+          "metric": "test_mse",
+          "stderr": 0.0,
+          "ties_or_beats_best": 0,
+          "values": [
+            0.003567386537473252
+          ]
+        }
+      },
+      "comparisons": {
+        "final_window_accuracy": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.008899986743927002
+            ],
+            "metric": "final_window_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.008899986743927002,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.008899986743927002
+            ],
+            "metric": "final_window_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.008899986743927002,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          }
+        },
+        "final_window_mse": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "mlp_h64": 1
+            },
+            "diffs": [
+              0.0037949830293655396
+            ],
+            "metric": "final_window_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.0037949830293655396,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h64": 1
+            },
+            "diffs": [
+              0.0037949830293655396
+            ],
+            "metric": "final_window_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.0037949830293655396,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          }
+        },
+        "online_mean_accuracy": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.007968439716312004
+            ],
+            "metric": "online_mean_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.007968439716312004,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.007968439716312004
+            ],
+            "metric": "online_mean_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.007968439716312004,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          }
+        },
+        "online_mean_mse": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.003857135310121322
+            ],
+            "metric": "online_mean_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.003857135310121322,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              0.003857135310121322
+            ],
+            "metric": "online_mean_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.003857135310121322,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          }
+        },
+        "test_accuracy": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "dynamic_sparse": 1
+            },
+            "diffs": [
+              -0.03697233853187967
+            ],
+            "metric": "test_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": -0.03697233853187967,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 1,
+            "wins_for_mixture": 0
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h128": 1
+            },
+            "diffs": [
+              -0.001797869167429328
+            ],
+            "metric": "test_accuracy",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": -0.001797869167429328,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 1,
+            "wins_for_mixture": 0
+          }
+        },
+        "test_mse": {
+          "mixture_vs_best_expert": {
+            "baseline_group": "best_expert",
+            "best_baseline_counts": {
+              "dynamic_sparse": 1
+            },
+            "diffs": [
+              -0.003567386537473252
+            ],
+            "metric": "test_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": -0.003567386537473252,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 1,
+            "wins_for_mixture": 0
+          },
+          "mixture_vs_best_mlp": {
+            "baseline_group": "best_mlp",
+            "best_baseline_counts": {
+              "mlp_h64_64": 1
+            },
+            "diffs": [
+              0.015333988723602698
+            ],
+            "metric": "test_mse",
+            "n": 1,
+            "paired_diff_mean_positive_favors_mixture": 0.015333988723602698,
+            "paired_diff_stderr": 0.0,
+            "ties": 0,
+            "wins_for_baseline": 0,
+            "wins_for_mixture": 1
+          }
+        }
+      },
+      "dynamic_sparse": {
+        "final_window_accuracy": {
+          "mean": 0.8530499935150146,
+          "stderr": 0.0,
+          "values": [
+            0.8530499935150146
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.03045131079852581,
+          "stderr": 0.0,
+          "values": [
+            0.03045131079852581
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8699794326241135,
+          "stderr": 0.0,
+          "values": [
+            0.8699794326241135
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.027196600734305822,
+          "stderr": 0.0,
+          "values": [
+            0.027196600734305822
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.2489680788935499,
+          "stderr": 0.0,
+          "values": [
+            0.2489680788935499
+          ]
+        },
+        "test_mse": {
+          "mean": 0.0921791930623511,
+          "stderr": 0.0,
+          "values": [
+            0.0921791930623511
+          ]
+        }
+      },
+      "mixture": {
+        "deployment_dynamic_sparse_weight": {
+          "mean": 0.1826423704624176,
+          "stderr": 0.0,
+          "values": [
+            0.1826423704624176
+          ]
+        },
+        "deployment_mlp_h128_weight": {
+          "mean": 0.23323358595371246,
+          "stderr": 0.0,
+          "values": [
+            0.23323358595371246
+          ]
+        },
+        "deployment_mlp_h64_64_weight": {
+          "mean": 0.3484625816345215,
+          "stderr": 0.0,
+          "values": [
+            0.3484625816345215
+          ]
+        },
+        "deployment_mlp_h64_weight": {
+          "mean": 0.20951734483242035,
+          "stderr": 0.0,
+          "values": [
+            0.20951734483242035
+          ]
+        },
+        "deployment_upgd_low_noise_weight": {
+          "mean": 0.026144133880734444,
+          "stderr": 0.0,
+          "values": [
+            0.026144133880734444
+          ]
+        },
+        "final_accuracy_dynamic_sparse_weight": {
+          "mean": 0.006907325703650713,
+          "stderr": 0.0,
+          "values": [
+            0.006907325703650713
+          ]
+        },
+        "final_accuracy_mlp_h128_weight": {
+          "mean": 0.23039518296718597,
+          "stderr": 0.0,
+          "values": [
+            0.23039518296718597
+          ]
+        },
+        "final_accuracy_mlp_h64_64_weight": {
+          "mean": 0.7008330225944519,
+          "stderr": 0.0,
+          "values": [
+            0.7008330225944519
+          ]
+        },
+        "final_accuracy_mlp_h64_weight": {
+          "mean": 0.06186115741729736,
+          "stderr": 0.0,
+          "values": [
+            0.06186115741729736
+          ]
+        },
+        "final_accuracy_upgd_low_noise_weight": {
+          "mean": 3.3428009373892564e-06,
+          "stderr": 0.0,
+          "values": [
+            3.3428009373892564e-06
+          ]
+        },
+        "final_dynamic_sparse_weight": {
+          "mean": 0.1826423704624176,
+          "stderr": 0.0,
+          "values": [
+            0.1826423704624176
+          ]
+        },
+        "final_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0
+          ]
+        },
+        "final_mlp_guard_mlp_h128_weight": {
+          "mean": 0.29477959871292114,
+          "stderr": 0.0,
+          "values": [
+            0.29477959871292114
+          ]
+        },
+        "final_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.4404153525829315,
+          "stderr": 0.0,
+          "values": [
+            0.4404153525829315
+          ]
+        },
+        "final_mlp_guard_mlp_h64_weight": {
+          "mean": 0.26480504870414734,
+          "stderr": 0.0,
+          "values": [
+            0.26480504870414734
+          ]
+        },
+        "final_mlp_h128_weight": {
+          "mean": 0.23323358595371246,
+          "stderr": 0.0,
+          "values": [
+            0.23323358595371246
+          ]
+        },
+        "final_mlp_h64_64_weight": {
+          "mean": 0.3484625816345215,
+          "stderr": 0.0,
+          "values": [
+            0.3484625816345215
+          ]
+        },
+        "final_mlp_h64_weight": {
+          "mean": 0.20951734483242035,
+          "stderr": 0.0,
+          "values": [
+            0.20951734483242035
+          ]
+        },
+        "final_upgd_low_noise_weight": {
+          "mean": 0.026144133880734444,
+          "stderr": 0.0,
+          "values": [
+            0.026144133880734444
+          ]
+        },
+        "final_window_accuracy": {
+          "mean": 0.8876833319664001,
+          "stderr": 0.0,
+          "values": [
+            0.8876833319664001
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.024954646825790405,
+          "stderr": 0.0,
+          "values": [
+            0.024954646825790405
+          ]
+        },
+        "mean_accuracy_dynamic_sparse_weight": {
+          "mean": 0.23062126562717297,
+          "stderr": 0.0,
+          "values": [
+            0.23062126562717297
+          ]
+        },
+        "mean_accuracy_mlp_h128_weight": {
+          "mean": 0.5175993195527847,
+          "stderr": 0.0,
+          "values": [
+            0.5175993195527847
+          ]
+        },
+        "mean_accuracy_mlp_h64_64_weight": {
+          "mean": 0.08031526611228862,
+          "stderr": 0.0,
+          "values": [
+            0.08031526611228862
+          ]
+        },
+        "mean_accuracy_mlp_h64_weight": {
+          "mean": 0.16134179411350277,
+          "stderr": 0.0,
+          "values": [
+            0.16134179411350277
+          ]
+        },
+        "mean_accuracy_upgd_low_noise_weight": {
+          "mean": 0.010122355574845586,
+          "stderr": 0.0,
+          "values": [
+            0.010122355574845586
+          ]
+        },
+        "mean_dynamic_sparse_weight": {
+          "mean": 0.27361485034183874,
+          "stderr": 0.0,
+          "values": [
+            0.27361485034183874
+          ]
+        },
+        "mean_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0
+          ]
+        },
+        "mean_mlp_guard_mlp_h128_weight": {
+          "mean": 0.4324086314956638,
+          "stderr": 0.0,
+          "values": [
+            0.4324086314956638
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.26391050054065246,
+          "stderr": 0.0,
+          "values": [
+            0.26391050054065246
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_weight": {
+          "mean": 0.30368086798462407,
+          "stderr": 0.0,
+          "values": [
+            0.30368086798462407
+          ]
+        },
+        "mean_mlp_h128_weight": {
+          "mean": 0.2752180615185885,
+          "stderr": 0.0,
+          "values": [
+            0.2752180615185885
+          ]
+        },
+        "mean_mlp_h64_64_weight": {
+          "mean": 0.15955187933834275,
+          "stderr": 0.0,
+          "values": [
+            0.15955187933834275
+          ]
+        },
+        "mean_mlp_h64_weight": {
+          "mean": 0.19372772616059222,
+          "stderr": 0.0,
+          "values": [
+            0.19372772616059222
+          ]
+        },
+        "mean_upgd_low_noise_weight": {
+          "mean": 0.09788748264600802,
+          "stderr": 0.0,
+          "values": [
+            0.09788748264600802
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8942031914893617,
+          "stderr": 0.0,
+          "values": [
+            0.8942031914893617
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.02328253091578035,
+          "stderr": 0.0,
+          "values": [
+            0.02328253091578035
+          ]
+        },
+        "retention_hazard": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.21199574036167024,
+          "stderr": 0.0,
+          "values": [
+            0.21199574036167024
+          ]
+        },
+        "test_mse": {
+          "mean": 0.09574657959982436,
+          "stderr": 0.0,
+          "values": [
+            0.09574657959982436
+          ]
+        }
+      },
+      "mlp_h128": {
+        "final_window_accuracy": {
+          "mean": 0.8787833452224731,
+          "stderr": 0.0,
+          "values": [
+            0.8787833452224731
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.029216613620519638,
+          "stderr": 0.0,
+          "values": [
+            0.029216613620519638
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8862347517730497,
+          "stderr": 0.0,
+          "values": [
+            0.8862347517730497
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.027139666225901672,
+          "stderr": 0.0,
+          "values": [
+            0.027139666225901672
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.21379360952909957,
+          "stderr": 0.0,
+          "values": [
+            0.21379360952909957
+          ]
+        },
+        "test_mse": {
+          "mean": 0.12852383111702634,
+          "stderr": 0.0,
+          "values": [
+            0.12852383111702634
+          ]
+        }
+      },
+      "mlp_h64": {
+        "final_window_accuracy": {
+          "mean": 0.8723499774932861,
+          "stderr": 0.0,
+          "values": [
+            0.8723499774932861
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.028749629855155945,
+          "stderr": 0.0,
+          "values": [
+            0.028749629855155945
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8754205673758865,
+          "stderr": 0.0,
+          "values": [
+            0.8754205673758865
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.028909306877780636,
+          "stderr": 0.0,
+          "values": [
+            0.028909306877780636
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.16060425166754014,
+          "stderr": 0.0,
+          "values": [
+            0.16060425166754014
+          ]
+        },
+        "test_mse": {
+          "mean": 0.12267004353727431,
+          "stderr": 0.0,
+          "values": [
+            0.12267004353727431
+          ]
+        }
+      },
+      "mlp_h64_64": {
+        "final_window_accuracy": {
+          "mean": 0.8449833393096924,
+          "stderr": 0.0,
+          "values": [
+            0.8449833393096924
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.031612198799848557,
+          "stderr": 0.0,
+          "values": [
+            0.031612198799848557
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8548645390070923,
+          "stderr": 0.0,
+          "values": [
+            0.8548645390070923
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.03067518481774374,
+          "stderr": 0.0,
+          "values": [
+            0.03067518481774374
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.15481276144372655,
+          "stderr": 0.0,
+          "values": [
+            0.15481276144372655
+          ]
+        },
+        "test_mse": {
+          "mean": 0.11108056832342705,
+          "stderr": 0.0,
+          "values": [
+            0.11108056832342705
+          ]
+        }
+      },
+      "upgd_low_noise": {
+        "final_window_accuracy": {
+          "mean": 0.7946666479110718,
+          "stderr": 0.0,
+          "values": [
+            0.7946666479110718
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.042147934436798096,
+          "stderr": 0.0,
+          "values": [
+            0.042147934436798096
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.8292748226950355,
+          "stderr": 0.0,
+          "values": [
+            0.8292748226950355
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.034095552618817936,
+          "stderr": 0.0,
+          "values": [
+            0.034095552618817936
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.2303468017502034,
+          "stderr": 0.0,
+          "values": [
+            0.2303468017502034
+          ]
+        },
+        "test_mse": {
+          "mean": 0.1060475034520347,
+          "stderr": 0.0,
+          "values": [
+            0.1060475034520347
+          ]
+        }
+      }
+    }
+  },
+  "config": {
+    "allow_openml_download": true,
+    "allow_torchvision_download": false,
+    "benchmarks": [
+      "permuted_mnist_like"
+    ],
+    "digits_deployment_objective": "mse",
+    "dynamic_hidden_size": 64,
+    "dynamic_rewire_interval": 240,
+    "dynamic_unit_replacement_rate": 0.05,
+    "dynamic_utility_decay": 0.99,
+    "evaluate_all_permutation_views": false,
+    "expert_names": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64",
+      "upgd_low_noise",
+      "dynamic_sparse"
+    ],
+    "final_window": 60000,
+    "guard_tolerance": 0.0,
+    "hedge_discount": 0.995,
+    "hedge_eta": 1.0,
+    "include_identity_permutation": false,
+    "long_scr": false,
+    "max_test_examples": null,
+    "max_test_permutation_views": 47,
+    "max_train_examples": null,
+    "mlp_comparator_methods": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64"
+    ],
+    "mnist_published_scale": true,
+    "mnist_source": "openml",
+    "mnist_split": "canonical",
+    "n_permutations": 800,
+    "n_seeds": 1,
+    "online_retention_max_recent_class_fraction": 0.5,
+    "online_retention_min_lifetime_class_fraction": 0.7,
+    "online_retention_mse_guard": true,
+    "openml_data_home": "outputs/step2_published_mnist_openml_cache",
+    "openml_n_retries": 2,
+    "openml_retry_delay": 1.0,
+    "opmnist_chunk_size": 20000,
+    "opmnist_force_restart": false,
+    "opmnist_resume": true,
+    "opmnist_resume_path": "outputs/step2_opmnist_scale_800task/opmnist_true_mnist_800task_partial40block_mse_seed0_opmnist_resume.pkl",
+    "opmnist_status_output": null,
+    "opmnist_status_target_steps": 48000000,
+    "opmnist_streaming": true,
+    "output_dir": "outputs/step2_opmnist_scale_800task",
+    "perturbation_ramp_steps": 0,
+    "perturbation_sigma": 0.0001,
+    "perturbation_warmup_steps": 0,
+    "regression_beta": 0.7,
+    "regression_bits": 20,
+    "regression_flip_interval": 50,
+    "regression_noise_std": 0.01,
+    "regression_slow_bits": 5,
+    "regression_target_hidden": 100,
+    "result_prefix": "opmnist_true_mnist_800task_partial47block_mse",
+    "retention_max_recent_class_fraction": 0.4,
+    "retention_min_lifetime_class_fraction": 0.8,
+    "retention_router": "none",
+    "retention_upgd_deployment_weight": 1.0,
+    "router_decay": 0.02,
+    "router_policy": "convex",
+    "sample_with_replacement": false,
+    "scr_preset": "compact",
+    "seed": 0,
+    "sparsity": 0.5,
+    "step_size": 0.03,
+    "steps": 2820000,
+    "task_block_size": 60000,
+    "task_sampling": "sequential_epoch",
+    "torchvision_data_home": null,
+    "train_fraction": 0.7
+  },
+  "datasets": {
+    "permuted_mnist_like": {
+      "all_experts_update_every_step": true,
+      "benchmark": "permuted_mnist_like",
+      "checkpoint_loaded": true,
+      "completed_full_task_blocks": 47,
+      "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+      "description": "OpenML MNIST 28x28 handwritten digits.",
+      "evaluate_all_permutation_views": false,
+      "feature_dim": 784,
+      "full_mnist_task_blocks": true,
+      "heldout_deployment_objective": "post-run selected weights; no task id",
+      "include_identity_permutation": false,
+      "is_full_mnist_split": true,
+      "is_true_mnist": true,
+      "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+      "matches_dohare_opmnist_core_protocol": true,
+      "matches_dohare_opmnist_published_task_count": false,
+      "max_test_examples": null,
+      "max_test_permutation_views": 47,
+      "max_train_examples": null,
+      "n_classes": 10,
+      "n_permutations": 800,
+      "n_test": 10000,
+      "n_total": 70000,
+      "n_train": 60000,
+      "observed_task_blocks": 47,
+      "openml_data_home": "outputs/step2_published_mnist_openml_cache",
+      "opmnist_completed_full_60000_task_blocks": 47,
+      "opmnist_elapsed_s": 7798.258760929108,
+      "opmnist_eta_to_800_tasks_s": 219503.749635458,
+      "opmnist_last_chunk_steps_per_second": 205.82791899925593,
+      "opmnist_overall_steps_per_second": 361.6191878793231,
+      "partial_task_steps": 0,
+      "permutations_are_random_pixel_orders": true,
+      "prediction_before_update_every_step": true,
+      "protocol": "chunked_online_permuted_pixels",
+      "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true.",
+      "random_pixel_permutation_seed": 10000,
+      "resumable_runner": true,
+      "resume_checkpoint_path": "outputs/step2_opmnist_scale_800task/opmnist_true_mnist_800task_partial40block_mse_seed0_opmnist_resume.pkl",
+      "sample_with_replacement": false,
+      "sequence_seed": 10000,
+      "sequential_single_pass_task_epochs": true,
+      "single_pass_examples_within_task": true,
+      "source_kind": "openml_mnist_784",
+      "split": "openml_canonical_60000_10000",
+      "split_seed": 0,
+      "steps": 2820000,
+      "stream_chunk_size": 20000,
+      "streaming_runner": true,
+      "task_block_size": 60000,
+      "task_id_provided_to_learner": false,
+      "task_ids_observed": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "task_sampling": "sequential_epoch",
+      "test_permutation_views": 47,
+      "test_task_ids_evaluated": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "test_views_cover_all_permutations": false,
+      "test_views_cover_observed_permutations": true,
+      "train_fraction": 0.7
+    }
+  },
+  "evidence_level": "compact_published_style_external_stressors",
+  "manifest_path": "outputs/step2_opmnist_scale_800task/opmnist_true_mnist_800task_partial47block_mse_manifest.json",
+  "records": [
+    {
+      "dataset": {
+        "all_experts_update_every_step": true,
+        "benchmark": "permuted_mnist_like",
+        "checkpoint_loaded": true,
+        "completed_full_task_blocks": 47,
+        "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+        "description": "OpenML MNIST 28x28 handwritten digits.",
+        "evaluate_all_permutation_views": false,
+        "feature_dim": 784,
+        "full_mnist_task_blocks": true,
+        "heldout_deployment_objective": "post-run selected weights; no task id",
+        "include_identity_permutation": false,
+        "is_full_mnist_split": true,
+        "is_true_mnist": true,
+        "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+        "matches_dohare_opmnist_core_protocol": true,
+        "matches_dohare_opmnist_published_task_count": false,
+        "max_test_examples": null,
+        "max_test_permutation_views": 47,
+        "max_train_examples": null,
+        "n_classes": 10,
+        "n_permutations": 800,
+        "n_test": 10000,
+        "n_total": 70000,
+        "n_train": 60000,
+        "observed_task_blocks": 47,
+        "openml_data_home": "outputs/step2_published_mnist_openml_cache",
+        "opmnist_completed_full_60000_task_blocks": 47,
+        "opmnist_elapsed_s": 7798.258760929108,
+        "opmnist_eta_to_800_tasks_s": 219503.749635458,
+        "opmnist_last_chunk_steps_per_second": 205.82791899925593,
+        "opmnist_overall_steps_per_second": 361.6191878793231,
+        "partial_task_steps": 0,
+        "permutations_are_random_pixel_orders": true,
+        "prediction_before_update_every_step": true,
+        "protocol": "chunked_online_permuted_pixels",
+        "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true.",
+        "random_pixel_permutation_seed": 10000,
+        "resumable_runner": true,
+        "resume_checkpoint_path": "outputs/step2_opmnist_scale_800task/opmnist_true_mnist_800task_partial40block_mse_seed0_opmnist_resume.pkl",
+        "sample_with_replacement": false,
+        "sequence_seed": 10000,
+        "sequential_single_pass_task_epochs": true,
+        "single_pass_examples_within_task": true,
+        "source_kind": "openml_mnist_784",
+        "split": "openml_canonical_60000_10000",
+        "split_seed": 0,
+        "steps": 2820000,
+        "stream_chunk_size": 20000,
+        "streaming_runner": true,
+        "task_block_size": 60000,
+        "task_id_provided_to_learner": false,
+        "task_ids_observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46
+        ],
+        "task_sampling": "sequential_epoch",
+        "test_permutation_views": 47,
+        "test_task_ids_evaluated": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46
+        ],
+        "test_views_cover_all_permutations": false,
+        "test_views_cover_observed_permutations": true,
+        "train_fraction": 0.7
+      },
+      "dataset_name": "permuted_mnist_like",
+      "methods": {
+        "dynamic_sparse": {
+          "final_window_accuracy": 0.8530499935150146,
+          "final_window_mse": 0.03045131079852581,
+          "online_mean_accuracy": 0.8699794326241135,
+          "online_mean_mse": 0.027196600734305822,
+          "test_accuracy": 0.2489680788935499,
+          "test_mse": 0.0921791930623511
+        },
+        "mixture": {
+          "deployment_dynamic_sparse_weight": 0.1826423704624176,
+          "deployment_mlp_h128_weight": 0.23323358595371246,
+          "deployment_mlp_h64_64_weight": 0.3484625816345215,
+          "deployment_mlp_h64_weight": 0.20951734483242035,
+          "deployment_upgd_low_noise_weight": 0.026144133880734444,
+          "final_accuracy_dynamic_sparse_weight": 0.006907325703650713,
+          "final_accuracy_mlp_h128_weight": 0.23039518296718597,
+          "final_accuracy_mlp_h64_64_weight": 0.7008330225944519,
+          "final_accuracy_mlp_h64_weight": 0.06186115741729736,
+          "final_accuracy_upgd_low_noise_weight": 3.3428009373892564e-06,
+          "final_dynamic_sparse_weight": 0.1826423704624176,
+          "final_meta_route_id": 0.0,
+          "final_mlp_guard_mlp_h128_weight": 0.29477959871292114,
+          "final_mlp_guard_mlp_h64_64_weight": 0.4404153525829315,
+          "final_mlp_guard_mlp_h64_weight": 0.26480504870414734,
+          "final_mlp_h128_weight": 0.23323358595371246,
+          "final_mlp_h64_64_weight": 0.3484625816345215,
+          "final_mlp_h64_weight": 0.20951734483242035,
+          "final_upgd_low_noise_weight": 0.026144133880734444,
+          "final_window_accuracy": 0.8876833319664001,
+          "final_window_mse": 0.024954646825790405,
+          "mean_accuracy_dynamic_sparse_weight": 0.23062126562717297,
+          "mean_accuracy_mlp_h128_weight": 0.5175993195527847,
+          "mean_accuracy_mlp_h64_64_weight": 0.08031526611228862,
+          "mean_accuracy_mlp_h64_weight": 0.16134179411350277,
+          "mean_accuracy_upgd_low_noise_weight": 0.010122355574845586,
+          "mean_dynamic_sparse_weight": 0.27361485034183874,
+          "mean_meta_route_id": 0.0,
+          "mean_mlp_guard_mlp_h128_weight": 0.4324086314956638,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.26391050054065246,
+          "mean_mlp_guard_mlp_h64_weight": 0.30368086798462407,
+          "mean_mlp_h128_weight": 0.2752180615185885,
+          "mean_mlp_h64_64_weight": 0.15955187933834275,
+          "mean_mlp_h64_weight": 0.19372772616059222,
+          "mean_upgd_low_noise_weight": 0.09788748264600802,
+          "online_mean_accuracy": 0.8942031914893617,
+          "online_mean_mse": 0.02328253091578035,
+          "retention_hazard": 0.0,
+          "test_accuracy": 0.21199574036167024,
+          "test_mse": 0.09574657959982436
+        },
+        "mlp_h128": {
+          "final_window_accuracy": 0.8787833452224731,
+          "final_window_mse": 0.029216613620519638,
+          "online_mean_accuracy": 0.8862347517730497,
+          "online_mean_mse": 0.027139666225901672,
+          "test_accuracy": 0.21379360952909957,
+          "test_mse": 0.12852383111702634
+        },
+        "mlp_h64": {
+          "final_window_accuracy": 0.8723499774932861,
+          "final_window_mse": 0.028749629855155945,
+          "online_mean_accuracy": 0.8754205673758865,
+          "online_mean_mse": 0.028909306877780636,
+          "test_accuracy": 0.16060425166754014,
+          "test_mse": 0.12267004353727431
+        },
+        "mlp_h64_64": {
+          "final_window_accuracy": 0.8449833393096924,
+          "final_window_mse": 0.031612198799848557,
+          "online_mean_accuracy": 0.8548645390070923,
+          "online_mean_mse": 0.03067518481774374,
+          "test_accuracy": 0.15481276144372655,
+          "test_mse": 0.11108056832342705
+        },
+        "upgd_low_noise": {
+          "final_window_accuracy": 0.7946666479110718,
+          "final_window_mse": 0.042147934436798096,
+          "online_mean_accuracy": 0.8292748226950355,
+          "online_mean_mse": 0.034095552618817936,
+          "test_accuracy": 0.2303468017502034,
+          "test_mse": 0.1060475034520347
+        }
+      },
+      "retention_router": {
+        "deployment_dynamic_sparse_weight": 0.1826423704624176,
+        "deployment_mlp_h128_weight": 0.23323358595371246,
+        "deployment_mlp_h64_64_weight": 0.3484625816345215,
+        "deployment_mlp_h64_weight": 0.20951734483242035,
+        "deployment_source": "tracking",
+        "deployment_upgd_low_noise_weight": 0.026144133880734444,
+        "lifetime_class_count": 0,
+        "lifetime_class_fraction": 0.0,
+        "recent_class_count": 0,
+        "recent_class_fraction": 0.0,
+        "recent_fraction_of_lifetime": 0.0,
+        "retention_hazard": false,
+        "router": "none",
+        "tracking_dynamic_sparse_weight": 0.1826423704624176,
+        "tracking_mlp_h128_weight": 0.23323358595371246,
+        "tracking_mlp_h64_64_weight": 0.3484625816345215,
+        "tracking_mlp_h64_weight": 0.20951734483242035,
+        "tracking_upgd_low_noise_weight": 0.026144133880734444
+      },
+      "seed": 0
+    }
+  ],
+  "references": [
+    {
+      "name": "Dohare et al. 2024 Nature: Loss of plasticity in deep continual learning",
+      "relevance": "Online Permuted MNIST and Slowly-Changing Regression protocols.",
+      "url": "https://www.nature.com/articles/s41586-024-07711-7"
+    },
+    {
+      "name": "shibhansh/loss-of-plasticity",
+      "relevance": "Public reproduction repository for the loss-of-plasticity paper.",
+      "url": "https://github.com/shibhansh/loss-of-plasticity"
+    }
+  ],
+  "status": {
+    "all_experts_update_every_step": true,
+    "all_primary_nonnegative_vs_best_mlp": false,
+    "checks": {
+      "permuted_mnist_like": {
+        "final_window_mse": {
+          "paired_diff_mean_positive_favors_portfolio": 0.0037949830293655396,
+          "ties": 0,
+          "wins_for_best_mlp": 0,
+          "wins_for_portfolio": 1
+        },
+        "test_accuracy": {
+          "paired_diff_mean_positive_favors_portfolio": -0.001797869167429328,
+          "ties": 0,
+          "wins_for_best_mlp": 1,
+          "wins_for_portfolio": 0
+        }
+      }
+    },
+    "matches_dohare_opmnist_core_protocol": true,
+    "matches_dohare_opmnist_published_task_count": false,
+    "matches_dohare_public_scr_protocol": false,
+    "opmnist_completed_full_60000_task_blocks": 47,
+    "opmnist_completed_full_task_blocks": 47,
+    "opmnist_n_permutations": 800,
+    "opmnist_resumable_runner": true,
+    "opmnist_steps": 2820000,
+    "opmnist_streaming_runner": true,
+    "prediction_before_update_every_step": true,
+    "published_scale_external_claim_supported": false,
+    "published_scale_scr_claim_supported": false,
+    "scr_meets_published_step_count": false,
+    "scr_min_published_steps": 1000000,
+    "scr_steps": 0,
+    "scr_task_id_provided_to_learner": true,
+    "scr_uses_fixed_target_network": false,
+    "scr_uses_online_stream_only": false,
+    "single_pass_examples_within_task": true,
+    "task_id_provided_to_learner": false,
+    "uses_dohare_public_scr_config": false,
+    "uses_full_mnist_split": true,
+    "uses_full_mnist_task_blocks": true,
+    "uses_full_openml_mnist_split": true,
+    "uses_random_pixel_permutations_for_all_tasks": true,
+    "uses_torchvision_mnist": false,
+    "uses_true_mnist": true,
+    "uses_true_openml_mnist": true
+  },
+  "wall_clock_s": 322.2701461315155
+}

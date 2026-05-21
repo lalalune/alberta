@@ -1,0 +1,83 @@
+{
+  "schema": "alberta.step7.chain_planning.v1",
+  "claim_scope": "six_state_chain_dyna_vs_real_only_differential_sarsa",
+  "config": {
+    "n_seeds": 10,
+    "steps": 500,
+    "final_window": 100,
+    "planning_steps": 4
+  },
+  "elapsed_s": 31325.311419010162,
+  "aggregate": {
+    "mean_real_only_final_window_reward": 0.9950000000000001,
+    "mean_dyna_final_window_reward": 0.993,
+    "mean_reward_improvement": -0.0020000000000000018,
+    "stderr_improvement": 0.00419523539268061,
+    "dyna_win_count": 2,
+    "n_seeds": 10,
+    "passed": false
+  },
+  "per_seed": [
+    {
+      "seed": 0,
+      "real_final_window_reward": 0.99,
+      "dyna_final_window_reward": 1.0,
+      "improvement": 0.010000000000000009
+    },
+    {
+      "seed": 1,
+      "real_final_window_reward": 0.97,
+      "dyna_final_window_reward": 1.0,
+      "improvement": 0.030000000000000027
+    },
+    {
+      "seed": 2,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 0.99,
+      "improvement": -0.010000000000000009
+    },
+    {
+      "seed": 3,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 0.98,
+      "improvement": -0.020000000000000018
+    },
+    {
+      "seed": 4,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 1.0,
+      "improvement": 0.0
+    },
+    {
+      "seed": 5,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 0.99,
+      "improvement": -0.010000000000000009
+    },
+    {
+      "seed": 6,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 0.99,
+      "improvement": -0.010000000000000009
+    },
+    {
+      "seed": 7,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 1.0,
+      "improvement": 0.0
+    },
+    {
+      "seed": 8,
+      "real_final_window_reward": 1.0,
+      "dyna_final_window_reward": 1.0,
+      "improvement": 0.0
+    },
+    {
+      "seed": 9,
+      "real_final_window_reward": 0.99,
+      "dyna_final_window_reward": 0.98,
+      "improvement": -0.010000000000000009
+    }
+  ],
+  "passed": false
+}

@@ -94,6 +94,15 @@ __jax_cache__/
 .python-version
 data/
 
+# Claude Code local state (worktrees, memory, settings)
+.claude/
+
+# Generated audit/report files
+AUDIT_RESULTS.txt
+
+# Experiment outputs (singular output/ dir)
+output/
+
 # Documentation builds
 docs/_build/
 site/

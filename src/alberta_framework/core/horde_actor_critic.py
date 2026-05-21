@@ -831,6 +831,29 @@ def _nlhac_log_prob(
 _nlhac_grad = jax.grad(_nlhac_log_prob, argnums=0)
 
 
+def _clip_nlhac_actor_grads(
+    grad_trunk_w: tuple[Array, ...],
+    grad_trunk_b: tuple[Array, ...],
+    grad_head_w: Array,
+    grad_head_b: Array,
+    max_norm: float | None,
+) -> tuple[tuple[Array, ...], tuple[Array, ...], Array, Array]:
+    """Clip one actor policy-gradient PyTree by global norm when requested."""
+    if max_norm is None:
+        return grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b
+    squared_norm = jnp.sum(jnp.square(grad_head_w)) + jnp.sum(jnp.square(grad_head_b))
+    for grad in (*grad_trunk_w, *grad_trunk_b):
+        squared_norm = squared_norm + jnp.sum(jnp.square(grad))
+    norm = jnp.sqrt(squared_norm)
+    scale = jnp.minimum(1.0, jnp.asarray(max_norm, dtype=jnp.float32) / (norm + 1e-8))
+    return (
+        tuple(scale * grad for grad in grad_trunk_w),
+        tuple(scale * grad for grad in grad_trunk_b),
+        scale * grad_head_w,
+        scale * grad_head_b,
+    )
+
+
 @dataclasses.dataclass(frozen=True)
 class NonlinearHordeActorCriticConfig:
     """Configuration for an MLP actor with a Step 3 Horde critic.
@@ -846,6 +869,8 @@ class NonlinearHordeActorCriticConfig:
         use_layer_norm: Whether to apply parameterless layer norm.
         actor_td_error_clip: Optional absolute clip applied only to the actor's
             policy-gradient TD error.
+        actor_gradient_clip_norm: Optional global-norm clip applied to the
+            actor policy gradient before eligibility-trace accumulation.
     """
 
     n_actions: int
@@ -857,6 +882,7 @@ class NonlinearHordeActorCriticConfig:
     leaky_relu_slope: float = 0.01
     use_layer_norm: bool = True
     actor_td_error_clip: float | None = None
+    actor_gradient_clip_norm: float | None = None
 
     def to_config(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
@@ -968,6 +994,13 @@ class NonlinearHordeActorCriticAgent:
             raise ValueError("temperature must be positive")
         if config.actor_td_error_clip is not None and config.actor_td_error_clip <= 0:
             raise ValueError("actor_td_error_clip must be positive when provided")
+        if (
+            config.actor_gradient_clip_norm is not None
+            and config.actor_gradient_clip_norm <= 0
+        ):
+            raise ValueError(
+                "actor_gradient_clip_norm must be positive when provided"
+            )
         if not 0 <= config.value_head_index < critic.n_demons:
             raise ValueError(
                 f"value_head_index {config.value_head_index} out of range "
@@ -1222,6 +1255,15 @@ class NonlinearHordeActorCriticAgent:
             cfg.temperature,
         )
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = grads
+        grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = (
+            _clip_nlhac_actor_grads(
+                grad_trunk_w,
+                grad_trunk_b,
+                grad_head_w,
+                grad_head_b,
+                cfg.actor_gradient_clip_norm,
+            )
+        )
 
         actor_decay = value_discount * cfg.actor_lamda
         n_hidden = len(cfg.hidden_sizes)

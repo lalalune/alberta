@@ -138,6 +138,7 @@ class TestStep7InitState:
         chex.assert_shape(state.memory_actions, (cfg.planning_memory_size,))
         chex.assert_shape(state.memory_rewards, (cfg.planning_memory_size,))
         chex.assert_shape(state.memory_priorities, (cfg.planning_memory_size,))
+        chex.assert_shape(state.memory_utilities, (cfg.planning_memory_size,))
         assert int(state.memory_count) == 0
         assert int(state.step_count) == 0
 

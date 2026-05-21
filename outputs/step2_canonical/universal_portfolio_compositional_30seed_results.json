@@ -1,0 +1,3836 @@
+{
+  "config": {
+    "datasets": [
+      "synthetic_compositional"
+    ],
+    "steps": 1200,
+    "n_seeds": 30,
+    "seed": 0,
+    "train_fraction": 0.7,
+    "final_window": 300,
+    "expert_names": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64",
+      "upgd_low_noise",
+      "dynamic_sparse"
+    ],
+    "mlp_comparator_methods": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64"
+    ],
+    "step_size": 0.03,
+    "sparsity": 0.5,
+    "perturbation_sigma": 0.0001,
+    "perturbation_warmup_steps": 0,
+    "perturbation_ramp_steps": 0,
+    "dynamic_hidden_size": 64,
+    "dynamic_utility_decay": 0.99,
+    "dynamic_rewire_interval": 240,
+    "dynamic_unit_replacement_rate": 0.05,
+    "hedge_eta": 1.0,
+    "hedge_discount": 0.995,
+    "router_policy": "convex",
+    "router_decay": 0.02,
+    "guard_tolerance": 0.0,
+    "digits_deployment_objective": "mse",
+    "retention_router": "class_imbalance",
+    "retention_upgd_deployment_weight": 1.0,
+    "retention_min_lifetime_class_fraction": 0.8,
+    "retention_max_recent_class_fraction": 0.4,
+    "phase_length": 400,
+    "mask_keep_fraction": 0.5,
+    "mask_noise_std": 0.05
+  },
+  "datasets": {
+    "synthetic_compositional": {
+      "dataset": "synthetic_compositional",
+      "feature_dim": 6,
+      "n_heads": 3,
+      "steps": 1200,
+      "stream_seed": 20029,
+      "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+      "regime": "synthetic_compositional",
+      "context_length": 300
+    }
+  },
+  "records": [
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 0,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20000,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.12018624693155289,
+          "final_window_mse": 0.14348278939723969,
+          "mean_mlp_h64_weight": 0.3558621108531952,
+          "final_mlp_h64_weight": 0.6106550097465515,
+          "mean_mlp_h128_weight": 0.473031610250473,
+          "final_mlp_h128_weight": 0.3516698479652405,
+          "mean_mlp_h64_64_weight": 0.04131220653653145,
+          "final_mlp_h64_64_weight": 0.03679066523909569,
+          "mean_upgd_low_noise_weight": 0.12354996055364609,
+          "final_upgd_low_noise_weight": 0.0006173066212795675,
+          "mean_dynamic_sparse_weight": 0.006244088988751173,
+          "final_dynamic_sparse_weight": 0.0002671263355296105,
+          "mean_mlp_guard_mlp_h64_weight": 0.4081450402736664,
+          "final_mlp_guard_mlp_h64_weight": 0.6111955642700195,
+          "mean_mlp_guard_mlp_h128_weight": 0.5318403244018555,
+          "final_mlp_guard_mlp_h128_weight": 0.35198116302490234,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.06001466140151024,
+          "final_mlp_guard_mlp_h64_64_weight": 0.03682323172688484,
+          "mean_accuracy_mlp_h64_weight": 0.16969896852970123,
+          "final_accuracy_mlp_h64_weight": 0.009419107809662819,
+          "mean_accuracy_mlp_h128_weight": 0.5105484127998352,
+          "final_accuracy_mlp_h128_weight": 0.36247625946998596,
+          "mean_accuracy_mlp_h64_64_weight": 0.09303272515535355,
+          "final_accuracy_mlp_h64_64_weight": 0.23478873074054718,
+          "mean_accuracy_upgd_low_noise_weight": 0.1019216775894165,
+          "final_accuracy_upgd_low_noise_weight": 0.1397794485092163,
+          "mean_accuracy_dynamic_sparse_weight": 0.12479820102453232,
+          "final_accuracy_dynamic_sparse_weight": 0.25353649258613586,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.12690973281860352,
+          "final_window_mse": 0.14298687875270844
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1261412501335144,
+          "final_window_mse": 0.15025779604911804
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.14667026698589325,
+          "final_window_mse": 0.15419064462184906
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.16449150443077087,
+          "final_window_mse": 0.21078582108020782
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.17047810554504395,
+          "final_window_mse": 0.20521420240402222
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 1,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20001,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.18595758080482483,
+          "final_window_mse": 0.22369664907455444,
+          "mean_mlp_h64_weight": 0.27986666560173035,
+          "final_mlp_h64_weight": 0.4369601607322693,
+          "mean_mlp_h128_weight": 0.6531926393508911,
+          "final_mlp_h128_weight": 0.5621466636657715,
+          "mean_mlp_h64_64_weight": 0.02521277591586113,
+          "final_mlp_h64_64_weight": 1.348751629848266e-05,
+          "mean_upgd_low_noise_weight": 0.02421944960951805,
+          "final_upgd_low_noise_weight": 9.211280121235177e-05,
+          "mean_dynamic_sparse_weight": 0.01750843971967697,
+          "final_dynamic_sparse_weight": 0.0007875554147176445,
+          "mean_mlp_guard_mlp_h64_weight": 0.30078524351119995,
+          "final_mlp_guard_mlp_h64_weight": 0.43734487891197205,
+          "mean_mlp_guard_mlp_h128_weight": 0.6706852912902832,
+          "final_mlp_guard_mlp_h128_weight": 0.5626416206359863,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.02852947823703289,
+          "final_mlp_guard_mlp_h64_64_weight": 1.349939157080371e-05,
+          "mean_accuracy_mlp_h64_weight": 0.4475814700126648,
+          "final_accuracy_mlp_h64_weight": 0.26816582679748535,
+          "mean_accuracy_mlp_h128_weight": 0.34045618772506714,
+          "final_accuracy_mlp_h128_weight": 0.09011951833963394,
+          "mean_accuracy_mlp_h64_64_weight": 0.0648813247680664,
+          "final_accuracy_mlp_h64_64_weight": 0.04594701901078224,
+          "mean_accuracy_upgd_low_noise_weight": 0.12261412292718887,
+          "final_accuracy_upgd_low_noise_weight": 0.0028796677943319082,
+          "mean_accuracy_dynamic_sparse_weight": 0.024466918781399727,
+          "final_accuracy_dynamic_sparse_weight": 0.5928879976272583,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.19445250928401947,
+          "final_window_mse": 0.22835256159305573
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.18902023136615753,
+          "final_window_mse": 0.22610530257225037
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.24437977373600006,
+          "final_window_mse": 0.281755656003952
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.2568080723285675,
+          "final_window_mse": 0.3135440945625305
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.24731267988681793,
+          "final_window_mse": 0.2930755317211151
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 2,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20002,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.22084645926952362,
+          "final_window_mse": 0.4500044286251068,
+          "mean_mlp_h64_weight": 0.26103657484054565,
+          "final_mlp_h64_weight": 0.7685874700546265,
+          "mean_mlp_h128_weight": 0.7175250053405762,
+          "final_mlp_h128_weight": 0.231402188539505,
+          "mean_mlp_h64_64_weight": 0.010125554166734219,
+          "final_mlp_h64_64_weight": 1.0344204383727629e-05,
+          "mean_upgd_low_noise_weight": 0.0110045550391078,
+          "final_upgd_low_noise_weight": 4.1558906316296884e-10,
+          "mean_dynamic_sparse_weight": 0.0003082680341321975,
+          "final_dynamic_sparse_weight": 1.0450094262148824e-10,
+          "mean_mlp_guard_mlp_h64_weight": 0.26351192593574524,
+          "final_mlp_guard_mlp_h64_weight": 0.7685874700546265,
+          "mean_mlp_guard_mlp_h128_weight": 0.7257820963859558,
+          "final_mlp_guard_mlp_h128_weight": 0.231402188539505,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.010705959051847458,
+          "final_mlp_guard_mlp_h64_64_weight": 1.0344204383727629e-05,
+          "mean_accuracy_mlp_h64_weight": 0.62421053647995,
+          "final_accuracy_mlp_h64_weight": 0.04615858942270279,
+          "mean_accuracy_mlp_h128_weight": 0.33794915676116943,
+          "final_accuracy_mlp_h128_weight": 0.943884015083313,
+          "mean_accuracy_mlp_h64_64_weight": 0.00961522851139307,
+          "final_accuracy_mlp_h64_64_weight": 0.00019932593568228185,
+          "mean_accuracy_upgd_low_noise_weight": 0.025905171409249306,
+          "final_accuracy_upgd_low_noise_weight": 0.0009860539576038718,
+          "mean_accuracy_dynamic_sparse_weight": 0.002319928491488099,
+          "final_accuracy_dynamic_sparse_weight": 0.00877202395349741,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.22835363447666168,
+          "final_window_mse": 0.45626404881477356
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.22382351756095886,
+          "final_window_mse": 0.45807915925979614
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.266560822725296,
+          "final_window_mse": 0.5391832590103149
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.34217312932014465,
+          "final_window_mse": 0.6928979754447937
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.34917405247688293,
+          "final_window_mse": 0.6983753442764282
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 3,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20003,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.1698739230632782,
+          "final_window_mse": 0.18578849732875824,
+          "mean_mlp_h64_weight": 0.23098067939281464,
+          "final_mlp_h64_weight": 0.5619808435440063,
+          "mean_mlp_h128_weight": 0.7586050629615784,
+          "final_mlp_h128_weight": 0.43705809116363525,
+          "mean_mlp_h64_64_weight": 0.0028332688380032778,
+          "final_mlp_h64_64_weight": 0.0008919174433685839,
+          "mean_upgd_low_noise_weight": 0.005652451887726784,
+          "final_upgd_low_noise_weight": 2.357684252274339e-06,
+          "mean_dynamic_sparse_weight": 0.0019286161987110972,
+          "final_dynamic_sparse_weight": 6.675908662145957e-05,
+          "mean_mlp_guard_mlp_h64_weight": 0.23160409927368164,
+          "final_mlp_guard_mlp_h64_weight": 0.5620197057723999,
+          "mean_mlp_guard_mlp_h128_weight": 0.7639808058738708,
+          "final_mlp_guard_mlp_h128_weight": 0.4370883107185364,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.004415115807205439,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0008919791434891522,
+          "mean_accuracy_mlp_h64_weight": 0.2629861831665039,
+          "final_accuracy_mlp_h64_weight": 0.15575316548347473,
+          "mean_accuracy_mlp_h128_weight": 0.3804251253604889,
+          "final_accuracy_mlp_h128_weight": 0.8394957780838013,
+          "mean_accuracy_mlp_h64_64_weight": 0.18504363298416138,
+          "final_accuracy_mlp_h64_64_weight": 0.00471202377229929,
+          "mean_accuracy_upgd_low_noise_weight": 0.05748912692070007,
+          "final_accuracy_upgd_low_noise_weight": 2.7690601200447418e-05,
+          "mean_accuracy_dynamic_sparse_weight": 0.11405592411756516,
+          "final_accuracy_dynamic_sparse_weight": 1.1198068932571914e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.18222446739673615,
+          "final_window_mse": 0.19161592423915863
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1713632494211197,
+          "final_window_mse": 0.18932309746742249
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2105325162410736,
+          "final_window_mse": 0.233656108379364
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.27468952536582947,
+          "final_window_mse": 0.3247557580471039
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.2466963231563568,
+          "final_window_mse": 0.28100958466529846
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 4,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20004,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.20895029604434967,
+          "final_window_mse": 0.2878468930721283,
+          "mean_mlp_h64_weight": 0.39861389994621277,
+          "final_mlp_h64_weight": 0.2544240951538086,
+          "mean_mlp_h128_weight": 0.4855399429798126,
+          "final_mlp_h128_weight": 0.744932234287262,
+          "mean_mlp_h64_64_weight": 0.028589146211743355,
+          "final_mlp_h64_64_weight": 0.000643712526652962,
+          "mean_upgd_low_noise_weight": 0.03704032301902771,
+          "final_upgd_low_noise_weight": 4.28473978519861e-10,
+          "mean_dynamic_sparse_weight": 0.05021671578288078,
+          "final_dynamic_sparse_weight": 3.3256233877843044e-10,
+          "mean_mlp_guard_mlp_h64_weight": 0.4320122301578522,
+          "final_mlp_guard_mlp_h64_weight": 0.2544240951538086,
+          "mean_mlp_guard_mlp_h128_weight": 0.5295893549919128,
+          "final_mlp_guard_mlp_h128_weight": 0.744932234287262,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.038398418575525284,
+          "final_mlp_guard_mlp_h64_64_weight": 0.000643712526652962,
+          "mean_accuracy_mlp_h64_weight": 0.6348958015441895,
+          "final_accuracy_mlp_h64_weight": 0.43904951214790344,
+          "mean_accuracy_mlp_h128_weight": 0.3072493374347687,
+          "final_accuracy_mlp_h128_weight": 0.5512164831161499,
+          "mean_accuracy_mlp_h64_64_weight": 0.04393555968999863,
+          "final_accuracy_mlp_h64_64_weight": 0.009733558632433414,
+          "mean_accuracy_upgd_low_noise_weight": 0.00938478671014309,
+          "final_accuracy_upgd_low_noise_weight": 4.0459678984916536e-07,
+          "mean_accuracy_dynamic_sparse_weight": 0.00453453604131937,
+          "final_accuracy_dynamic_sparse_weight": 2.159023715364583e-08,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2164052277803421,
+          "final_window_mse": 0.29287195205688477
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.2144065648317337,
+          "final_window_mse": 0.29225093126296997
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2466365247964859,
+          "final_window_mse": 0.34246164560317993
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.3413673937320709,
+          "final_window_mse": 0.48871541023254395
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.3291563391685486,
+          "final_window_mse": 0.4997848570346832
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 5,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20005,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.24793563783168793,
+          "final_window_mse": 0.10885348170995712,
+          "mean_mlp_h64_weight": 0.5119132399559021,
+          "final_mlp_h64_weight": 0.35947027802467346,
+          "mean_mlp_h128_weight": 0.48384329676628113,
+          "final_mlp_h128_weight": 0.636191189289093,
+          "mean_mlp_h64_64_weight": 0.002626436995342374,
+          "final_mlp_h64_64_weight": 0.004182212520390749,
+          "mean_upgd_low_noise_weight": 0.0011478215456008911,
+          "final_upgd_low_noise_weight": 3.0894232622813433e-05,
+          "mean_dynamic_sparse_weight": 0.0004691702197305858,
+          "final_dynamic_sparse_weight": 0.00012552081898320466,
+          "mean_mlp_guard_mlp_h64_weight": 0.5125516653060913,
+          "final_mlp_guard_mlp_h64_weight": 0.35952648520469666,
+          "mean_mlp_guard_mlp_h128_weight": 0.48427221179008484,
+          "final_mlp_guard_mlp_h128_weight": 0.6362906694412231,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0031761201098561287,
+          "final_mlp_guard_mlp_h64_64_weight": 0.004182866774499416,
+          "mean_accuracy_mlp_h64_weight": 0.12760357558727264,
+          "final_accuracy_mlp_h64_weight": 0.6687319874763489,
+          "mean_accuracy_mlp_h128_weight": 0.8648586273193359,
+          "final_accuracy_mlp_h128_weight": 0.32783350348472595,
+          "mean_accuracy_mlp_h64_64_weight": 0.0052596768364310265,
+          "final_accuracy_mlp_h64_64_weight": 0.0024621153715997934,
+          "mean_accuracy_upgd_low_noise_weight": 0.001268097315914929,
+          "final_accuracy_upgd_low_noise_weight": 8.697529119672254e-05,
+          "mean_accuracy_dynamic_sparse_weight": 0.0010100099025294185,
+          "final_accuracy_dynamic_sparse_weight": 0.0008854034240357578,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2561664879322052,
+          "final_window_mse": 0.11577612906694412
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.25252053141593933,
+          "final_window_mse": 0.10967720299959183
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.3155698776245117,
+          "final_window_mse": 0.14284402132034302
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.4588124454021454,
+          "final_window_mse": 0.16987884044647217
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.4630858302116394,
+          "final_window_mse": 0.15993186831474304
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 6,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20006,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.22464022040367126,
+          "final_window_mse": 0.23526069521903992,
+          "mean_mlp_h64_weight": 0.6314148902893066,
+          "final_mlp_h64_weight": 0.20365910232067108,
+          "mean_mlp_h128_weight": 0.35400187969207764,
+          "final_mlp_h128_weight": 0.7963271141052246,
+          "mean_mlp_h64_64_weight": 0.001448113820515573,
+          "final_mlp_h64_64_weight": 1.3684280929737724e-05,
+          "mean_upgd_low_noise_weight": 0.0007636085501872003,
+          "final_upgd_low_noise_weight": 4.1297903985437756e-10,
+          "mean_dynamic_sparse_weight": 0.012371459975838661,
+          "final_dynamic_sparse_weight": 7.557314063433296e-08,
+          "mean_mlp_guard_mlp_h64_weight": 0.6391024589538574,
+          "final_mlp_guard_mlp_h64_weight": 0.20365911722183228,
+          "mean_mlp_guard_mlp_h128_weight": 0.3583969175815582,
+          "final_mlp_guard_mlp_h128_weight": 0.7963272333145142,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.00250057689845562,
+          "final_mlp_guard_mlp_h64_64_weight": 1.3684282748727128e-05,
+          "mean_accuracy_mlp_h64_weight": 0.8297157883644104,
+          "final_accuracy_mlp_h64_weight": 0.8493292331695557,
+          "mean_accuracy_mlp_h128_weight": 0.15834668278694153,
+          "final_accuracy_mlp_h128_weight": 0.15059491991996765,
+          "mean_accuracy_mlp_h64_64_weight": 0.00840869639068842,
+          "final_accuracy_mlp_h64_64_weight": 1.2084150284863426e-06,
+          "mean_accuracy_upgd_low_noise_weight": 0.000820846064016223,
+          "final_accuracy_upgd_low_noise_weight": 5.334755769581534e-05,
+          "mean_accuracy_dynamic_sparse_weight": 0.0027080117724835873,
+          "final_accuracy_dynamic_sparse_weight": 2.128224696207326e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.22946882247924805,
+          "final_window_mse": 0.2479870319366455
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.23287592828273773,
+          "final_window_mse": 0.23521064221858978
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.3010823428630829,
+          "final_window_mse": 0.2962760925292969
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.38368892669677734,
+          "final_window_mse": 0.42266061902046204
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.34141862392425537,
+          "final_window_mse": 0.3969208300113678
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 7,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20007,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.2149650603532791,
+          "final_window_mse": 0.3226569890975952,
+          "mean_mlp_h64_weight": 0.40035876631736755,
+          "final_mlp_h64_weight": 0.1012653261423111,
+          "mean_mlp_h128_weight": 0.5863174200057983,
+          "final_mlp_h128_weight": 0.8987346887588501,
+          "mean_mlp_h64_64_weight": 0.00676228990778327,
+          "final_mlp_h64_64_weight": 3.435863149547913e-08,
+          "mean_upgd_low_noise_weight": 0.004822455812245607,
+          "final_upgd_low_noise_weight": 6.568288931517094e-16,
+          "mean_dynamic_sparse_weight": 0.0017390723805874586,
+          "final_dynamic_sparse_weight": 7.971006125116753e-13,
+          "mean_mlp_guard_mlp_h64_weight": 0.40255486965179443,
+          "final_mlp_guard_mlp_h64_weight": 0.1012653261423111,
+          "mean_mlp_guard_mlp_h128_weight": 0.5892142057418823,
+          "final_mlp_guard_mlp_h128_weight": 0.8987346887588501,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.008230870589613914,
+          "final_mlp_guard_mlp_h64_64_weight": 3.435863149547913e-08,
+          "mean_accuracy_mlp_h64_weight": 0.42829564213752747,
+          "final_accuracy_mlp_h64_weight": 0.11155525594949722,
+          "mean_accuracy_mlp_h128_weight": 0.5496629476547241,
+          "final_accuracy_mlp_h128_weight": 0.8874964118003845,
+          "mean_accuracy_mlp_h64_64_weight": 0.002982768462970853,
+          "final_accuracy_mlp_h64_64_weight": 0.0009417430264875293,
+          "mean_accuracy_upgd_low_noise_weight": 0.01095608714967966,
+          "final_accuracy_upgd_low_noise_weight": 1.7216478909176658e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.00810259860008955,
+          "final_accuracy_dynamic_sparse_weight": 4.96292295792955e-06,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.223454087972641,
+          "final_window_mse": 0.33759164810180664
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.21885719895362854,
+          "final_window_mse": 0.3228738605976105
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.28860312700271606,
+          "final_window_mse": 0.44435060024261475
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.3974362313747406,
+          "final_window_mse": 0.6387061476707458
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.3668142557144165,
+          "final_window_mse": 0.5766786336898804
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 8,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20008,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.3561380207538605,
+          "final_window_mse": 0.5607330799102783,
+          "mean_mlp_h64_weight": 0.34769585728645325,
+          "final_mlp_h64_weight": 0.19478048384189606,
+          "mean_mlp_h128_weight": 0.6424496173858643,
+          "final_mlp_h128_weight": 0.805160403251648,
+          "mean_mlp_h64_64_weight": 0.002403541002422571,
+          "final_mlp_h64_64_weight": 5.9152458561584353e-05,
+          "mean_upgd_low_noise_weight": 0.004874053876847029,
+          "final_upgd_low_noise_weight": 0.0,
+          "mean_dynamic_sparse_weight": 0.0025769679341465235,
+          "final_dynamic_sparse_weight": 2.9948685304202566e-37,
+          "mean_mlp_guard_mlp_h64_weight": 0.35026177763938904,
+          "final_mlp_guard_mlp_h64_weight": 0.19478048384189606,
+          "mean_mlp_guard_mlp_h128_weight": 0.6464817523956299,
+          "final_mlp_guard_mlp_h128_weight": 0.805160403251648,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0032565221190452576,
+          "final_mlp_guard_mlp_h64_64_weight": 5.9152458561584353e-05,
+          "mean_accuracy_mlp_h64_weight": 0.46113529801368713,
+          "final_accuracy_mlp_h64_weight": 0.5763390064239502,
+          "mean_accuracy_mlp_h128_weight": 0.522547721862793,
+          "final_accuracy_mlp_h128_weight": 0.3991941809654236,
+          "mean_accuracy_mlp_h64_64_weight": 0.0058423359878361225,
+          "final_accuracy_mlp_h64_64_weight": 0.024466775357723236,
+          "mean_accuracy_upgd_low_noise_weight": 0.0036102335434406996,
+          "final_accuracy_upgd_low_noise_weight": 1.1628887852666026e-09,
+          "mean_accuracy_dynamic_sparse_weight": 0.006864444352686405,
+          "final_accuracy_dynamic_sparse_weight": 1.041423058900648e-09,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.36676692962646484,
+          "final_window_mse": 0.5759340524673462
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.36046966910362244,
+          "final_window_mse": 0.5594813823699951
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.4281935691833496,
+          "final_window_mse": 0.6278833150863647
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.7600842118263245,
+          "final_window_mse": 1.469545841217041
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.7166545391082764,
+          "final_window_mse": 1.3096057176589966
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 9,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20009,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.1742967963218689,
+          "final_window_mse": 0.1872081458568573,
+          "mean_mlp_h64_weight": 0.7561529278755188,
+          "final_mlp_h64_weight": 0.5436953902244568,
+          "mean_mlp_h128_weight": 0.22360722720623016,
+          "final_mlp_h128_weight": 0.4536551237106323,
+          "mean_mlp_h64_64_weight": 0.01462982501834631,
+          "final_mlp_h64_64_weight": 0.0026470795273780823,
+          "mean_upgd_low_noise_weight": 0.004451325163245201,
+          "final_upgd_low_noise_weight": 1.0138982133867103e-06,
+          "mean_dynamic_sparse_weight": 0.0011586177861317992,
+          "final_dynamic_sparse_weight": 1.4174356692819856e-06,
+          "mean_mlp_guard_mlp_h64_weight": 0.7589328289031982,
+          "final_mlp_guard_mlp_h64_weight": 0.5436967015266418,
+          "mean_mlp_guard_mlp_h128_weight": 0.22565457224845886,
+          "final_mlp_guard_mlp_h128_weight": 0.45365622639656067,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.015412546694278717,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0026470862794667482,
+          "mean_accuracy_mlp_h64_weight": 0.3711856007575989,
+          "final_accuracy_mlp_h64_weight": 0.1400381624698639,
+          "mean_accuracy_mlp_h128_weight": 0.4619803726673126,
+          "final_accuracy_mlp_h128_weight": 0.8260272145271301,
+          "mean_accuracy_mlp_h64_64_weight": 0.10911896079778671,
+          "final_accuracy_mlp_h64_64_weight": 0.0012333542108535767,
+          "mean_accuracy_upgd_low_noise_weight": 0.04023687541484833,
+          "final_accuracy_upgd_low_noise_weight": 0.032074782997369766,
+          "mean_accuracy_dynamic_sparse_weight": 0.017478186637163162,
+          "final_accuracy_dynamic_sparse_weight": 0.0006264853873290122,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.17592865228652954,
+          "final_window_mse": 0.1905800849199295
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.18465633690357208,
+          "final_window_mse": 0.1896371692419052
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2119578868150711,
+          "final_window_mse": 0.2170965075492859
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.2708844244480133,
+          "final_window_mse": 0.3197842240333557
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.27911755442619324,
+          "final_window_mse": 0.30155181884765625
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 10,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20010,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.28566378355026245,
+          "final_window_mse": 0.3813028335571289,
+          "mean_mlp_h64_weight": 0.32885682582855225,
+          "final_mlp_h64_weight": 0.43113037943840027,
+          "mean_mlp_h128_weight": 0.6194766163825989,
+          "final_mlp_h128_weight": 0.5688210725784302,
+          "mean_mlp_h64_64_weight": 0.03134641423821449,
+          "final_mlp_h64_64_weight": 4.8573449021205306e-05,
+          "mean_upgd_low_noise_weight": 0.018781905993819237,
+          "final_upgd_low_noise_weight": 1.1853003000428348e-20,
+          "mean_dynamic_sparse_weight": 0.0015382315032184124,
+          "final_dynamic_sparse_weight": 3.112551074948905e-20,
+          "mean_mlp_guard_mlp_h64_weight": 0.3357444107532501,
+          "final_mlp_guard_mlp_h64_weight": 0.43113037943840027,
+          "mean_mlp_guard_mlp_h128_weight": 0.6284555196762085,
+          "final_mlp_guard_mlp_h128_weight": 0.5688210725784302,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.035800106823444366,
+          "final_mlp_guard_mlp_h64_64_weight": 4.8573449021205306e-05,
+          "mean_accuracy_mlp_h64_weight": 0.1842447966337204,
+          "final_accuracy_mlp_h64_weight": 0.012095773592591286,
+          "mean_accuracy_mlp_h128_weight": 0.36282986402511597,
+          "final_accuracy_mlp_h128_weight": 0.9739840626716614,
+          "mean_accuracy_mlp_h64_64_weight": 0.3862079977989197,
+          "final_accuracy_mlp_h64_64_weight": 0.013916753232479095,
+          "mean_accuracy_upgd_low_noise_weight": 0.021557286381721497,
+          "final_accuracy_upgd_low_noise_weight": 2.9481016099452972e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.04516008868813515,
+          "final_accuracy_dynamic_sparse_weight": 5.792658157588448e-07,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2943239212036133,
+          "final_window_mse": 0.3898372948169708
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.2905932366847992,
+          "final_window_mse": 0.3844219446182251
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.34395405650138855,
+          "final_window_mse": 0.44752100110054016
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.5121605396270752,
+          "final_window_mse": 0.8160351514816284
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.5201019048690796,
+          "final_window_mse": 0.7989518642425537
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 11,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20011,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.14469315111637115,
+          "final_window_mse": 0.0659327581524849,
+          "mean_mlp_h64_weight": 0.3806905150413513,
+          "final_mlp_h64_weight": 0.419886976480484,
+          "mean_mlp_h128_weight": 0.5715798735618591,
+          "final_mlp_h128_weight": 0.499593585729599,
+          "mean_mlp_h64_64_weight": 0.025876909494400024,
+          "final_mlp_h64_64_weight": 0.021664835512638092,
+          "mean_upgd_low_noise_weight": 0.019067831337451935,
+          "final_upgd_low_noise_weight": 0.041789401322603226,
+          "mean_dynamic_sparse_weight": 0.0027848449535667896,
+          "final_dynamic_sparse_weight": 0.01706523820757866,
+          "mean_mlp_guard_mlp_h64_weight": 0.3878341615200043,
+          "final_mlp_guard_mlp_h64_weight": 0.44614464044570923,
+          "mean_mlp_guard_mlp_h128_weight": 0.5835643410682678,
+          "final_mlp_guard_mlp_h128_weight": 0.530835747718811,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.028601456433534622,
+          "final_mlp_guard_mlp_h64_64_weight": 0.02301964908838272,
+          "mean_accuracy_mlp_h64_weight": 0.26146140694618225,
+          "final_accuracy_mlp_h64_weight": 0.06123683601617813,
+          "mean_accuracy_mlp_h128_weight": 0.48928043246269226,
+          "final_accuracy_mlp_h128_weight": 0.23454566299915314,
+          "mean_accuracy_mlp_h64_64_weight": 0.0817963182926178,
+          "final_accuracy_mlp_h64_64_weight": 0.0069611044600605965,
+          "mean_accuracy_upgd_low_noise_weight": 0.07374248653650284,
+          "final_accuracy_upgd_low_noise_weight": 0.6916566491127014,
+          "mean_accuracy_dynamic_sparse_weight": 0.09371934086084366,
+          "final_accuracy_dynamic_sparse_weight": 0.005599763710051775,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.15151184797286987,
+          "final_window_mse": 0.06885944306850433
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1491234302520752,
+          "final_window_mse": 0.06757237762212753
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.18445202708244324,
+          "final_window_mse": 0.08618425577878952
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.19585159420967102,
+          "final_window_mse": 0.08353132754564285
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.2084052860736847,
+          "final_window_mse": 0.08537516742944717
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 12,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20012,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.31031081080436707,
+          "final_window_mse": 0.20780645310878754,
+          "mean_mlp_h64_weight": 0.6158310174942017,
+          "final_mlp_h64_weight": 0.6044216752052307,
+          "mean_mlp_h128_weight": 0.38199174404144287,
+          "final_mlp_h128_weight": 0.39529749751091003,
+          "mean_mlp_h64_64_weight": 0.0006358815007843077,
+          "final_mlp_h64_64_weight": 0.00028045588987879455,
+          "mean_upgd_low_noise_weight": 0.0012265703408047557,
+          "final_upgd_low_noise_weight": 1.4246954549435031e-07,
+          "mean_dynamic_sparse_weight": 0.00031480047618970275,
+          "final_dynamic_sparse_weight": 1.8568424309250986e-07,
+          "mean_mlp_guard_mlp_h64_weight": 0.6161102056503296,
+          "final_mlp_guard_mlp_h64_weight": 0.6044219136238098,
+          "mean_mlp_guard_mlp_h128_weight": 0.3829718232154846,
+          "final_mlp_guard_mlp_h128_weight": 0.395297646522522,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0009180227061733603,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0002804559771902859,
+          "mean_accuracy_mlp_h64_weight": 0.373402863740921,
+          "final_accuracy_mlp_h64_weight": 0.890158474445343,
+          "mean_accuracy_mlp_h128_weight": 0.5955496430397034,
+          "final_accuracy_mlp_h128_weight": 0.1091725155711174,
+          "mean_accuracy_mlp_h64_64_weight": 0.0276342686265707,
+          "final_accuracy_mlp_h64_64_weight": 0.0005334398592822254,
+          "mean_accuracy_upgd_low_noise_weight": 0.002277625259011984,
+          "final_accuracy_upgd_low_noise_weight": 5.576956027653068e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.0011356072500348091,
+          "final_accuracy_dynamic_sparse_weight": 0.00012990260438527912,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.3172242343425751,
+          "final_window_mse": 0.2111009657382965
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.31812191009521484,
+          "final_window_mse": 0.21343998610973358
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.4084709584712982,
+          "final_window_mse": 0.24989257752895355
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.584076464176178,
+          "final_window_mse": 0.34245041012763977
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.5927243232727051,
+          "final_window_mse": 0.3166358172893524
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 13,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20013,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.40420451760292053,
+          "final_window_mse": 0.21566380560398102,
+          "mean_mlp_h64_weight": 0.7891449928283691,
+          "final_mlp_h64_weight": 0.8086881637573242,
+          "mean_mlp_h128_weight": 0.20637473464012146,
+          "final_mlp_h128_weight": 0.19130723178386688,
+          "mean_mlp_h64_64_weight": 0.0017367266118526459,
+          "final_mlp_h64_64_weight": 4.650049504562048e-06,
+          "mean_upgd_low_noise_weight": 0.0022495840676128864,
+          "final_upgd_low_noise_weight": 1.333158650140831e-08,
+          "mean_dynamic_sparse_weight": 0.000493907427880913,
+          "final_dynamic_sparse_weight": 3.3442997704469235e-08,
+          "mean_mlp_guard_mlp_h64_weight": 0.7902368903160095,
+          "final_mlp_guard_mlp_h64_weight": 0.8086881637573242,
+          "mean_mlp_guard_mlp_h128_weight": 0.20730598270893097,
+          "final_mlp_guard_mlp_h128_weight": 0.19130723178386688,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.002457102295011282,
+          "final_mlp_guard_mlp_h64_64_weight": 4.650049504562048e-06,
+          "mean_accuracy_mlp_h64_weight": 0.44883930683135986,
+          "final_accuracy_mlp_h64_weight": 0.9355149269104004,
+          "mean_accuracy_mlp_h128_weight": 0.5002536773681641,
+          "final_accuracy_mlp_h128_weight": 0.06293990463018417,
+          "mean_accuracy_mlp_h64_64_weight": 0.030931435525417328,
+          "final_accuracy_mlp_h64_64_weight": 0.0010200527030974627,
+          "mean_accuracy_upgd_low_noise_weight": 0.014146426692605019,
+          "final_accuracy_upgd_low_noise_weight": 0.0001850218395702541,
+          "mean_accuracy_dynamic_sparse_weight": 0.005829164758324623,
+          "final_accuracy_dynamic_sparse_weight": 0.0003399781708139926,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.4044400155544281,
+          "final_window_mse": 0.21026410162448883
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.4201631546020508,
+          "final_window_mse": 0.23023612797260284
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.5141803026199341,
+          "final_window_mse": 0.2843616306781769
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.6532115936279297,
+          "final_window_mse": 0.3568641245365143
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.6537103056907654,
+          "final_window_mse": 0.32814446091651917
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 14,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20014,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.25331154465675354,
+          "final_window_mse": 0.21292847394943237,
+          "mean_mlp_h64_weight": 0.5249438285827637,
+          "final_mlp_h64_weight": 0.7347111105918884,
+          "mean_mlp_h128_weight": 0.4409043788909912,
+          "final_mlp_h128_weight": 0.2641811966896057,
+          "mean_mlp_h64_64_weight": 0.016982007771730423,
+          "final_mlp_h64_64_weight": 0.001107785734347999,
+          "mean_upgd_low_noise_weight": 0.014235439710319042,
+          "final_upgd_low_noise_weight": 3.969693074017398e-21,
+          "mean_dynamic_sparse_weight": 0.0029342654161155224,
+          "final_dynamic_sparse_weight": 8.842615672984539e-17,
+          "mean_mlp_guard_mlp_h64_weight": 0.5285646319389343,
+          "final_mlp_guard_mlp_h64_weight": 0.7347111105918884,
+          "mean_mlp_guard_mlp_h128_weight": 0.45261475443840027,
+          "final_mlp_guard_mlp_h128_weight": 0.2641811966896057,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.01882060617208481,
+          "final_mlp_guard_mlp_h64_64_weight": 0.001107785734347999,
+          "mean_accuracy_mlp_h64_weight": 0.24094238877296448,
+          "final_accuracy_mlp_h64_weight": 0.1255367398262024,
+          "mean_accuracy_mlp_h128_weight": 0.556275486946106,
+          "final_accuracy_mlp_h128_weight": 0.8740575909614563,
+          "mean_accuracy_mlp_h64_64_weight": 0.15230372548103333,
+          "final_accuracy_mlp_h64_64_weight": 0.00040557829197496176,
+          "mean_accuracy_upgd_low_noise_weight": 0.04101715609431267,
+          "final_accuracy_upgd_low_noise_weight": 2.898720596888893e-09,
+          "mean_accuracy_dynamic_sparse_weight": 0.009461265988647938,
+          "final_accuracy_dynamic_sparse_weight": 1.1450408976543258e-07,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2594375014305115,
+          "final_window_mse": 0.20700563490390778
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.26103007793426514,
+          "final_window_mse": 0.22549830377101898
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.3097386360168457,
+          "final_window_mse": 0.2378862500190735
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.4983455538749695,
+          "final_window_mse": 0.6440467238426208
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.45864343643188477,
+          "final_window_mse": 0.5604392886161804
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 15,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20015,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.17367812991142273,
+          "final_window_mse": 0.1809612214565277,
+          "mean_mlp_h64_weight": 0.2949484884738922,
+          "final_mlp_h64_weight": 0.37569889426231384,
+          "mean_mlp_h128_weight": 0.6887669563293457,
+          "final_mlp_h128_weight": 0.6238715648651123,
+          "mean_mlp_h64_64_weight": 0.009027053602039814,
+          "final_mlp_h64_64_weight": 5.8429774071555585e-05,
+          "mean_upgd_low_noise_weight": 0.0030015597585588694,
+          "final_upgd_low_noise_weight": 0.00036000495310872793,
+          "mean_dynamic_sparse_weight": 0.004255932290107012,
+          "final_dynamic_sparse_weight": 1.1098999493697193e-05,
+          "mean_mlp_guard_mlp_h64_weight": 0.29707640409469604,
+          "final_mlp_guard_mlp_h64_weight": 0.37583836913108826,
+          "mean_mlp_guard_mlp_h128_weight": 0.6917352080345154,
+          "final_mlp_guard_mlp_h128_weight": 0.6241031289100647,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.011188384145498276,
+          "final_mlp_guard_mlp_h64_64_weight": 5.845146733918227e-05,
+          "mean_accuracy_mlp_h64_weight": 0.4605867564678192,
+          "final_accuracy_mlp_h64_weight": 0.37319520115852356,
+          "mean_accuracy_mlp_h128_weight": 0.45990824699401855,
+          "final_accuracy_mlp_h128_weight": 0.6146365404129028,
+          "mean_accuracy_mlp_h64_64_weight": 0.06667327880859375,
+          "final_accuracy_mlp_h64_64_weight": 0.004113717935979366,
+          "mean_accuracy_upgd_low_noise_weight": 0.0036474557127803564,
+          "final_accuracy_upgd_low_noise_weight": 0.007621299009770155,
+          "mean_accuracy_dynamic_sparse_weight": 0.009184276685118675,
+          "final_accuracy_dynamic_sparse_weight": 0.0004332245443947613,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.18170608580112457,
+          "final_window_mse": 0.18991118669509888
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.17663615942001343,
+          "final_window_mse": 0.18265825510025024
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.21682682633399963,
+          "final_window_mse": 0.2490738481283188
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.25631532073020935,
+          "final_window_mse": 0.26240280270576477
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.25633642077445984,
+          "final_window_mse": 0.28050467371940613
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 16,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20016,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.35155320167541504,
+          "final_window_mse": 0.3453807532787323,
+          "mean_mlp_h64_weight": 0.20669201016426086,
+          "final_mlp_h64_weight": 0.7879436612129211,
+          "mean_mlp_h128_weight": 0.7914783954620361,
+          "final_mlp_h128_weight": 0.21098704636096954,
+          "mean_mlp_h64_64_weight": 0.0007745143957436085,
+          "final_mlp_h64_64_weight": 0.001069268910214305,
+          "mean_upgd_low_noise_weight": 0.00029335886938497424,
+          "final_upgd_low_noise_weight": 5.74258611435152e-19,
+          "mean_dynamic_sparse_weight": 0.0007617152878083289,
+          "final_dynamic_sparse_weight": 3.2072015810167425e-17,
+          "mean_mlp_guard_mlp_h64_weight": 0.20717446506023407,
+          "final_mlp_guard_mlp_h64_weight": 0.7879436612129211,
+          "mean_mlp_guard_mlp_h128_weight": 0.791861355304718,
+          "final_mlp_guard_mlp_h128_weight": 0.21098704636096954,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0009641266660764813,
+          "final_mlp_guard_mlp_h64_64_weight": 0.001069268910214305,
+          "mean_accuracy_mlp_h64_weight": 0.09147278964519501,
+          "final_accuracy_mlp_h64_weight": 0.45074936747550964,
+          "mean_accuracy_mlp_h128_weight": 0.7896009087562561,
+          "final_accuracy_mlp_h128_weight": 0.5489959120750427,
+          "mean_accuracy_mlp_h64_64_weight": 0.09301824122667313,
+          "final_accuracy_mlp_h64_64_weight": 0.00025361281586810946,
+          "mean_accuracy_upgd_low_noise_weight": 0.024161439388990402,
+          "final_accuracy_upgd_low_noise_weight": 4.858228521698038e-07,
+          "mean_accuracy_dynamic_sparse_weight": 0.0017466041026636958,
+          "final_accuracy_dynamic_sparse_weight": 5.81218216666457e-07,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.3659941554069519,
+          "final_window_mse": 0.34814611077308655
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.35457998514175415,
+          "final_window_mse": 0.35414519906044006
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.4157177209854126,
+          "final_window_mse": 0.3924023509025574
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.7205483317375183,
+          "final_window_mse": 0.6782179474830627
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.6761699914932251,
+          "final_window_mse": 0.6500589847564697
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 17,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20017,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.2016115039587021,
+          "final_window_mse": 0.1699523776769638,
+          "mean_mlp_h64_weight": 0.5554925203323364,
+          "final_mlp_h64_weight": 0.7008059620857239,
+          "mean_mlp_h128_weight": 0.39564529061317444,
+          "final_mlp_h128_weight": 0.2984676957130432,
+          "mean_mlp_h64_64_weight": 0.026153547689318657,
+          "final_mlp_h64_64_weight": 0.000726063153706491,
+          "mean_upgd_low_noise_weight": 0.020521411672234535,
+          "final_upgd_low_noise_weight": 1.4991962116184254e-09,
+          "mean_dynamic_sparse_weight": 0.0021872716024518013,
+          "final_dynamic_sparse_weight": 2.371671712353418e-07,
+          "mean_mlp_guard_mlp_h64_weight": 0.562925398349762,
+          "final_mlp_guard_mlp_h64_weight": 0.7008061408996582,
+          "mean_mlp_guard_mlp_h128_weight": 0.40851977467536926,
+          "final_mlp_guard_mlp_h128_weight": 0.2984677851200104,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.028554802760481834,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0007260633283294737,
+          "mean_accuracy_mlp_h64_weight": 0.30587929487228394,
+          "final_accuracy_mlp_h64_weight": 0.5849801898002625,
+          "mean_accuracy_mlp_h128_weight": 0.43435293436050415,
+          "final_accuracy_mlp_h128_weight": 0.19194762408733368,
+          "mean_accuracy_mlp_h64_64_weight": 0.07891012728214264,
+          "final_accuracy_mlp_h64_64_weight": 0.006594317499548197,
+          "mean_accuracy_upgd_low_noise_weight": 0.1784796416759491,
+          "final_accuracy_upgd_low_noise_weight": 0.2131892293691635,
+          "mean_accuracy_dynamic_sparse_weight": 0.0023779801558703184,
+          "final_accuracy_dynamic_sparse_weight": 0.0032887097913771868,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.20650848746299744,
+          "final_window_mse": 0.1709669530391693
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.20953430235385895,
+          "final_window_mse": 0.1751111000776291
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.24188105762004852,
+          "final_window_mse": 0.2008281946182251
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.34527939558029175,
+          "final_window_mse": 0.32478511333465576
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.3026704490184784,
+          "final_window_mse": 0.3146827220916748
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 18,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20018,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.20165595412254333,
+          "final_window_mse": 0.202626034617424,
+          "mean_mlp_h64_weight": 0.7406190037727356,
+          "final_mlp_h64_weight": 0.7130519151687622,
+          "mean_mlp_h128_weight": 0.1903250813484192,
+          "final_mlp_h128_weight": 0.28590643405914307,
+          "mean_mlp_h64_64_weight": 0.006848301272839308,
+          "final_mlp_h64_64_weight": 0.0010402207262814045,
+          "mean_upgd_low_noise_weight": 0.057364750653505325,
+          "final_upgd_low_noise_weight": 1.8050224070975673e-07,
+          "mean_dynamic_sparse_weight": 0.004842852242290974,
+          "final_dynamic_sparse_weight": 1.2066240060448763e-06,
+          "mean_mlp_guard_mlp_h64_weight": 0.7783017158508301,
+          "final_mlp_guard_mlp_h64_weight": 0.7130528688430786,
+          "mean_mlp_guard_mlp_h128_weight": 0.21207039058208466,
+          "final_mlp_guard_mlp_h128_weight": 0.2859068214893341,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.009627905674278736,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0010402221232652664,
+          "mean_accuracy_mlp_h64_weight": 0.4896301329135895,
+          "final_accuracy_mlp_h64_weight": 0.3238145411014557,
+          "mean_accuracy_mlp_h128_weight": 0.34958407282829285,
+          "final_accuracy_mlp_h128_weight": 0.6736371517181396,
+          "mean_accuracy_mlp_h64_64_weight": 0.004272465128451586,
+          "final_accuracy_mlp_h64_64_weight": 0.0002606525085866451,
+          "mean_accuracy_upgd_low_noise_weight": 0.1342102289199829,
+          "final_accuracy_upgd_low_noise_weight": 0.0017439827788621187,
+          "mean_accuracy_dynamic_sparse_weight": 0.022303126752376556,
+          "final_accuracy_dynamic_sparse_weight": 0.000543762173037976,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.20535637438297272,
+          "final_window_mse": 0.20523715019226074
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.2134191393852234,
+          "final_window_mse": 0.2059590220451355
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2576841115951538,
+          "final_window_mse": 0.23334848880767822
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.3309214413166046,
+          "final_window_mse": 0.322370707988739
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.33045271039009094,
+          "final_window_mse": 0.29771825671195984
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 19,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20019,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.26659318804740906,
+          "final_window_mse": 0.411302775144577,
+          "mean_mlp_h64_weight": 0.3089255690574646,
+          "final_mlp_h64_weight": 0.28234297037124634,
+          "mean_mlp_h128_weight": 0.6825315356254578,
+          "final_mlp_h128_weight": 0.7176566123962402,
+          "mean_mlp_h64_64_weight": 0.0026873007882386446,
+          "final_mlp_h64_64_weight": 3.161209463087289e-07,
+          "mean_upgd_low_noise_weight": 0.0012101518223062158,
+          "final_upgd_low_noise_weight": 6.445851907178261e-17,
+          "mean_dynamic_sparse_weight": 0.004645446315407753,
+          "final_dynamic_sparse_weight": 4.699697736053918e-20,
+          "mean_mlp_guard_mlp_h64_weight": 0.3099071681499481,
+          "final_mlp_guard_mlp_h64_weight": 0.28234297037124634,
+          "mean_mlp_guard_mlp_h128_weight": 0.6859309673309326,
+          "final_mlp_guard_mlp_h128_weight": 0.7176566123962402,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.004161885008215904,
+          "final_mlp_guard_mlp_h64_64_weight": 3.161209463087289e-07,
+          "mean_accuracy_mlp_h64_weight": 0.6308416724205017,
+          "final_accuracy_mlp_h64_weight": 0.09288544952869415,
+          "mean_accuracy_mlp_h128_weight": 0.24596534669399261,
+          "final_accuracy_mlp_h128_weight": 0.03665837273001671,
+          "mean_accuracy_mlp_h64_64_weight": 0.11465957760810852,
+          "final_accuracy_mlp_h64_64_weight": 0.8564613461494446,
+          "mean_accuracy_upgd_low_noise_weight": 0.004102890379726887,
+          "final_accuracy_upgd_low_noise_weight": 0.0003822837898042053,
+          "mean_accuracy_dynamic_sparse_weight": 0.004430514294654131,
+          "final_accuracy_dynamic_sparse_weight": 0.013612672686576843,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2763749659061432,
+          "final_window_mse": 0.42367228865623474
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.26931825280189514,
+          "final_window_mse": 0.41243642568588257
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.3417494297027588,
+          "final_window_mse": 0.5204057097434998
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.43509718775749207,
+          "final_window_mse": 0.8009835481643677
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.435531884431839,
+          "final_window_mse": 0.8568745851516724
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 20,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20020,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.23088862001895905,
+          "final_window_mse": 0.3232477307319641,
+          "mean_mlp_h64_weight": 0.8022722601890564,
+          "final_mlp_h64_weight": 0.760130763053894,
+          "mean_mlp_h128_weight": 0.1463956981897354,
+          "final_mlp_h128_weight": 0.23986874520778656,
+          "mean_mlp_h64_64_weight": 0.002636366058140993,
+          "final_mlp_h64_64_weight": 4.24303578938634e-07,
+          "mean_upgd_low_noise_weight": 0.044534552842378616,
+          "final_upgd_low_noise_weight": 2.987373057937411e-24,
+          "mean_dynamic_sparse_weight": 0.0041611287742853165,
+          "final_dynamic_sparse_weight": 4.0456452583043504e-22,
+          "mean_mlp_guard_mlp_h64_weight": 0.8364509344100952,
+          "final_mlp_guard_mlp_h64_weight": 0.760130763053894,
+          "mean_mlp_guard_mlp_h128_weight": 0.15986205637454987,
+          "final_mlp_guard_mlp_h128_weight": 0.23986874520778656,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0036869903560727835,
+          "final_mlp_guard_mlp_h64_64_weight": 4.24303578938634e-07,
+          "mean_accuracy_mlp_h64_weight": 0.14799392223358154,
+          "final_accuracy_mlp_h64_weight": 0.5005058646202087,
+          "mean_accuracy_mlp_h128_weight": 0.7003238201141357,
+          "final_accuracy_mlp_h128_weight": 0.49912670254707336,
+          "mean_accuracy_mlp_h64_64_weight": 0.04123927652835846,
+          "final_accuracy_mlp_h64_64_weight": 4.1922485252143815e-05,
+          "mean_accuracy_upgd_low_noise_weight": 0.08654782176017761,
+          "final_accuracy_upgd_low_noise_weight": 9.808086178964004e-05,
+          "mean_accuracy_dynamic_sparse_weight": 0.023895112797617912,
+          "final_accuracy_dynamic_sparse_weight": 0.00022735483071301132,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.23169884085655212,
+          "final_window_mse": 0.3247058093547821
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.24524764716625214,
+          "final_window_mse": 0.34142187237739563
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.28919291496276855,
+          "final_window_mse": 0.422685444355011
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.4843981862068176,
+          "final_window_mse": 0.8551344871520996
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.4597109854221344,
+          "final_window_mse": 0.7945275902748108
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 21,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20021,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.19257117807865143,
+          "final_window_mse": 0.15548625588417053,
+          "mean_mlp_h64_weight": 0.3307524621486664,
+          "final_mlp_h64_weight": 0.7451283931732178,
+          "mean_mlp_h128_weight": 0.6643396019935608,
+          "final_mlp_h128_weight": 0.25480398535728455,
+          "mean_mlp_h64_64_weight": 0.0023905527777969837,
+          "final_mlp_h64_64_weight": 6.761810800526291e-05,
+          "mean_upgd_low_noise_weight": 0.0019608349539339542,
+          "final_upgd_low_noise_weight": 4.10948212308318e-13,
+          "mean_dynamic_sparse_weight": 0.0005566058098338544,
+          "final_dynamic_sparse_weight": 5.747968420677374e-11,
+          "mean_mlp_guard_mlp_h64_weight": 0.33158084750175476,
+          "final_mlp_guard_mlp_h64_weight": 0.7451283931732178,
+          "mean_mlp_guard_mlp_h128_weight": 0.6654123663902283,
+          "final_mlp_guard_mlp_h128_weight": 0.25480398535728455,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.003006762359291315,
+          "final_mlp_guard_mlp_h64_64_weight": 6.761810800526291e-05,
+          "mean_accuracy_mlp_h64_weight": 0.223198801279068,
+          "final_accuracy_mlp_h64_weight": 0.5381760597229004,
+          "mean_accuracy_mlp_h128_weight": 0.6737591624259949,
+          "final_accuracy_mlp_h128_weight": 0.4608955979347229,
+          "mean_accuracy_mlp_h64_64_weight": 0.01472115982323885,
+          "final_accuracy_mlp_h64_64_weight": 0.0008684925269335508,
+          "mean_accuracy_upgd_low_noise_weight": 0.07357021421194077,
+          "final_accuracy_upgd_low_noise_weight": 8.689050446264446e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.014750640839338303,
+          "final_accuracy_dynamic_sparse_weight": 5.117627733852714e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2007921040058136,
+          "final_window_mse": 0.15114367008209229
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.19631172716617584,
+          "final_window_mse": 0.16717617213726044
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2715298533439636,
+          "final_window_mse": 0.20820146799087524
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.36128556728363037,
+          "final_window_mse": 0.4071181118488312
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.3492651879787445,
+          "final_window_mse": 0.373146653175354
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 22,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20022,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.16634131968021393,
+          "final_window_mse": 0.2106187641620636,
+          "mean_mlp_h64_weight": 0.5057323575019836,
+          "final_mlp_h64_weight": 0.4990115463733673,
+          "mean_mlp_h128_weight": 0.46789315342903137,
+          "final_mlp_h128_weight": 0.500974714756012,
+          "mean_mlp_h64_64_weight": 0.0026693195104599,
+          "final_mlp_h64_64_weight": 1.3692972970602568e-05,
+          "mean_upgd_low_noise_weight": 0.014466242864727974,
+          "final_upgd_low_noise_weight": 9.202688389109426e-09,
+          "mean_dynamic_sparse_weight": 0.009238841943442822,
+          "final_dynamic_sparse_weight": 3.4882063904007055e-09,
+          "mean_mlp_guard_mlp_h64_weight": 0.5161036252975464,
+          "final_mlp_guard_mlp_h64_weight": 0.4990115463733673,
+          "mean_mlp_guard_mlp_h128_weight": 0.48014214634895325,
+          "final_mlp_guard_mlp_h128_weight": 0.500974714756012,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.003754244651645422,
+          "final_mlp_guard_mlp_h64_64_weight": 1.3692972970602568e-05,
+          "mean_accuracy_mlp_h64_weight": 0.4316070079803467,
+          "final_accuracy_mlp_h64_weight": 0.07303959131240845,
+          "mean_accuracy_mlp_h128_weight": 0.4669118821620941,
+          "final_accuracy_mlp_h128_weight": 0.9170389175415039,
+          "mean_accuracy_mlp_h64_64_weight": 0.04203921929001808,
+          "final_accuracy_mlp_h64_64_weight": 0.001427204580977559,
+          "mean_accuracy_upgd_low_noise_weight": 0.01638590730726719,
+          "final_accuracy_upgd_low_noise_weight": 0.004638024605810642,
+          "mean_accuracy_dynamic_sparse_weight": 0.04305600747466087,
+          "final_accuracy_dynamic_sparse_weight": 0.0038563404232263565,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.1719699203968048,
+          "final_window_mse": 0.21721822023391724
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1723647117614746,
+          "final_window_mse": 0.2168663591146469
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.2292102575302124,
+          "final_window_mse": 0.2879793643951416
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.25681063532829285,
+          "final_window_mse": 0.4181912839412689
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.26198872923851013,
+          "final_window_mse": 0.4109806716442108
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 23,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20023,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.24469825625419617,
+          "final_window_mse": 0.38087019324302673,
+          "mean_mlp_h64_weight": 0.4992871582508087,
+          "final_mlp_h64_weight": 0.995933473110199,
+          "mean_mlp_h128_weight": 0.49109944701194763,
+          "final_mlp_h128_weight": 0.0040557850152254105,
+          "mean_mlp_h64_64_weight": 0.002201266586780548,
+          "final_mlp_h64_64_weight": 1.0832369298441336e-05,
+          "mean_upgd_low_noise_weight": 0.003802297171205282,
+          "final_upgd_low_noise_weight": 2.603497417652534e-10,
+          "mean_dynamic_sparse_weight": 0.0036097820848226547,
+          "final_dynamic_sparse_weight": 4.596309111093433e-09,
+          "mean_mlp_guard_mlp_h64_weight": 0.5002627372741699,
+          "final_mlp_guard_mlp_h64_weight": 0.995933473110199,
+          "mean_mlp_guard_mlp_h128_weight": 0.4956975281238556,
+          "final_mlp_guard_mlp_h128_weight": 0.0040557850152254105,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.004039747174829245,
+          "final_mlp_guard_mlp_h64_64_weight": 1.0832369298441336e-05,
+          "mean_accuracy_mlp_h64_weight": 0.07424550503492355,
+          "final_accuracy_mlp_h64_weight": 0.22803151607513428,
+          "mean_accuracy_mlp_h128_weight": 0.750725507736206,
+          "final_accuracy_mlp_h128_weight": 0.7052688598632812,
+          "mean_accuracy_mlp_h64_64_weight": 0.07299280911684036,
+          "final_accuracy_mlp_h64_64_weight": 0.06593408435583115,
+          "mean_accuracy_upgd_low_noise_weight": 0.07445566356182098,
+          "final_accuracy_upgd_low_noise_weight": 0.0007147510186769068,
+          "mean_accuracy_dynamic_sparse_weight": 0.027580471709370613,
+          "final_accuracy_dynamic_sparse_weight": 5.0893497245851904e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.25005626678466797,
+          "final_window_mse": 0.37779471278190613
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.2569284737110138,
+          "final_window_mse": 0.4203585684299469
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.30803167819976807,
+          "final_window_mse": 0.4668044149875641
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.37037304043769836,
+          "final_window_mse": 0.5873826742172241
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.3677336871623993,
+          "final_window_mse": 0.5716814398765564
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 24,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20024,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.28763940930366516,
+          "final_window_mse": 0.2997095286846161,
+          "mean_mlp_h64_weight": 0.7496245503425598,
+          "final_mlp_h64_weight": 0.9156622290611267,
+          "mean_mlp_h128_weight": 0.2326839119195938,
+          "final_mlp_h128_weight": 0.08388133347034454,
+          "mean_mlp_h64_64_weight": 0.00431009940803051,
+          "final_mlp_h64_64_weight": 0.0004563452966976911,
+          "mean_upgd_low_noise_weight": 0.011294033378362656,
+          "final_upgd_low_noise_weight": 1.9174632087756504e-19,
+          "mean_dynamic_sparse_weight": 0.002087475499138236,
+          "final_dynamic_sparse_weight": 1.6091712232766504e-16,
+          "mean_mlp_guard_mlp_h64_weight": 0.7591413259506226,
+          "final_mlp_guard_mlp_h64_weight": 0.9156622290611267,
+          "mean_mlp_guard_mlp_h128_weight": 0.23574335873126984,
+          "final_mlp_guard_mlp_h128_weight": 0.08388133347034454,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.005115330219268799,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0004563452966976911,
+          "mean_accuracy_mlp_h64_weight": 0.2583601772785187,
+          "final_accuracy_mlp_h64_weight": 0.33233538269996643,
+          "mean_accuracy_mlp_h128_weight": 0.49457937479019165,
+          "final_accuracy_mlp_h128_weight": 0.6672160029411316,
+          "mean_accuracy_mlp_h64_64_weight": 0.18266814947128296,
+          "final_accuracy_mlp_h64_64_weight": 0.00044845903175882995,
+          "mean_accuracy_upgd_low_noise_weight": 0.047700684517621994,
+          "final_accuracy_upgd_low_noise_weight": 5.6288104843815745e-08,
+          "mean_accuracy_dynamic_sparse_weight": 0.016691602766513824,
+          "final_accuracy_dynamic_sparse_weight": 4.0071221008020075e-08,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.2907359302043915,
+          "final_window_mse": 0.28678175806999207
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.3016665577888489,
+          "final_window_mse": 0.32109445333480835
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.35593700408935547,
+          "final_window_mse": 0.3120124340057373
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.5139707326889038,
+          "final_window_mse": 0.6657394766807556
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.49846482276916504,
+          "final_window_mse": 0.6171397566795349
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 25,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20025,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.2865908443927765,
+          "final_window_mse": 0.355704128742218,
+          "mean_mlp_h64_weight": 0.6220499873161316,
+          "final_mlp_h64_weight": 0.16621163487434387,
+          "mean_mlp_h128_weight": 0.37311482429504395,
+          "final_mlp_h128_weight": 0.833788275718689,
+          "mean_mlp_h64_64_weight": 0.0009031548979692161,
+          "final_mlp_h64_64_weight": 5.7799912411837795e-08,
+          "mean_upgd_low_noise_weight": 0.0034324307925999165,
+          "final_upgd_low_noise_weight": 3.3296069512214847e-19,
+          "mean_dynamic_sparse_weight": 0.0004996119532734156,
+          "final_dynamic_sparse_weight": 4.378909287988823e-18,
+          "mean_mlp_guard_mlp_h64_weight": 0.6240496039390564,
+          "final_mlp_guard_mlp_h64_weight": 0.16621163487434387,
+          "mean_mlp_guard_mlp_h128_weight": 0.3747151494026184,
+          "final_mlp_guard_mlp_h128_weight": 0.833788275718689,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.0012352371122688055,
+          "final_mlp_guard_mlp_h64_64_weight": 5.7799912411837795e-08,
+          "mean_accuracy_mlp_h64_weight": 0.6674907207489014,
+          "final_accuracy_mlp_h64_weight": 0.5619725584983826,
+          "mean_accuracy_mlp_h128_weight": 0.2984470725059509,
+          "final_accuracy_mlp_h128_weight": 0.43774351477622986,
+          "mean_accuracy_mlp_h64_64_weight": 0.014140990562736988,
+          "final_accuracy_mlp_h64_64_weight": 0.00028368932544253767,
+          "mean_accuracy_upgd_low_noise_weight": 0.01804954931139946,
+          "final_accuracy_upgd_low_noise_weight": 2.2060152105041198e-07,
+          "mean_accuracy_dynamic_sparse_weight": 0.0018717050552368164,
+          "final_accuracy_dynamic_sparse_weight": 1.2204850463604089e-08,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.29214394092559814,
+          "final_window_mse": 0.36987239122390747
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.29458457231521606,
+          "final_window_mse": 0.35769036412239075
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.37537363171577454,
+          "final_window_mse": 0.4855923354625702
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.5207462310791016,
+          "final_window_mse": 0.7487643361091614
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.4809568226337433,
+          "final_window_mse": 0.7260122895240784
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 26,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20026,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.18548552691936493,
+          "final_window_mse": 0.22801215946674347,
+          "mean_mlp_h64_weight": 0.6100521683692932,
+          "final_mlp_h64_weight": 0.8276663422584534,
+          "mean_mlp_h128_weight": 0.32637348771095276,
+          "final_mlp_h128_weight": 0.17198239266872406,
+          "mean_mlp_h64_64_weight": 0.005193131510168314,
+          "final_mlp_h64_64_weight": 0.00035122164990752935,
+          "mean_upgd_low_noise_weight": 0.054078228771686554,
+          "final_upgd_low_noise_weight": 9.55954502128507e-16,
+          "mean_dynamic_sparse_weight": 0.004302963614463806,
+          "final_dynamic_sparse_weight": 4.751671603929475e-13,
+          "mean_mlp_guard_mlp_h64_weight": 0.6310108304023743,
+          "final_mlp_guard_mlp_h64_weight": 0.8276663422584534,
+          "mean_mlp_guard_mlp_h128_weight": 0.3621542453765869,
+          "final_mlp_guard_mlp_h128_weight": 0.17198239266872406,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.00683493772521615,
+          "final_mlp_guard_mlp_h64_64_weight": 0.00035122164990752935,
+          "mean_accuracy_mlp_h64_weight": 0.3307860195636749,
+          "final_accuracy_mlp_h64_weight": 0.9804221987724304,
+          "mean_accuracy_mlp_h128_weight": 0.4237423241138458,
+          "final_accuracy_mlp_h128_weight": 0.018816588446497917,
+          "mean_accuracy_mlp_h64_64_weight": 0.09033044427633286,
+          "final_accuracy_mlp_h64_64_weight": 0.000737084774300456,
+          "mean_accuracy_upgd_low_noise_weight": 0.13163582980632782,
+          "final_accuracy_upgd_low_noise_weight": 9.61497971729841e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.023505371063947678,
+          "final_accuracy_dynamic_sparse_weight": 1.446395708626369e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.1892930567264557,
+          "final_window_mse": 0.22889447212219238
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1966586709022522,
+          "final_window_mse": 0.23741520941257477
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.23430342972278595,
+          "final_window_mse": 0.2719196081161499
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.35256215929985046,
+          "final_window_mse": 0.5236037373542786
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.33896705508232117,
+          "final_window_mse": 0.47034287452697754
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 27,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20027,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.321237176656723,
+          "final_window_mse": 0.33489835262298584,
+          "mean_mlp_h64_weight": 0.5726326704025269,
+          "final_mlp_h64_weight": 0.6532105803489685,
+          "mean_mlp_h128_weight": 0.42156875133514404,
+          "final_mlp_h128_weight": 0.34678494930267334,
+          "mean_mlp_h64_64_weight": 0.0014197540003806353,
+          "final_mlp_h64_64_weight": 4.437529241840821e-06,
+          "mean_upgd_low_noise_weight": 0.0034096355084329844,
+          "final_upgd_low_noise_weight": 2.8196440717627352e-24,
+          "mean_dynamic_sparse_weight": 0.0009692221065051854,
+          "final_dynamic_sparse_weight": 1.473737482367154e-27,
+          "mean_mlp_guard_mlp_h64_weight": 0.5744205713272095,
+          "final_mlp_guard_mlp_h64_weight": 0.6532105803489685,
+          "mean_mlp_guard_mlp_h128_weight": 0.42346182465553284,
+          "final_mlp_guard_mlp_h128_weight": 0.34678494930267334,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.002117616357281804,
+          "final_mlp_guard_mlp_h64_64_weight": 4.437529241840821e-06,
+          "mean_accuracy_mlp_h64_weight": 0.12659059464931488,
+          "final_accuracy_mlp_h64_weight": 0.7396307587623596,
+          "mean_accuracy_mlp_h128_weight": 0.7518982887268066,
+          "final_accuracy_mlp_h128_weight": 0.1674964278936386,
+          "mean_accuracy_mlp_h64_64_weight": 0.08970588445663452,
+          "final_accuracy_mlp_h64_64_weight": 0.09287206083536148,
+          "mean_accuracy_upgd_low_noise_weight": 0.014159906655550003,
+          "final_accuracy_upgd_low_noise_weight": 6.722734724462498e-07,
+          "mean_accuracy_dynamic_sparse_weight": 0.017645299434661865,
+          "final_accuracy_dynamic_sparse_weight": 9.366339526195588e-08,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.3270643353462219,
+          "final_window_mse": 0.3372843563556671
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.3295162320137024,
+          "final_window_mse": 0.3430357277393341
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.40740901231765747,
+          "final_window_mse": 0.4013068974018097
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.7390004992485046,
+          "final_window_mse": 0.7214352488517761
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.7231720089912415,
+          "final_window_mse": 0.7736365795135498
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 28,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20028,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.14894899725914001,
+          "final_window_mse": 0.23696869611740112,
+          "mean_mlp_h64_weight": 0.3065720200538635,
+          "final_mlp_h64_weight": 0.2212238609790802,
+          "mean_mlp_h128_weight": 0.6780495047569275,
+          "final_mlp_h128_weight": 0.777228832244873,
+          "mean_mlp_h64_64_weight": 0.011144053190946579,
+          "final_mlp_h64_64_weight": 0.0015063107712194324,
+          "mean_upgd_low_noise_weight": 0.0019544954411685467,
+          "final_upgd_low_noise_weight": 1.3172368198866025e-05,
+          "mean_dynamic_sparse_weight": 0.002279888838529587,
+          "final_dynamic_sparse_weight": 2.7782405595644377e-05,
+          "mean_mlp_guard_mlp_h64_weight": 0.30837565660476685,
+          "final_mlp_guard_mlp_h64_weight": 0.22123292088508606,
+          "mean_mlp_guard_mlp_h128_weight": 0.6795085668563843,
+          "final_mlp_guard_mlp_h128_weight": 0.7772606611251831,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.012115774676203728,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0015063724713400006,
+          "mean_accuracy_mlp_h64_weight": 0.21823756396770477,
+          "final_accuracy_mlp_h64_weight": 0.15805478394031525,
+          "mean_accuracy_mlp_h128_weight": 0.5852859020233154,
+          "final_accuracy_mlp_h128_weight": 0.835123598575592,
+          "mean_accuracy_mlp_h64_64_weight": 0.006958378944545984,
+          "final_accuracy_mlp_h64_64_weight": 0.0006108402740210295,
+          "mean_accuracy_upgd_low_noise_weight": 0.15353329479694366,
+          "final_accuracy_upgd_low_noise_weight": 0.006194607354700565,
+          "mean_accuracy_dynamic_sparse_weight": 0.03598487377166748,
+          "final_accuracy_dynamic_sparse_weight": 1.6169457012438215e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.15629225969314575,
+          "final_window_mse": 0.24713121354579926
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.1507711559534073,
+          "final_window_mse": 0.23757652938365936
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.1899934858083725,
+          "final_window_mse": 0.2774532437324524
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.2217656522989273,
+          "final_window_mse": 0.35977447032928467
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.22008654475212097,
+          "final_window_mse": 0.34738287329673767
+        }
+      }
+    },
+    {
+      "dataset_name": "synthetic_compositional",
+      "seed": 29,
+      "dataset": {
+        "dataset": "synthetic_compositional",
+        "feature_dim": 6,
+        "n_heads": 3,
+        "steps": 1200,
+        "stream_seed": 20029,
+        "description": "Two-hidden-layer tanh oracle outside shallow feature classes.",
+        "regime": "synthetic_compositional",
+        "context_length": 300
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.1478181630373001,
+          "final_window_mse": 0.2279377281665802,
+          "mean_mlp_h64_weight": 0.3931315243244171,
+          "final_mlp_h64_weight": 0.7249867916107178,
+          "mean_mlp_h128_weight": 0.5250734090805054,
+          "final_mlp_h128_weight": 0.27435189485549927,
+          "mean_mlp_h64_64_weight": 0.028952935710549355,
+          "final_mlp_h64_64_weight": 0.0005957450484856963,
+          "mean_upgd_low_noise_weight": 0.05090034380555153,
+          "final_upgd_low_noise_weight": 8.013609658519272e-06,
+          "mean_dynamic_sparse_weight": 0.0019417812582105398,
+          "final_dynamic_sparse_weight": 5.753890945925377e-05,
+          "mean_mlp_guard_mlp_h64_weight": 0.42436057329177856,
+          "final_mlp_guard_mlp_h64_weight": 0.7250342965126038,
+          "mean_mlp_guard_mlp_h128_weight": 0.542119026184082,
+          "final_mlp_guard_mlp_h128_weight": 0.27436989545822144,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.033520400524139404,
+          "final_mlp_guard_mlp_h64_64_weight": 0.0005957841058261693,
+          "mean_accuracy_mlp_h64_weight": 0.20876142382621765,
+          "final_accuracy_mlp_h64_weight": 0.17141583561897278,
+          "mean_accuracy_mlp_h128_weight": 0.6666418313980103,
+          "final_accuracy_mlp_h128_weight": 0.4682260751724243,
+          "mean_accuracy_mlp_h64_64_weight": 0.09972111880779266,
+          "final_accuracy_mlp_h64_64_weight": 0.34652814269065857,
+          "mean_accuracy_upgd_low_noise_weight": 0.014016655273735523,
+          "final_accuracy_upgd_low_noise_weight": 0.008569106459617615,
+          "mean_accuracy_dynamic_sparse_weight": 0.010858913883566856,
+          "final_accuracy_dynamic_sparse_weight": 0.005260840989649296,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.1544472724199295,
+          "final_window_mse": 0.23055674135684967
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.15375064313411713,
+          "final_window_mse": 0.237312451004982
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.18120740354061127,
+          "final_window_mse": 0.27249032258987427
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.22342351078987122,
+          "final_window_mse": 0.3455284833908081
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.22912274301052094,
+          "final_window_mse": 0.3218066692352295
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "synthetic_compositional": {
+      "mixture": {
+        "final_accuracy_dynamic_sparse_weight": {
+          "mean": 0.02967241809630892,
+          "stderr": 0.021165255175691938,
+          "values": [
+            0.25353649258613586,
+            0.5928879976272583,
+            0.00877202395349741,
+            1.1198068932571914e-05,
+            2.159023715364583e-08,
+            0.0008854034240357578,
+            2.128224696207326e-05,
+            4.96292295792955e-06,
+            1.041423058900648e-09,
+            0.0006264853873290122,
+            5.792658157588448e-07,
+            0.005599763710051775,
+            0.00012990260438527912,
+            0.0003399781708139926,
+            1.1450408976543258e-07,
+            0.0004332245443947613,
+            5.81218216666457e-07,
+            0.0032887097913771868,
+            0.000543762173037976,
+            0.013612672686576843,
+            0.00022735483071301132,
+            5.117627733852714e-05,
+            0.0038563404232263565,
+            5.0893497245851904e-05,
+            4.0071221008020075e-08,
+            1.2204850463604089e-08,
+            1.446395708626369e-05,
+            9.366339526195588e-08,
+            1.6169457012438215e-05,
+            0.005260840989649296
+          ]
+        },
+        "final_accuracy_mlp_h128_weight": {
+          "mean": 0.495862196944654,
+          "stderr": 0.05630962761669463,
+          "values": [
+            0.36247625946998596,
+            0.09011951833963394,
+            0.943884015083313,
+            0.8394957780838013,
+            0.5512164831161499,
+            0.32783350348472595,
+            0.15059491991996765,
+            0.8874964118003845,
+            0.3991941809654236,
+            0.8260272145271301,
+            0.9739840626716614,
+            0.23454566299915314,
+            0.1091725155711174,
+            0.06293990463018417,
+            0.8740575909614563,
+            0.6146365404129028,
+            0.5489959120750427,
+            0.19194762408733368,
+            0.6736371517181396,
+            0.03665837273001671,
+            0.49912670254707336,
+            0.4608955979347229,
+            0.9170389175415039,
+            0.7052688598632812,
+            0.6672160029411316,
+            0.43774351477622986,
+            0.018816588446497917,
+            0.1674964278936386,
+            0.835123598575592,
+            0.4682260751724243
+          ]
+        },
+        "final_accuracy_mlp_h64_64_weight": {
+          "mean": 0.057491947027009854,
+          "stderr": 0.03080695740629602,
+          "values": [
+            0.23478873074054718,
+            0.04594701901078224,
+            0.00019932593568228185,
+            0.00471202377229929,
+            0.009733558632433414,
+            0.0024621153715997934,
+            1.2084150284863426e-06,
+            0.0009417430264875293,
+            0.024466775357723236,
+            0.0012333542108535767,
+            0.013916753232479095,
+            0.0069611044600605965,
+            0.0005334398592822254,
+            0.0010200527030974627,
+            0.00040557829197496176,
+            0.004113717935979366,
+            0.00025361281586810946,
+            0.006594317499548197,
+            0.0002606525085866451,
+            0.8564613461494446,
+            4.1922485252143815e-05,
+            0.0008684925269335508,
+            0.001427204580977559,
+            0.06593408435583115,
+            0.00044845903175882995,
+            0.00028368932544253767,
+            0.000737084774300456,
+            0.09287206083536148,
+            0.0006108402740210295,
+            0.34652814269065857
+          ]
+        },
+        "final_accuracy_mlp_h64_weight": {
+          "mean": 0.3799430632342895,
+          "stderr": 0.0542977971486906,
+          "values": [
+            0.009419107809662819,
+            0.26816582679748535,
+            0.04615858942270279,
+            0.15575316548347473,
+            0.43904951214790344,
+            0.6687319874763489,
+            0.8493292331695557,
+            0.11155525594949722,
+            0.5763390064239502,
+            0.1400381624698639,
+            0.012095773592591286,
+            0.06123683601617813,
+            0.890158474445343,
+            0.9355149269104004,
+            0.1255367398262024,
+            0.37319520115852356,
+            0.45074936747550964,
+            0.5849801898002625,
+            0.3238145411014557,
+            0.09288544952869415,
+            0.5005058646202087,
+            0.5381760597229004,
+            0.07303959131240845,
+            0.22803151607513428,
+            0.33233538269996643,
+            0.5619725584983826,
+            0.9804221987724304,
+            0.7396307587623596,
+            0.15805478394031525,
+            0.17141583561897278
+          ]
+        },
+        "final_accuracy_upgd_low_noise_weight": {
+          "mean": 0.03703037990963746,
+          "stderr": 0.024056270226107474,
+          "values": [
+            0.1397794485092163,
+            0.0028796677943319082,
+            0.0009860539576038718,
+            2.7690601200447418e-05,
+            4.0459678984916536e-07,
+            8.697529119672254e-05,
+            5.334755769581534e-05,
+            1.7216478909176658e-06,
+            1.1628887852666026e-09,
+            0.032074782997369766,
+            2.9481016099452972e-06,
+            0.6916566491127014,
+            5.576956027653068e-06,
+            0.0001850218395702541,
+            2.898720596888893e-09,
+            0.007621299009770155,
+            4.858228521698038e-07,
+            0.2131892293691635,
+            0.0017439827788621187,
+            0.0003822837898042053,
+            9.808086178964004e-05,
+            8.689050446264446e-06,
+            0.004638024605810642,
+            0.0007147510186769068,
+            5.6288104843815745e-08,
+            2.2060152105041198e-07,
+            9.61497971729841e-06,
+            6.722734724462498e-07,
+            0.006194607354700565,
+            0.008569106459617615
+          ]
+        },
+        "final_dynamic_sparse_weight": {
+          "mean": 0.0006137261561846061,
+          "stderr": 0.0005679551775645654,
+          "values": [
+            0.0002671263355296105,
+            0.0007875554147176445,
+            1.0450094262148824e-10,
+            6.675908662145957e-05,
+            3.3256233877843044e-10,
+            0.00012552081898320466,
+            7.557314063433296e-08,
+            7.971006125116753e-13,
+            2.9948685304202566e-37,
+            1.4174356692819856e-06,
+            3.112551074948905e-20,
+            0.01706523820757866,
+            1.8568424309250986e-07,
+            3.3442997704469235e-08,
+            8.842615672984539e-17,
+            1.1098999493697193e-05,
+            3.2072015810167425e-17,
+            2.371671712353418e-07,
+            1.2066240060448763e-06,
+            4.699697736053918e-20,
+            4.0456452583043504e-22,
+            5.747968420677374e-11,
+            3.4882063904007055e-09,
+            4.596309111093433e-09,
+            1.6091712232766504e-16,
+            4.378909287988823e-18,
+            4.751671603929475e-13,
+            1.473737482367154e-27,
+            2.7782405595644377e-05,
+            5.753890945925377e-05
+          ]
+        },
+        "final_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "final_mlp_guard_mlp_h128_weight": {
+          "mean": 0.4497849922006329,
+          "stderr": 0.04503391816024637,
+          "values": [
+            0.35198116302490234,
+            0.5626416206359863,
+            0.231402188539505,
+            0.4370883107185364,
+            0.744932234287262,
+            0.6362906694412231,
+            0.7963272333145142,
+            0.8987346887588501,
+            0.805160403251648,
+            0.45365622639656067,
+            0.5688210725784302,
+            0.530835747718811,
+            0.395297646522522,
+            0.19130723178386688,
+            0.2641811966896057,
+            0.6241031289100647,
+            0.21098704636096954,
+            0.2984677851200104,
+            0.2859068214893341,
+            0.7176566123962402,
+            0.23986874520778656,
+            0.25480398535728455,
+            0.500974714756012,
+            0.0040557850152254105,
+            0.08388133347034454,
+            0.833788275718689,
+            0.17198239266872406,
+            0.34678494930267334,
+            0.7772606611251831,
+            0.27436989545822144
+          ]
+        },
+        "final_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.0025215938000736553,
+          "stderr": 0.0014092648357939158,
+          "values": [
+            0.03682323172688484,
+            1.349939157080371e-05,
+            1.0344204383727629e-05,
+            0.0008919791434891522,
+            0.000643712526652962,
+            0.004182866774499416,
+            1.3684282748727128e-05,
+            3.435863149547913e-08,
+            5.9152458561584353e-05,
+            0.0026470862794667482,
+            4.8573449021205306e-05,
+            0.02301964908838272,
+            0.0002804559771902859,
+            4.650049504562048e-06,
+            0.001107785734347999,
+            5.845146733918227e-05,
+            0.001069268910214305,
+            0.0007260633283294737,
+            0.0010402221232652664,
+            3.161209463087289e-07,
+            4.24303578938634e-07,
+            6.761810800526291e-05,
+            1.3692972970602568e-05,
+            1.0832369298441336e-05,
+            0.0004563452966976911,
+            5.7799912411837795e-08,
+            0.00035122164990752935,
+            4.437529241840821e-06,
+            0.0015063724713400006,
+            0.0005957841058261693
+          ]
+        },
+        "final_mlp_guard_mlp_h64_weight": {
+          "mean": 0.547693407535553,
+          "stderr": 0.04502082216486843,
+          "values": [
+            0.6111955642700195,
+            0.43734487891197205,
+            0.7685874700546265,
+            0.5620197057723999,
+            0.2544240951538086,
+            0.35952648520469666,
+            0.20365911722183228,
+            0.1012653261423111,
+            0.19478048384189606,
+            0.5436967015266418,
+            0.43113037943840027,
+            0.44614464044570923,
+            0.6044219136238098,
+            0.8086881637573242,
+            0.7347111105918884,
+            0.37583836913108826,
+            0.7879436612129211,
+            0.7008061408996582,
+            0.7130528688430786,
+            0.28234297037124634,
+            0.760130763053894,
+            0.7451283931732178,
+            0.4990115463733673,
+            0.995933473110199,
+            0.9156622290611267,
+            0.16621163487434387,
+            0.8276663422584534,
+            0.6532105803489685,
+            0.22123292088508606,
+            0.7250342965126038
+          ]
+        },
+        "final_mlp_h128_weight": {
+          "mean": 0.44870294636736313,
+          "stderr": 0.044978940161629614,
+          "values": [
+            0.3516698479652405,
+            0.5621466636657715,
+            0.231402188539505,
+            0.43705809116363525,
+            0.744932234287262,
+            0.636191189289093,
+            0.7963271141052246,
+            0.8987346887588501,
+            0.805160403251648,
+            0.4536551237106323,
+            0.5688210725784302,
+            0.499593585729599,
+            0.39529749751091003,
+            0.19130723178386688,
+            0.2641811966896057,
+            0.6238715648651123,
+            0.21098704636096954,
+            0.2984676957130432,
+            0.28590643405914307,
+            0.7176566123962402,
+            0.23986874520778656,
+            0.25480398535728455,
+            0.500974714756012,
+            0.0040557850152254105,
+            0.08388133347034454,
+            0.833788275718689,
+            0.17198239266872406,
+            0.34678494930267334,
+            0.777228832244873,
+            0.27435189485549927
+          ]
+        },
+        "final_mlp_h64_64_weight": {
+          "mean": 0.0024753191748539886,
+          "stderr": 0.0013862371034076702,
+          "values": [
+            0.03679066523909569,
+            1.348751629848266e-05,
+            1.0344204383727629e-05,
+            0.0008919174433685839,
+            0.000643712526652962,
+            0.004182212520390749,
+            1.3684280929737724e-05,
+            3.435863149547913e-08,
+            5.9152458561584353e-05,
+            0.0026470795273780823,
+            4.8573449021205306e-05,
+            0.021664835512638092,
+            0.00028045588987879455,
+            4.650049504562048e-06,
+            0.001107785734347999,
+            5.8429774071555585e-05,
+            0.001069268910214305,
+            0.000726063153706491,
+            0.0010402207262814045,
+            3.161209463087289e-07,
+            4.24303578938634e-07,
+            6.761810800526291e-05,
+            1.3692972970602568e-05,
+            1.0832369298441336e-05,
+            0.0004563452966976911,
+            5.7799912411837795e-08,
+            0.00035122164990752935,
+            4.437529241840821e-06,
+            0.0015063107712194324,
+            0.0005957450484856963
+          ]
+        },
+        "final_mlp_h64_weight": {
+          "mean": 0.5467775161067645,
+          "stderr": 0.045098249152870334,
+          "values": [
+            0.6106550097465515,
+            0.4369601607322693,
+            0.7685874700546265,
+            0.5619808435440063,
+            0.2544240951538086,
+            0.35947027802467346,
+            0.20365910232067108,
+            0.1012653261423111,
+            0.19478048384189606,
+            0.5436953902244568,
+            0.43113037943840027,
+            0.419886976480484,
+            0.6044216752052307,
+            0.8086881637573242,
+            0.7347111105918884,
+            0.37569889426231384,
+            0.7879436612129211,
+            0.7008059620857239,
+            0.7130519151687622,
+            0.28234297037124634,
+            0.760130763053894,
+            0.7451283931732178,
+            0.4990115463733673,
+            0.995933473110199,
+            0.9156622290611267,
+            0.16621163487434387,
+            0.8276663422584534,
+            0.6532105803489685,
+            0.2212238609790802,
+            0.7249867916107178
+          ]
+        },
+        "final_upgd_low_noise_weight": {
+          "mean": 0.0014304875338070496,
+          "stderr": 0.001391883524982331,
+          "values": [
+            0.0006173066212795675,
+            9.211280121235177e-05,
+            4.1558906316296884e-10,
+            2.357684252274339e-06,
+            4.28473978519861e-10,
+            3.0894232622813433e-05,
+            4.1297903985437756e-10,
+            6.568288931517094e-16,
+            0.0,
+            1.0138982133867103e-06,
+            1.1853003000428348e-20,
+            0.041789401322603226,
+            1.4246954549435031e-07,
+            1.333158650140831e-08,
+            3.969693074017398e-21,
+            0.00036000495310872793,
+            5.74258611435152e-19,
+            1.4991962116184254e-09,
+            1.8050224070975673e-07,
+            6.445851907178261e-17,
+            2.987373057937411e-24,
+            4.10948212308318e-13,
+            9.202688389109426e-09,
+            2.603497417652534e-10,
+            1.9174632087756504e-19,
+            3.3296069512214847e-19,
+            9.55954502128507e-16,
+            2.8196440717627352e-24,
+            1.3172368198866025e-05,
+            8.013609658519272e-06
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.2617614224553108,
+          "stderr": 0.01971984322376719,
+          "values": [
+            0.14348278939723969,
+            0.22369664907455444,
+            0.4500044286251068,
+            0.18578849732875824,
+            0.2878468930721283,
+            0.10885348170995712,
+            0.23526069521903992,
+            0.3226569890975952,
+            0.5607330799102783,
+            0.1872081458568573,
+            0.3813028335571289,
+            0.0659327581524849,
+            0.20780645310878754,
+            0.21566380560398102,
+            0.21292847394943237,
+            0.1809612214565277,
+            0.3453807532787323,
+            0.1699523776769638,
+            0.202626034617424,
+            0.411302775144577,
+            0.3232477307319641,
+            0.15548625588417053,
+            0.2106187641620636,
+            0.38087019324302673,
+            0.2997095286846161,
+            0.355704128742218,
+            0.22801215946674347,
+            0.33489835262298584,
+            0.23696869611740112,
+            0.2279377281665802
+          ]
+        },
+        "mean_accuracy_dynamic_sparse_weight": {
+          "mean": 0.023917557601816953,
+          "stderr": 0.005871473261081645,
+          "values": [
+            0.12479820102453232,
+            0.024466918781399727,
+            0.002319928491488099,
+            0.11405592411756516,
+            0.00453453604131937,
+            0.0010100099025294185,
+            0.0027080117724835873,
+            0.00810259860008955,
+            0.006864444352686405,
+            0.017478186637163162,
+            0.04516008868813515,
+            0.09371934086084366,
+            0.0011356072500348091,
+            0.005829164758324623,
+            0.009461265988647938,
+            0.009184276685118675,
+            0.0017466041026636958,
+            0.0023779801558703184,
+            0.022303126752376556,
+            0.004430514294654131,
+            0.023895112797617912,
+            0.014750640839338303,
+            0.04305600747466087,
+            0.027580471709370613,
+            0.016691602766513824,
+            0.0018717050552368164,
+            0.023505371063947678,
+            0.017645299434661865,
+            0.03598487377166748,
+            0.010858913883566856
+          ]
+        },
+        "mean_accuracy_mlp_h128_weight": {
+          "mean": 0.5009980117281277,
+          "stderr": 0.031163854979490847,
+          "values": [
+            0.5105484127998352,
+            0.34045618772506714,
+            0.33794915676116943,
+            0.3804251253604889,
+            0.3072493374347687,
+            0.8648586273193359,
+            0.15834668278694153,
+            0.5496629476547241,
+            0.522547721862793,
+            0.4619803726673126,
+            0.36282986402511597,
+            0.48928043246269226,
+            0.5955496430397034,
+            0.5002536773681641,
+            0.556275486946106,
+            0.45990824699401855,
+            0.7896009087562561,
+            0.43435293436050415,
+            0.34958407282829285,
+            0.24596534669399261,
+            0.7003238201141357,
+            0.6737591624259949,
+            0.4669118821620941,
+            0.750725507736206,
+            0.49457937479019165,
+            0.2984470725059509,
+            0.4237423241138458,
+            0.7518982887268066,
+            0.5852859020233154,
+            0.6666418313980103
+          ]
+        },
+        "mean_accuracy_mlp_h64_64_weight": {
+          "mean": 0.07396819255469987,
+          "stderr": 0.014346754533794408,
+          "values": [
+            0.09303272515535355,
+            0.0648813247680664,
+            0.00961522851139307,
+            0.18504363298416138,
+            0.04393555968999863,
+            0.0052596768364310265,
+            0.00840869639068842,
+            0.002982768462970853,
+            0.0058423359878361225,
+            0.10911896079778671,
+            0.3862079977989197,
+            0.0817963182926178,
+            0.0276342686265707,
+            0.030931435525417328,
+            0.15230372548103333,
+            0.06667327880859375,
+            0.09301824122667313,
+            0.07891012728214264,
+            0.004272465128451586,
+            0.11465957760810852,
+            0.04123927652835846,
+            0.01472115982323885,
+            0.04203921929001808,
+            0.07299280911684036,
+            0.18266814947128296,
+            0.014140990562736988,
+            0.09033044427633286,
+            0.08970588445663452,
+            0.006958378944545984,
+            0.09972111880779266
+          ]
+        },
+        "mean_accuracy_mlp_h64_weight": {
+          "mean": 0.35106273368000984,
+          "stderr": 0.03519603681135899,
+          "values": [
+            0.16969896852970123,
+            0.4475814700126648,
+            0.62421053647995,
+            0.2629861831665039,
+            0.6348958015441895,
+            0.12760357558727264,
+            0.8297157883644104,
+            0.42829564213752747,
+            0.46113529801368713,
+            0.3711856007575989,
+            0.1842447966337204,
+            0.26146140694618225,
+            0.373402863740921,
+            0.44883930683135986,
+            0.24094238877296448,
+            0.4605867564678192,
+            0.09147278964519501,
+            0.30587929487228394,
+            0.4896301329135895,
+            0.6308416724205017,
+            0.14799392223358154,
+            0.223198801279068,
+            0.4316070079803467,
+            0.07424550503492355,
+            0.2583601772785187,
+            0.6674907207489014,
+            0.3307860195636749,
+            0.12659059464931488,
+            0.21823756396770477,
+            0.20876142382621765
+          ]
+        },
+        "mean_accuracy_upgd_low_noise_weight": {
+          "mean": 0.05005350630963221,
+          "stderr": 0.00940565035941603,
+          "values": [
+            0.1019216775894165,
+            0.12261412292718887,
+            0.025905171409249306,
+            0.05748912692070007,
+            0.00938478671014309,
+            0.001268097315914929,
+            0.000820846064016223,
+            0.01095608714967966,
+            0.0036102335434406996,
+            0.04023687541484833,
+            0.021557286381721497,
+            0.07374248653650284,
+            0.002277625259011984,
+            0.014146426692605019,
+            0.04101715609431267,
+            0.0036474557127803564,
+            0.024161439388990402,
+            0.1784796416759491,
+            0.1342102289199829,
+            0.004102890379726887,
+            0.08654782176017761,
+            0.07357021421194077,
+            0.01638590730726719,
+            0.07445566356182098,
+            0.047700684517621994,
+            0.01804954931139946,
+            0.13163582980632782,
+            0.014159906655550003,
+            0.15353329479694366,
+            0.014016655273735523
+          ]
+        },
+        "mean_dynamic_sparse_weight": {
+          "mean": 0.004964266213937663,
+          "stderr": 0.0017061945717191216,
+          "values": [
+            0.006244088988751173,
+            0.01750843971967697,
+            0.0003082680341321975,
+            0.0019286161987110972,
+            0.05021671578288078,
+            0.0004691702197305858,
+            0.012371459975838661,
+            0.0017390723805874586,
+            0.0025769679341465235,
+            0.0011586177861317992,
+            0.0015382315032184124,
+            0.0027848449535667896,
+            0.00031480047618970275,
+            0.000493907427880913,
+            0.0029342654161155224,
+            0.004255932290107012,
+            0.0007617152878083289,
+            0.0021872716024518013,
+            0.004842852242290974,
+            0.004645446315407753,
+            0.0041611287742853165,
+            0.0005566058098338544,
+            0.009238841943442822,
+            0.0036097820848226547,
+            0.002087475499138236,
+            0.0004996119532734156,
+            0.004302963614463806,
+            0.0009692221065051854,
+            0.002279888838529587,
+            0.0019417812582105398
+          ]
+        },
+        "mean_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_mlp_guard_mlp_h128_weight": {
+          "mean": 0.49965813060601555,
+          "stderr": 0.03282482403782783,
+          "values": [
+            0.5318403244018555,
+            0.6706852912902832,
+            0.7257820963859558,
+            0.7639808058738708,
+            0.5295893549919128,
+            0.48427221179008484,
+            0.3583969175815582,
+            0.5892142057418823,
+            0.6464817523956299,
+            0.22565457224845886,
+            0.6284555196762085,
+            0.5835643410682678,
+            0.3829718232154846,
+            0.20730598270893097,
+            0.45261475443840027,
+            0.6917352080345154,
+            0.791861355304718,
+            0.40851977467536926,
+            0.21207039058208466,
+            0.6859309673309326,
+            0.15986205637454987,
+            0.6654123663902283,
+            0.48014214634895325,
+            0.4956975281238556,
+            0.23574335873126984,
+            0.3747151494026184,
+            0.3621542453765869,
+            0.42346182465553284,
+            0.6795085668563843,
+            0.542119026184082
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.013038723644179602,
+          "stderr": 0.002663260290387884,
+          "values": [
+            0.06001466140151024,
+            0.02852947823703289,
+            0.010705959051847458,
+            0.004415115807205439,
+            0.038398418575525284,
+            0.0031761201098561287,
+            0.00250057689845562,
+            0.008230870589613914,
+            0.0032565221190452576,
+            0.015412546694278717,
+            0.035800106823444366,
+            0.028601456433534622,
+            0.0009180227061733603,
+            0.002457102295011282,
+            0.01882060617208481,
+            0.011188384145498276,
+            0.0009641266660764813,
+            0.028554802760481834,
+            0.009627905674278736,
+            0.004161885008215904,
+            0.0036869903560727835,
+            0.003006762359291315,
+            0.003754244651645422,
+            0.004039747174829245,
+            0.005115330219268799,
+            0.0012352371122688055,
+            0.00683493772521615,
+            0.002117616357281804,
+            0.012115774676203728,
+            0.033520400524139404
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_weight": {
+          "mean": 0.48730314324299495,
+          "stderr": 0.03332908691094476,
+          "values": [
+            0.4081450402736664,
+            0.30078524351119995,
+            0.26351192593574524,
+            0.23160409927368164,
+            0.4320122301578522,
+            0.5125516653060913,
+            0.6391024589538574,
+            0.40255486965179443,
+            0.35026177763938904,
+            0.7589328289031982,
+            0.3357444107532501,
+            0.3878341615200043,
+            0.6161102056503296,
+            0.7902368903160095,
+            0.5285646319389343,
+            0.29707640409469604,
+            0.20717446506023407,
+            0.562925398349762,
+            0.7783017158508301,
+            0.3099071681499481,
+            0.8364509344100952,
+            0.33158084750175476,
+            0.5161036252975464,
+            0.5002627372741699,
+            0.7591413259506226,
+            0.6240496039390564,
+            0.6310108304023743,
+            0.5744205713272095,
+            0.30837565660476685,
+            0.42436057329177856
+          ]
+        },
+        "mean_mlp_h128_weight": {
+          "mean": 0.4891260032852491,
+          "stderr": 0.03311132862028657,
+          "values": [
+            0.473031610250473,
+            0.6531926393508911,
+            0.7175250053405762,
+            0.7586050629615784,
+            0.4855399429798126,
+            0.48384329676628113,
+            0.35400187969207764,
+            0.5863174200057983,
+            0.6424496173858643,
+            0.22360722720623016,
+            0.6194766163825989,
+            0.5715798735618591,
+            0.38199174404144287,
+            0.20637473464012146,
+            0.4409043788909912,
+            0.6887669563293457,
+            0.7914783954620361,
+            0.39564529061317444,
+            0.1903250813484192,
+            0.6825315356254578,
+            0.1463956981897354,
+            0.6643396019935608,
+            0.46789315342903137,
+            0.49109944701194763,
+            0.2326839119195938,
+            0.37311482429504395,
+            0.32637348771095276,
+            0.42156875133514404,
+            0.6780495047569275,
+            0.5250734090805054
+          ]
+        },
+        "mean_mlp_h64_64_weight": {
+          "mean": 0.010661081647655616,
+          "stderr": 0.0021266675203662523,
+          "values": [
+            0.04131220653653145,
+            0.02521277591586113,
+            0.010125554166734219,
+            0.0028332688380032778,
+            0.028589146211743355,
+            0.002626436995342374,
+            0.001448113820515573,
+            0.00676228990778327,
+            0.002403541002422571,
+            0.01462982501834631,
+            0.03134641423821449,
+            0.025876909494400024,
+            0.0006358815007843077,
+            0.0017367266118526459,
+            0.016982007771730423,
+            0.009027053602039814,
+            0.0007745143957436085,
+            0.026153547689318657,
+            0.006848301272839308,
+            0.0026873007882386446,
+            0.002636366058140993,
+            0.0023905527777969837,
+            0.0026693195104599,
+            0.002201266586780548,
+            0.00431009940803051,
+            0.0009031548979692161,
+            0.005193131510168314,
+            0.0014197540003806353,
+            0.011144053190946579,
+            0.028952935710549355
+          ]
+        },
+        "mean_mlp_h64_weight": {
+          "mean": 0.47707158476114275,
+          "stderr": 0.03286293847680044,
+          "values": [
+            0.3558621108531952,
+            0.27986666560173035,
+            0.26103657484054565,
+            0.23098067939281464,
+            0.39861389994621277,
+            0.5119132399559021,
+            0.6314148902893066,
+            0.40035876631736755,
+            0.34769585728645325,
+            0.7561529278755188,
+            0.32885682582855225,
+            0.3806905150413513,
+            0.6158310174942017,
+            0.7891449928283691,
+            0.5249438285827637,
+            0.2949484884738922,
+            0.20669201016426086,
+            0.5554925203323364,
+            0.7406190037727356,
+            0.3089255690574646,
+            0.8022722601890564,
+            0.3307524621486664,
+            0.5057323575019836,
+            0.4992871582508087,
+            0.7496245503425598,
+            0.6220499873161316,
+            0.6100521683692932,
+            0.5726326704025269,
+            0.3065720200538635,
+            0.3931315243244171
+          ]
+        },
+        "mean_upgd_low_noise_weight": {
+          "mean": 0.018177055493773273,
+          "stderr": 0.0048020252549273385,
+          "values": [
+            0.12354996055364609,
+            0.02421944960951805,
+            0.0110045550391078,
+            0.005652451887726784,
+            0.03704032301902771,
+            0.0011478215456008911,
+            0.0007636085501872003,
+            0.004822455812245607,
+            0.004874053876847029,
+            0.004451325163245201,
+            0.018781905993819237,
+            0.019067831337451935,
+            0.0012265703408047557,
+            0.0022495840676128864,
+            0.014235439710319042,
+            0.0030015597585588694,
+            0.00029335886938497424,
+            0.020521411672234535,
+            0.057364750653505325,
+            0.0012101518223062158,
+            0.044534552842378616,
+            0.0019608349539339542,
+            0.014466242864727974,
+            0.003802297171205282,
+            0.011294033378362656,
+            0.0034324307925999165,
+            0.054078228771686554,
+            0.0034096355084329844,
+            0.0019544954411685467,
+            0.05090034380555153
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.23097618396083514,
+          "stderr": 0.012781905715984133,
+          "values": [
+            0.12018624693155289,
+            0.18595758080482483,
+            0.22084645926952362,
+            0.1698739230632782,
+            0.20895029604434967,
+            0.24793563783168793,
+            0.22464022040367126,
+            0.2149650603532791,
+            0.3561380207538605,
+            0.1742967963218689,
+            0.28566378355026245,
+            0.14469315111637115,
+            0.31031081080436707,
+            0.40420451760292053,
+            0.25331154465675354,
+            0.17367812991142273,
+            0.35155320167541504,
+            0.2016115039587021,
+            0.20165595412254333,
+            0.26659318804740906,
+            0.23088862001895905,
+            0.19257117807865143,
+            0.16634131968021393,
+            0.24469825625419617,
+            0.28763940930366516,
+            0.2865908443927765,
+            0.18548552691936493,
+            0.321237176656723,
+            0.14894899725914001,
+            0.1478181630373001
+          ]
+        }
+      },
+      "mlp_h64": {
+        "final_window_mse": {
+          "mean": 0.2658781595528126,
+          "stderr": 0.020157402014846466,
+          "values": [
+            0.14298687875270844,
+            0.22835256159305573,
+            0.45626404881477356,
+            0.19161592423915863,
+            0.29287195205688477,
+            0.11577612906694412,
+            0.2479870319366455,
+            0.33759164810180664,
+            0.5759340524673462,
+            0.1905800849199295,
+            0.3898372948169708,
+            0.06885944306850433,
+            0.2111009657382965,
+            0.21026410162448883,
+            0.20700563490390778,
+            0.18991118669509888,
+            0.34814611077308655,
+            0.1709669530391693,
+            0.20523715019226074,
+            0.42367228865623474,
+            0.3247058093547821,
+            0.15114367008209229,
+            0.21721822023391724,
+            0.37779471278190613,
+            0.28678175806999207,
+            0.36987239122390747,
+            0.22889447212219238,
+            0.3372843563556671,
+            0.24713121354579926,
+            0.23055674135684967
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.23758340229590733,
+          "stderr": 0.012808366338987473,
+          "values": [
+            0.12690973281860352,
+            0.19445250928401947,
+            0.22835363447666168,
+            0.18222446739673615,
+            0.2164052277803421,
+            0.2561664879322052,
+            0.22946882247924805,
+            0.223454087972641,
+            0.36676692962646484,
+            0.17592865228652954,
+            0.2943239212036133,
+            0.15151184797286987,
+            0.3172242343425751,
+            0.4044400155544281,
+            0.2594375014305115,
+            0.18170608580112457,
+            0.3659941554069519,
+            0.20650848746299744,
+            0.20535637438297272,
+            0.2763749659061432,
+            0.23169884085655212,
+            0.2007921040058136,
+            0.1719699203968048,
+            0.25005626678466797,
+            0.2907359302043915,
+            0.29214394092559814,
+            0.1892930567264557,
+            0.3270643353462219,
+            0.15629225969314575,
+            0.1544472724199295
+          ]
+        }
+      },
+      "mlp_h128": {
+        "final_window_mse": {
+          "mean": 0.26881076643864316,
+          "stderr": 0.019983327707797875,
+          "values": [
+            0.15025779604911804,
+            0.22610530257225037,
+            0.45807915925979614,
+            0.18932309746742249,
+            0.29225093126296997,
+            0.10967720299959183,
+            0.23521064221858978,
+            0.3228738605976105,
+            0.5594813823699951,
+            0.1896371692419052,
+            0.3844219446182251,
+            0.06757237762212753,
+            0.21343998610973358,
+            0.23023612797260284,
+            0.22549830377101898,
+            0.18265825510025024,
+            0.35414519906044006,
+            0.1751111000776291,
+            0.2059590220451355,
+            0.41243642568588257,
+            0.34142187237739563,
+            0.16717617213726044,
+            0.2168663591146469,
+            0.4203585684299469,
+            0.32109445333480835,
+            0.35769036412239075,
+            0.23741520941257477,
+            0.3430357277393341,
+            0.23757652938365936,
+            0.237312451004982
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.23781515061855316,
+          "stderr": 0.013025600616649017,
+          "values": [
+            0.1261412501335144,
+            0.18902023136615753,
+            0.22382351756095886,
+            0.1713632494211197,
+            0.2144065648317337,
+            0.25252053141593933,
+            0.23287592828273773,
+            0.21885719895362854,
+            0.36046966910362244,
+            0.18465633690357208,
+            0.2905932366847992,
+            0.1491234302520752,
+            0.31812191009521484,
+            0.4201631546020508,
+            0.26103007793426514,
+            0.17663615942001343,
+            0.35457998514175415,
+            0.20953430235385895,
+            0.2134191393852234,
+            0.26931825280189514,
+            0.24524764716625214,
+            0.19631172716617584,
+            0.1723647117614746,
+            0.2569284737110138,
+            0.3016665577888489,
+            0.29458457231521606,
+            0.1966586709022522,
+            0.3295162320137024,
+            0.1507711559534073,
+            0.15375064313411713
+          ]
+        }
+      },
+      "mlp_h64_64": {
+        "final_window_mse": {
+          "mean": 0.31960158968965213,
+          "stderr": 0.023484952890413555,
+          "values": [
+            0.15419064462184906,
+            0.281755656003952,
+            0.5391832590103149,
+            0.233656108379364,
+            0.34246164560317993,
+            0.14284402132034302,
+            0.2962760925292969,
+            0.44435060024261475,
+            0.6278833150863647,
+            0.2170965075492859,
+            0.44752100110054016,
+            0.08618425577878952,
+            0.24989257752895355,
+            0.2843616306781769,
+            0.2378862500190735,
+            0.2490738481283188,
+            0.3924023509025574,
+            0.2008281946182251,
+            0.23334848880767822,
+            0.5204057097434998,
+            0.422685444355011,
+            0.20820146799087524,
+            0.2879793643951416,
+            0.4668044149875641,
+            0.3120124340057373,
+            0.4855923354625702,
+            0.2719196081161499,
+            0.4013068974018097,
+            0.2774532437324524,
+            0.27249032258987427
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.29123435020446775,
+          "stderr": 0.01582749708046664,
+          "values": [
+            0.14667026698589325,
+            0.24437977373600006,
+            0.266560822725296,
+            0.2105325162410736,
+            0.2466365247964859,
+            0.3155698776245117,
+            0.3010823428630829,
+            0.28860312700271606,
+            0.4281935691833496,
+            0.2119578868150711,
+            0.34395405650138855,
+            0.18445202708244324,
+            0.4084709584712982,
+            0.5141803026199341,
+            0.3097386360168457,
+            0.21682682633399963,
+            0.4157177209854126,
+            0.24188105762004852,
+            0.2576841115951538,
+            0.3417494297027588,
+            0.28919291496276855,
+            0.2715298533439636,
+            0.2292102575302124,
+            0.30803167819976807,
+            0.35593700408935547,
+            0.37537363171577454,
+            0.23430342972278595,
+            0.40740901231765747,
+            0.1899934858083725,
+            0.18120740354061127
+          ]
+        }
+      },
+      "upgd_low_noise": {
+        "final_window_mse": {
+          "mean": 0.5105211632947128,
+          "stderr": 0.05030733899805136,
+          "values": [
+            0.21078582108020782,
+            0.3135440945625305,
+            0.6928979754447937,
+            0.3247557580471039,
+            0.48871541023254395,
+            0.16987884044647217,
+            0.42266061902046204,
+            0.6387061476707458,
+            1.469545841217041,
+            0.3197842240333557,
+            0.8160351514816284,
+            0.08353132754564285,
+            0.34245041012763977,
+            0.3568641245365143,
+            0.6440467238426208,
+            0.26240280270576477,
+            0.6782179474830627,
+            0.32478511333465576,
+            0.322370707988739,
+            0.8009835481643677,
+            0.8551344871520996,
+            0.4071181118488312,
+            0.4181912839412689,
+            0.5873826742172241,
+            0.6657394766807556,
+            0.7487643361091614,
+            0.5236037373542786,
+            0.7214352488517761,
+            0.35977447032928467,
+            0.3455284833908081
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.4075526500741641,
+          "stderr": 0.0299197730504736,
+          "values": [
+            0.16449150443077087,
+            0.2568080723285675,
+            0.34217312932014465,
+            0.27468952536582947,
+            0.3413673937320709,
+            0.4588124454021454,
+            0.38368892669677734,
+            0.3974362313747406,
+            0.7600842118263245,
+            0.2708844244480133,
+            0.5121605396270752,
+            0.19585159420967102,
+            0.584076464176178,
+            0.6532115936279297,
+            0.4983455538749695,
+            0.25631532073020935,
+            0.7205483317375183,
+            0.34527939558029175,
+            0.3309214413166046,
+            0.43509718775749207,
+            0.4843981862068176,
+            0.36128556728363037,
+            0.25681063532829285,
+            0.37037304043769836,
+            0.5139707326889038,
+            0.5207462310791016,
+            0.35256215929985046,
+            0.7390004992485046,
+            0.2217656522989273,
+            0.22342351078987122
+          ]
+        }
+      },
+      "dynamic_sparse": {
+        "final_window_mse": {
+          "mean": 0.4872730535765489,
+          "stderr": 0.04736842778614158,
+          "values": [
+            0.20521420240402222,
+            0.2930755317211151,
+            0.6983753442764282,
+            0.28100958466529846,
+            0.4997848570346832,
+            0.15993186831474304,
+            0.3969208300113678,
+            0.5766786336898804,
+            1.3096057176589966,
+            0.30155181884765625,
+            0.7989518642425537,
+            0.08537516742944717,
+            0.3166358172893524,
+            0.32814446091651917,
+            0.5604392886161804,
+            0.28050467371940613,
+            0.6500589847564697,
+            0.3146827220916748,
+            0.29771825671195984,
+            0.8568745851516724,
+            0.7945275902748108,
+            0.373146653175354,
+            0.4109806716442108,
+            0.5716814398765564,
+            0.6171397566795349,
+            0.7260122895240784,
+            0.47034287452697754,
+            0.7736365795135498,
+            0.34738287329673767,
+            0.3218066692352295
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.3958041201035182,
+          "stderr": 0.028582213984487948,
+          "values": [
+            0.17047810554504395,
+            0.24731267988681793,
+            0.34917405247688293,
+            0.2466963231563568,
+            0.3291563391685486,
+            0.4630858302116394,
+            0.34141862392425537,
+            0.3668142557144165,
+            0.7166545391082764,
+            0.27911755442619324,
+            0.5201019048690796,
+            0.2084052860736847,
+            0.5927243232727051,
+            0.6537103056907654,
+            0.45864343643188477,
+            0.25633642077445984,
+            0.6761699914932251,
+            0.3026704490184784,
+            0.33045271039009094,
+            0.435531884431839,
+            0.4597109854221344,
+            0.3492651879787445,
+            0.26198872923851013,
+            0.3677336871623993,
+            0.49846482276916504,
+            0.4809568226337433,
+            0.33896705508232117,
+            0.7231720089912415,
+            0.22008654475212097,
+            0.22912274301052094
+          ]
+        }
+      },
+      "comparisons": {
+        "final_window_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.0006690844893455505,
+            "paired_diff_stderr": 0.0007057230115676083,
+            "wins_for_mixture": 22,
+            "wins_for_baseline": 8,
+            "ties": 0,
+            "n": 30,
+            "diffs": [
+              -0.00049591064453125,
+              0.002408653497695923,
+              0.006259620189666748,
+              0.0035346001386642456,
+              0.004404038190841675,
+              0.0008237212896347046,
+              -5.005300045013428e-05,
+              0.0002168715000152588,
+              -0.0012516975402832031,
+              0.0024290233850479126,
+              0.0031191110610961914,
+              0.0016396194696426392,
+              0.003294512629508972,
+              -0.0053997039794921875,
+              -0.005922839045524597,
+              0.0016970336437225342,
+              0.002765357494354248,
+              0.0010145753622055054,
+              0.002611115574836731,
+              0.001133650541305542,
+              0.0014580786228179932,
+              -0.004342585802078247,
+              0.006247594952583313,
+              -0.0030754804611206055,
+              -0.012927770614624023,
+              0.0019862353801727295,
+              0.0008823126554489136,
+              0.0023860037326812744,
+              0.0006078332662582397,
+              0.00261901319026947
+            ],
+            "best_baseline_counts": {
+              "mlp_h64": 15,
+              "mlp_h128": 15
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.0006690844893455505,
+            "paired_diff_stderr": 0.0007057230115676083,
+            "wins_for_mixture": 22,
+            "wins_for_baseline": 8,
+            "ties": 0,
+            "n": 30,
+            "diffs": [
+              -0.00049591064453125,
+              0.002408653497695923,
+              0.006259620189666748,
+              0.0035346001386642456,
+              0.004404038190841675,
+              0.0008237212896347046,
+              -5.005300045013428e-05,
+              0.0002168715000152588,
+              -0.0012516975402832031,
+              0.0024290233850479126,
+              0.0031191110610961914,
+              0.0016396194696426392,
+              0.003294512629508972,
+              -0.0053997039794921875,
+              -0.005922839045524597,
+              0.0016970336437225342,
+              0.002765357494354248,
+              0.0010145753622055054,
+              0.002611115574836731,
+              0.001133650541305542,
+              0.0014580786228179932,
+              -0.004342585802078247,
+              0.006247594952583313,
+              -0.0030754804611206055,
+              -0.012927770614624023,
+              0.0019862353801727295,
+              0.0008823126554489136,
+              0.0023860037326812744,
+              0.0006078332662582397,
+              0.00261901319026947
+            ],
+            "best_baseline_counts": {
+              "mlp_h64": 15,
+              "mlp_h128": 15
+            }
+          }
+        },
+        "online_mean_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.003990922123193741,
+            "paired_diff_stderr": 0.0003098535594313938,
+            "wins_for_mixture": 30,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 30,
+            "diffs": [
+              0.005955003201961517,
+              0.0030626505613327026,
+              0.0029770582914352417,
+              0.0014893263578414917,
+              0.005456268787384033,
+              0.004584893584251404,
+              0.004828602075576782,
+              0.0038921386003494263,
+              0.004331648349761963,
+              0.0016318559646606445,
+              0.004929453134536743,
+              0.0044302791357040405,
+              0.006913423538208008,
+              0.00023549795150756836,
+              0.006125956773757935,
+              0.0029580295085906982,
+              0.0030267834663391113,
+              0.004896983504295349,
+              0.0037004202604293823,
+              0.002725064754486084,
+              0.0008102208375930786,
+              0.003740549087524414,
+              0.005628600716590881,
+              0.005358010530471802,
+              0.0030965209007263184,
+              0.005553096532821655,
+              0.0038075298070907593,
+              0.005827158689498901,
+              0.001822158694267273,
+              0.005932480096817017
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 16,
+              "mlp_h64": 14
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.003990922123193741,
+            "paired_diff_stderr": 0.0003098535594313938,
+            "wins_for_mixture": 30,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 30,
+            "diffs": [
+              0.005955003201961517,
+              0.0030626505613327026,
+              0.0029770582914352417,
+              0.0014893263578414917,
+              0.005456268787384033,
+              0.004584893584251404,
+              0.004828602075576782,
+              0.0038921386003494263,
+              0.004331648349761963,
+              0.0016318559646606445,
+              0.004929453134536743,
+              0.0044302791357040405,
+              0.006913423538208008,
+              0.00023549795150756836,
+              0.006125956773757935,
+              0.0029580295085906982,
+              0.0030267834663391113,
+              0.004896983504295349,
+              0.0037004202604293823,
+              0.002725064754486084,
+              0.0008102208375930786,
+              0.003740549087524414,
+              0.005628600716590881,
+              0.005358010530471802,
+              0.0030965209007263184,
+              0.005553096532821655,
+              0.0038075298070907593,
+              0.005827158689498901,
+              0.001822158694267273,
+              0.005932480096817017
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 16,
+              "mlp_h64": 14
+            }
+          }
+        }
+      },
+      "best_expert_regret": {
+        "final_window_mse": {
+          "metric": "final_window_mse",
+          "mean_regret_positive_favors_best_expert": -0.0006690844893455505,
+          "stderr": 0.0007057230115676083,
+          "values": [
+            0.00049591064453125,
+            -0.002408653497695923,
+            -0.006259620189666748,
+            -0.0035346001386642456,
+            -0.004404038190841675,
+            -0.0008237212896347046,
+            5.005300045013428e-05,
+            -0.0002168715000152588,
+            0.0012516975402832031,
+            -0.0024290233850479126,
+            -0.0031191110610961914,
+            -0.0016396194696426392,
+            -0.003294512629508972,
+            0.0053997039794921875,
+            0.005922839045524597,
+            -0.0016970336437225342,
+            -0.002765357494354248,
+            -0.0010145753622055054,
+            -0.002611115574836731,
+            -0.001133650541305542,
+            -0.0014580786228179932,
+            0.004342585802078247,
+            -0.006247594952583313,
+            0.0030754804611206055,
+            0.012927770614624023,
+            -0.0019862353801727295,
+            -0.0008823126554489136,
+            -0.0023860037326812744,
+            -0.0006078332662582397,
+            -0.00261901319026947
+          ],
+          "failures": 8,
+          "ties_or_beats_best": 22,
+          "best_expert_counts": {
+            "mlp_h64": 15,
+            "mlp_h128": 15
+          }
+        },
+        "online_mean_mse": {
+          "metric": "online_mean_mse",
+          "mean_regret_positive_favors_best_expert": -0.003990922123193741,
+          "stderr": 0.0003098535594313938,
+          "values": [
+            -0.005955003201961517,
+            -0.0030626505613327026,
+            -0.0029770582914352417,
+            -0.0014893263578414917,
+            -0.005456268787384033,
+            -0.004584893584251404,
+            -0.004828602075576782,
+            -0.0038921386003494263,
+            -0.004331648349761963,
+            -0.0016318559646606445,
+            -0.004929453134536743,
+            -0.0044302791357040405,
+            -0.006913423538208008,
+            -0.00023549795150756836,
+            -0.006125956773757935,
+            -0.0029580295085906982,
+            -0.0030267834663391113,
+            -0.004896983504295349,
+            -0.0037004202604293823,
+            -0.002725064754486084,
+            -0.0008102208375930786,
+            -0.003740549087524414,
+            -0.005628600716590881,
+            -0.005358010530471802,
+            -0.0030965209007263184,
+            -0.005553096532821655,
+            -0.0038075298070907593,
+            -0.005827158689498901,
+            -0.001822158694267273,
+            -0.005932480096817017
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 30,
+          "best_expert_counts": {
+            "mlp_h128": 16,
+            "mlp_h64": 14
+          }
+        }
+      }
+    }
+  },
+  "wall_clock_s": 28.396049737930298,
+  "evidence_level": "prediction_space_mlp_upgd_dynamic_sparse_portfolio"
+}

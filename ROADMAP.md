@@ -196,22 +196,37 @@ The Alberta Plan's Step 4 ("Control I: Continual actor-critic control" — Sutto
 - Promote nlhac to canonical Step 4 after Autostep-actor evidence matches SARSA
   on seeded continuing-control benchmarks.
 
-## Steps 5–6: Continuing Control — Primitive Implemented
+## Steps 5–6: Continuing Control — Local Completion Gate Accepted
 
 **Goal**: Transition from episodic to continuing (average-reward) formulations, which are more natural for long-lived agents.
 
 **Delivered primitive surface**:
 - `DifferentialTDLearner` for average-reward prediction
 - `DifferentialSARSAAgent` for continuing average-reward control
+- `DifferentialGTDLearner` for off-policy average-reward prediction
+- `AverageRewardHordeLearner` for nonlinear shared-trunk average-reward GVFs
+- `AverageRewardHordeActorCriticAgent` for nonlinear shared-feature
+  average-reward control
 - Production facades `steps.step5` and `steps.step6`
 - Scan-compatible tests and smoke probes
+- Standalone Step 6 solution gate:
+  `benchmarks/step6_solution_gate.py` reports
+  `accepted_step6_continuing_control=true`
+- Deterministic six-state continuing chain:
+  `10/10` seeds pass, mean final-window reward `0.9938`, right-action rate
+  `0.9938`
+- Stochastic RiverSwim:
+  `10/10` seeds pass, mean final reward `0.9070`, right-action rate `0.9747`
+- Nonlinear shared-feature average-reward actor-critic:
+  `10/10` seeds pass, mean final reward `0.9891`, correct greedy policy in
+  every seed
 
 **Remaining research boundary**:
-- Nonlinear average-reward Horde/GVF integration
-- Average-reward actor-critic with shared nonlinear features
-- Continuing-control benchmark evidence beyond primitive probes
+- Broader external continuing-control suites beyond local RiverSwim and
+  two-state tasks
+- Downstream daemon/security-environment integration after sibling API audit
 
-## Step 7: Planning — Primitive Implemented
+## Step 7: Planning — Local Completion Gate Accepted
 
 **Goal**: Add bounded background planning from a learned transition model while
 preserving foreground, continuing real-time control.
@@ -224,9 +239,11 @@ preserving foreground, continuing real-time control.
 - Fixed-size transition memory for memory-backed planning anchors
 - Search-control strategies for random, reward-prioritized,
   transition-surprise-prioritized, predecessor-prioritized, and
-  queue-prioritized planning
+  queue-prioritized planning, plus learned utility-prioritized planning
 - Explicit bounded prioritized-sweeping queue with recursive predecessor
   priority propagation after imagined backups
+- Learned search-control utilities in `memory_utilities`, updated from the
+  absolute TD signal produced by imagined backups
 - Target-policy/search-control behavior probability accounting and clipped
   importance-ratio diagnostics for imagined updates
 - Per-decision importance correction that scales imagined SARSA Q, trace, and
@@ -249,12 +266,16 @@ preserving foreground, continuing real-time control.
 - Seeded nonlinear-feature chain benchmark:
   Dyna improves final-window reward by `+0.10154` over real-only differential
   SARSA on dense nonlinear Fourier observations across 10 seeds
+- Seeded production nonlinear JAX benchmark:
+  the promoted `steps.step7` facade with a hidden-layer world model
+  (`hidden_sizes=(8,)`) improves final-window reward from `0.92` to `1.00` and
+  Q-gap by `+3.23` across 10 seeds
+- Standalone Step 7 gate:
+  `benchmarks/step7_solution_gate.py` accepts the bounded Dyna average-reward
+  control local completion claim
 
 **Remaining research boundary**:
-- Learned search-control policies over model backups
 - Option/subtask discovery variants
-- Production JAX/bsuite nonlinear benchmark evidence beyond the fast
-  NumPy nonlinear-feature gate
 
 ## Step 8: One-Step World Model — Primitive Implemented
 

@@ -609,16 +609,29 @@ class TestNonlinearHordeActorCriticConfig:
                 critic,
             )
 
+    def test_actor_gradient_clip_norm_positive(self) -> None:
+        with pytest.raises(ValueError, match="actor_gradient_clip_norm"):
+            NonlinearHordeActorCriticAgent(
+                NonlinearHordeActorCriticConfig(
+                    n_actions=2,
+                    hidden_sizes=(16,),
+                    actor_gradient_clip_norm=0.0,
+                ),
+                self._simple_critic(),
+            )
+
     def test_config_roundtrip(self) -> None:
         cfg = NonlinearHordeActorCriticConfig(
             n_actions=4,
             hidden_sizes=(64, 32),
             temperature=0.3,
+            actor_gradient_clip_norm=0.25,
         )
         restored = NonlinearHordeActorCriticConfig.from_config(cfg.to_config())
         assert restored.n_actions == 4
         assert restored.hidden_sizes == (64, 32)
         assert restored.temperature == pytest.approx(0.3)
+        assert restored.actor_gradient_clip_norm == pytest.approx(0.25)
 
 
 class TestNonlinearHordeActorCriticInit:
@@ -698,6 +711,39 @@ class TestNonlinearHordeActorCriticUpdate:
         result = agent.update(state, jnp.array(1.0), obs)
         after = result.state.actor_head_w
         assert not jnp.allclose(before, after, atol=1e-6)
+
+    def test_actor_gradient_clip_limits_new_trace_norm(self) -> None:
+        critic = HordeLearner(
+            create_horde_spec(
+                [GVFSpec(  # type: ignore[call-arg]
+                    name="v", demon_type=DemonType.PREDICTION,
+                    gamma=0.99, lamda=0.0, cumulant_index=0,
+                )]
+            ),
+            hidden_sizes=(32,),
+            step_size=0.03,
+        )
+        cfg = NonlinearHordeActorCriticConfig(
+            n_actions=N_ACTIONS,
+            hidden_sizes=(32,),
+            actor_gradient_clip_norm=0.05,
+        )
+        agent = NonlinearHordeActorCriticAgent(
+            cfg, critic, actor_optimizer=Autostep(initial_step_size=0.01)
+        )
+        state = agent.init(OBS_DIM, jr.key(9))
+        obs = 100.0 * jr.normal(jr.key(10), (OBS_DIM,))
+        state, _, _ = agent.start(state, obs)
+        result = agent.update(state, jnp.array(1.0), obs)
+        trace_norm = jnp.sqrt(
+            jnp.sum(jnp.square(result.state.actor_head_trace_w))
+            + jnp.sum(jnp.square(result.state.actor_head_trace_b))
+            + sum(
+                jnp.sum(jnp.square(trace))
+                for trace in result.state.actor_trunk_traces
+            )
+        )
+        assert float(trace_norm) <= 0.0501
 
     def test_trunk_weights_update(self) -> None:
         critic = HordeLearner(

@@ -1,0 +1,173 @@
+{
+  "config": {
+    "seeds": 2,
+    "num_steps": 800,
+    "final_window": 200,
+    "feature_dim": 4,
+    "noise_std": 0.05,
+    "methods": [
+      "single_mechanism",
+      "recursive_mlp_router",
+      "mlp_32x32_no_ln"
+    ],
+    "task_mode": "rare",
+    "suite": false,
+    "rare_period": 8,
+    "output_dir": "outputs/step2_canonical/recursive_router_smoke",
+    "smoke": false,
+    "task_modes": [
+      "rare"
+    ]
+  },
+  "aggregate": {
+    "rare": {
+      "mlp_32x32_no_ln": {
+        "mean_final_window_mse": 0.08398622451257325,
+        "stderr_final_window_mse": 0.03595842940558213,
+        "mean_heldout_mse": 0.43261283449828625,
+        "stderr_heldout_mse": 0.22379763051867485,
+        "mean_rare_head_heldout_mse": 0.8307798206806183,
+        "mean_active_depth2_count": 0.0,
+        "depth2_present_seeds": 0
+      },
+      "recursive_mlp_router": {
+        "mean_final_window_mse": 0.043683296596490145,
+        "stderr_final_window_mse": 0.03179665958324224,
+        "mean_heldout_mse": 0.40153015119722113,
+        "stderr_heldout_mse": 0.24691313196672124,
+        "mean_rare_head_heldout_mse": 0.8005178421735764,
+        "mean_active_depth2_count": 19.5,
+        "depth2_present_seeds": 2
+      },
+      "single_mechanism": {
+        "mean_final_window_mse": 0.06448567579001967,
+        "stderr_final_window_mse": 0.04297893210319678,
+        "mean_heldout_mse": 0.3764000227674842,
+        "stderr_heldout_mse": 0.2518345126882195,
+        "mean_rare_head_heldout_mse": 0.6292428001761436,
+        "mean_active_depth2_count": 19.0,
+        "depth2_present_seeds": 2
+      },
+      "best_mlp_method": "mlp_32x32_no_ln",
+      "paired_best_mlp_minus_recursive_mlp_router": {
+        "left_method": "mlp_32x32_no_ln",
+        "right_method": "recursive_mlp_router",
+        "mean_final_window_mse_delta": 0.0403029279160831,
+        "right_wins": 2,
+        "n": 2
+      },
+      "paired_best_mlp_minus_single_mechanism": {
+        "left_method": "mlp_32x32_no_ln",
+        "right_method": "single_mechanism",
+        "mean_final_window_mse_delta": 0.01950054872255358,
+        "right_wins": 2,
+        "n": 2
+      }
+    },
+    "suite_summary": {
+      "tasks": 1,
+      "recursive_mlp_router_beats_best_mlp_tasks": 1,
+      "recursive_mlp_router_ties_best_mlp_tasks": 0,
+      "single_mechanism_beats_best_mlp_tasks": 1,
+      "single_mechanism_ties_best_mlp_tasks": 0
+    }
+  },
+  "per_run": [
+    {
+      "method": "single_mechanism",
+      "seed": 0,
+      "task_mode": "rare",
+      "final_window_mse": 0.10746460789321645,
+      "initial_window_mse": 0.16450258404094598,
+      "mean_mse": 0.13783232526775438,
+      "heldout_mse_by_task": [
+        0.19718343019485474,
+        1.0592856407165527
+      ],
+      "heldout_mean_mse": 0.6282345354557037,
+      "active_depth2_count": 19,
+      "max_depth2_utility": 0.026282956823706627,
+      "wall_clock_s": 2.7726762294769287
+    },
+    {
+      "method": "recursive_mlp_router",
+      "seed": 0,
+      "task_mode": "rare",
+      "final_window_mse": 0.07547995617973238,
+      "initial_window_mse": 0.06318186496987041,
+      "mean_mse": 0.045844149952463074,
+      "heldout_mse_by_task": [
+        0.0029203922022134066,
+        1.2939661741256714
+      ],
+      "heldout_mean_mse": 0.6484432831639424,
+      "active_depth2_count": 18,
+      "max_depth2_utility": 0.02387498877942562,
+      "wall_clock_s": 3.402914047241211
+    },
+    {
+      "method": "mlp_32x32_no_ln",
+      "seed": 0,
+      "task_mode": "rare",
+      "final_window_mse": 0.11994465391815538,
+      "initial_window_mse": 0.1308619203972355,
+      "mean_mse": 0.10707169110316339,
+      "heldout_mse_by_task": [
+        0.04222537949681282,
+        1.2705955505371094
+      ],
+      "heldout_mean_mse": 0.6564104650169611,
+      "active_depth2_count": 0,
+      "max_depth2_utility": 0.0,
+      "wall_clock_s": 0.35773181915283203
+    },
+    {
+      "method": "single_mechanism",
+      "seed": 1,
+      "task_mode": "rare",
+      "final_window_mse": 0.021506743686822885,
+      "initial_window_mse": 0.2347023845583359,
+      "mean_mse": 0.14301678669598597,
+      "heldout_mse_by_task": [
+        0.049931060522794724,
+        0.19919995963573456
+      ],
+      "heldout_mean_mse": 0.12456551007926464,
+      "active_depth2_count": 19,
+      "max_depth2_utility": 0.012826438993215561,
+      "wall_clock_s": 4.115689992904663
+    },
+    {
+      "method": "recursive_mlp_router",
+      "seed": 1,
+      "task_mode": "rare",
+      "final_window_mse": 0.011886637013247903,
+      "initial_window_mse": 0.11073258358291241,
+      "mean_mse": 0.10115229487699835,
+      "heldout_mse_by_task": [
+        0.002164528239518404,
+        0.3070695102214813
+      ],
+      "heldout_mean_mse": 0.15461701923049986,
+      "active_depth2_count": 21,
+      "max_depth2_utility": 0.011422614566981792,
+      "wall_clock_s": 5.580305814743042
+    },
+    {
+      "method": "mlp_32x32_no_ln",
+      "seed": 1,
+      "task_mode": "rare",
+      "final_window_mse": 0.04802779510699111,
+      "initial_window_mse": 0.1531582115369696,
+      "mean_mse": 0.15418833739249735,
+      "heldout_mse_by_task": [
+        0.026666317135095596,
+        0.3909640908241272
+      ],
+      "heldout_mean_mse": 0.2088152039796114,
+      "active_depth2_count": 0,
+      "max_depth2_utility": 0.0,
+      "wall_clock_s": 0.6009819507598877
+    }
+  ]
+}

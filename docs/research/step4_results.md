@@ -301,9 +301,23 @@ Findings:
 - On cartpole/0 the default `actor_step_size=0.01` is too conservative for
   fast convergence on the 4-dimensional state; only 3 seeds completed and the
   mean (55) is noisy. The linear actor (71) is more reliable at this horizon.
-- Known next step: apply Autostep per-weight step-size adaptation to the actor
-  (currently the actor uses a fixed scalar `actor_step_size`). This would
-  automatically adapt to task dimensionality and remove the manual tuning knob.
+- Follow-up on 2026-05-21 fixed the bsuite `nlhac` adapter so
+  `actor_step_size` correctly aliases the actor Autostep initial step-size.
+  Before this fix, configs such as `nlhac_as03` and `nlhac_as10` silently used
+  the default actor initial step-size.
+- The post-fix 10-seed bounded continuing probe
+  `outputs/bsuite/nlhac_bottleneck_10seed/report.md` did not promote NLHAC:
+  `nlhac_bottleneck` was `-7.55` overall vs `autostep_bottleneck`
+  (`cartpole=-14.1`, `catch=-1.0`), while `sarsa_bottleneck` was `+3.4`
+  overall. This confirms the framework path is wired, but actor-critic
+  promotion over Q/SARSA remains unproven.
+- A clipped-actor follow-up on 2026-05-21 also failed promotion. The bounded
+  3-seed, 500-step probe in
+  `outputs/bsuite/nlhac_clipped_3seed_500/report.md` recorded
+  `nlhac_clipped=-5.83333` overall vs `autostep_bottleneck`
+  (`cartpole=-3.66667`, `catch=-8.0`). Clipping reduced neither the catch
+  regret gap nor the overall promotion gap, so this remains diagnostic
+  negative evidence rather than Step 4 closure.
 
 ### Verdict
 

@@ -1,0 +1,78 @@
+{
+  "accepted_sarsa_step4a": true,
+  "accepted_step4_local_framework_scope": true,
+  "claim_scope": "canonical_discrete_sarsa_control_local_completion",
+  "evidence": {
+    "horde_actor_critic_boundary": {
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/horde_ac_catch_cartpole_10seed/horde_ac.md",
+      "promotion_failed_as_documented": true
+    },
+    "horde_actor_critic_positive_control": {
+      "claim_scope": "horde_actor_critic_positive_control",
+      "mean_final_optimal_action_probability": 0.9976258277893066,
+      "mean_final_reward_rate": 0.9969000399112702,
+      "mean_tail_td_mse": 0.0033361203270033,
+      "n_passed": 10,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step4_horde_actor_critic_control/results.json"
+    },
+    "latest_actor_critic_probe": {
+      "boundary": "latest local actor-critic variants still improve cartpole but do not robustly improve catch, so this is diagnostic evidence rather than promotion evidence",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/step4_ac_paths_seed0/report.md"
+    },
+    "q_sarsa_actor_critic_report": {
+      "boundary": "actor-critic is implemented and evidenced but underperforms the canonical Q/SARSA baselines in this report",
+      "overall": {
+        "col_2": 20.0,
+        "col_3": 154.15,
+        "col_4": 157.15,
+        "col_5": 172.95,
+        "col_6": -9.8,
+        "col_7": -58.0,
+        "numeric_values": [
+          20.0,
+          154.15,
+          157.15,
+          172.95,
+          -9.8,
+          -58.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/step4_catch_cartpole_10seed/step4.md"
+    },
+    "sarsa_vs_q_catch_cartpole": {
+      "cartpole_improvement": 12.695,
+      "cartpole_pairs": 200.0,
+      "catch_improvement": 0.05,
+      "catch_pairs": 200.0,
+      "passed": true,
+      "path": "outputs/bsuite/sarsa_vs_q_catch_cartpole_10seed/sarsa_vs_q.md"
+    },
+    "sarsa_vs_q_primary": {
+      "boundary": "overall win rate is not >50%; evidence supports canonical SARSA API and broad nonnegative aggregate, not dominance on every bsuite family",
+      "overall_improvement_vs_q_mean": 252.46,
+      "overall_wins": 669.0,
+      "pairs": 1400.0,
+      "passed": true,
+      "path": "outputs/bsuite/sarsa_vs_q_primary_10seed/sarsa_vs_q.md"
+    },
+    "test_files_present": {
+      "tests/test_actor_critic.py": true,
+      "tests/test_horde_actor_critic.py": true,
+      "tests/test_sarsa.py": true,
+      "tests/test_step3_production.py": true
+    }
+  },
+  "open_boundaries": [
+    "Horde actor-critic positive control passes, but bsuite promotion over Q/SARSA remains unproven",
+    "active-defense rlsecd/security-gym deployment remains external"
+  ],
+  "schema": "alberta.step4.solution_gate.v1",
+  "solved_step4_full_actor_critic_scope": false
+}

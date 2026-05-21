@@ -60,6 +60,7 @@ def _make_nlhac_agent(
     sparsity: float,
     actor_bounder: Any,
     actor_td_error_clip: float | None,
+    actor_gradient_clip_norm: float | None,
 ) -> NonlinearHordeActorCriticAgent:
     demons = [
         GVFSpec(
@@ -97,6 +98,7 @@ def _make_nlhac_agent(
             hidden_sizes=actor_hidden_sizes,
             actor_sparsity=sparsity,
             actor_td_error_clip=actor_td_error_clip,
+            actor_gradient_clip_norm=actor_gradient_clip_norm,
         ),
         critic=critic,
         actor_optimizer=actor_optimizer,
@@ -221,6 +223,7 @@ def default_agent(
     aux_gammas: tuple[float, ...] = DEFAULT_AUX_GAMMAS,
     sparsity: float = 0.0,
     actor_td_error_clip: float | None = None,
+    actor_gradient_clip_norm: float | None = None,
     seed: int = 0,
     **_: Any,
 ) -> BSuiteNLHACAgent:
@@ -264,5 +267,6 @@ def default_agent(
         sparsity=sparsity,
         actor_bounder=actor_bounder,
         actor_td_error_clip=actor_td_error_clip,
+        actor_gradient_clip_norm=actor_gradient_clip_norm,
     )
     return BSuiteNLHACAgent(obs_spec, action_spec, agent, seed=seed)

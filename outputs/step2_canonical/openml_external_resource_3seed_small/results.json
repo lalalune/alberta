@@ -1,0 +1,1018 @@
+{
+  "config": {
+    "steps": 300,
+    "n_seeds": 3,
+    "seed": 0,
+    "train_fraction": 0.7,
+    "final_window": 100,
+    "hidden_size": 32,
+    "step_size": 0.03,
+    "sparsity": 0.5,
+    "low_sigma": 0.0001,
+    "high_sigma": 0.001,
+    "cbp_decay": 0.99,
+    "cbp_replacement_rate": 0.0005,
+    "cbp_maturity": 100,
+    "manager_learning_rate": 2.0,
+    "manager_discount": 0.995,
+    "retention_manager_learning_rate": 4.0,
+    "retention_manager_discount": 0.999,
+    "manager_exploration": 0.01,
+    "manager_loss_decay": 0.99,
+    "resource_cost_weight": 0.0,
+    "resource_policy_names": [
+      "mlp_static",
+      "upgd_low",
+      "upgd_high",
+      "cbp_replace"
+    ],
+    "resource_policy_costs": {
+      "mlp_static": 0.0,
+      "upgd_low": 0.1,
+      "upgd_high": 1.0,
+      "cbp_replace": 0.5
+    },
+    "n_states": 5,
+    "block_size": 60,
+    "context_delay_blocks": 1,
+    "mask_keep_fraction": 0.5,
+    "noise_std": 0.05,
+    "external_image_source": "openml_fashion_mnist",
+    "allow_openml_download": true,
+    "external_sample_limit": 1000,
+    "benchmarks": [
+      "external_delayed_contextual_permutation"
+    ]
+  },
+  "benchmarks": {
+    "external_delayed_contextual_permutation": {
+      "dataset": {
+        "dataset": "OpenML Fashion-MNIST",
+        "requested_external_source": "openml_fashion_mnist",
+        "used_fallback": false,
+        "openml_name": "Fashion-MNIST",
+        "openml_version": 1,
+        "n_total": 70000,
+        "n_train": 700,
+        "n_test": 300,
+        "feature_dim": 784,
+        "n_classes": 10,
+        "train_fraction": 0.7,
+        "split_seed": 2,
+        "sample_limit": 1000
+      },
+      "stream": {
+        "benchmark": "external_delayed_contextual_permutation",
+        "description": "Fashion-MNIST-style 28x28 image stream when OpenML is enabled, otherwise expanded sklearn digits fallback; recurring pixel permutations use true hidden states while manager context ids are delayed by whole blocks.",
+        "n_states": 5,
+        "block_size": 60,
+        "context_delay_blocks": 1,
+        "steps": 300,
+        "state_id_semantics": "manager receives delayed context ids",
+        "true_state_ids_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "manager_state_ids_head": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "records": [
+        {
+          "seed": 0,
+          "methods": {
+            "resource_manager": {
+              "online_mean_mse": 0.0876583606004715,
+              "online_mean_accuracy": 0.3633333444595337,
+              "final_window_mse": 0.08396464586257935,
+              "final_window_accuracy": 0.4000000059604645,
+              "test_mse": 0.08419614881277085,
+              "test_accuracy": 0.3393333375453949
+            },
+            "resource_manager_retention": {
+              "online_mean_mse": 0.09184812754392624,
+              "online_mean_accuracy": 0.3333333432674408,
+              "final_window_mse": 0.08891851454973221,
+              "final_window_accuracy": 0.36000001430511475,
+              "test_mse": 0.08747131377458572,
+              "test_accuracy": 0.32200000882148744
+            },
+            "mlp_static": {
+              "online_mean_mse": 0.10611705482006073,
+              "online_mean_accuracy": 0.2966666519641876,
+              "final_window_mse": 0.10008946061134338,
+              "final_window_accuracy": 0.33000001311302185,
+              "test_mse": 0.09711469560861588,
+              "test_accuracy": 0.29466667473316194
+            },
+            "upgd_low": {
+              "online_mean_mse": 0.13150641322135925,
+              "online_mean_accuracy": 0.19333332777023315,
+              "final_window_mse": 0.12087119370698929,
+              "final_window_accuracy": 0.20000000298023224,
+              "test_mse": 0.11343395709991455,
+              "test_accuracy": 0.2706666707992554
+            },
+            "upgd_high": {
+              "online_mean_mse": 0.1353914439678192,
+              "online_mean_accuracy": 0.20666666328907013,
+              "final_window_mse": 0.12288472056388855,
+              "final_window_accuracy": 0.23000000417232513,
+              "test_mse": 0.11973492354154587,
+              "test_accuracy": 0.2160000056028366
+            },
+            "cbp_replace": {
+              "online_mean_mse": 0.10622774809598923,
+              "online_mean_accuracy": 0.3233333230018616,
+              "final_window_mse": 0.10033679753541946,
+              "final_window_accuracy": 0.30000001192092896,
+              "test_mse": 0.09555341452360153,
+              "test_accuracy": 0.2580000013113022
+            }
+          },
+          "resource_weights": {
+            "tracking_mean_weights": {
+              "mlp_static": 0.37071874737739563,
+              "upgd_low": 0.10142958909273148,
+              "upgd_high": 0.11618901789188385,
+              "cbp_replace": 0.41166260838508606
+            },
+            "tracking_final_window_mean_weights": {
+              "mlp_static": 0.3506571650505066,
+              "upgd_low": 0.13773877918720245,
+              "upgd_high": 0.16902989149093628,
+              "cbp_replace": 0.34257423877716064
+            },
+            "tracking_last_weights": {
+              "mlp_static": 0.440547376871109,
+              "upgd_low": 0.08677630871534348,
+              "upgd_high": 0.08635412901639938,
+              "cbp_replace": 0.38632214069366455
+            },
+            "retention_mean_weights": {
+              "mlp_static": 0.5394216775894165,
+              "upgd_low": 0.020020252093672752,
+              "upgd_high": 0.021969808265566826,
+              "cbp_replace": 0.4185882806777954
+            },
+            "retention_final_window_mean_weights": {
+              "mlp_static": 0.5580975413322449,
+              "upgd_low": 0.014019587077200413,
+              "upgd_high": 0.018888672813773155,
+              "cbp_replace": 0.40899425745010376
+            },
+            "retention_last_weights": {
+              "mlp_static": 0.6688024401664734,
+              "upgd_low": 0.002501284470781684,
+              "upgd_high": 0.002508108504116535,
+              "cbp_replace": 0.32618820667266846
+            }
+          }
+        },
+        {
+          "seed": 1,
+          "methods": {
+            "resource_manager": {
+              "online_mean_mse": 0.08597763627767563,
+              "online_mean_accuracy": 0.35333332419395447,
+              "final_window_mse": 0.08123727887868881,
+              "final_window_accuracy": 0.36000001430511475,
+              "test_mse": 0.08740775287151337,
+              "test_accuracy": 0.2986666798591614
+            },
+            "resource_manager_retention": {
+              "online_mean_mse": 0.08850914984941483,
+              "online_mean_accuracy": 0.35333332419395447,
+              "final_window_mse": 0.08392653614282608,
+              "final_window_accuracy": 0.3400000035762787,
+              "test_mse": 0.08902757465839387,
+              "test_accuracy": 0.29200000762939454
+            },
+            "mlp_static": {
+              "online_mean_mse": 0.10223665833473206,
+              "online_mean_accuracy": 0.3033333420753479,
+              "final_window_mse": 0.09466767311096191,
+              "final_window_accuracy": 0.3100000023841858,
+              "test_mse": 0.1029358834028244,
+              "test_accuracy": 0.286000007390976
+            },
+            "upgd_low": {
+              "online_mean_mse": 0.1273312121629715,
+              "online_mean_accuracy": 0.17000000178813934,
+              "final_window_mse": 0.11505159735679626,
+              "final_window_accuracy": 0.18000000715255737,
+              "test_mse": 0.10599971264600754,
+              "test_accuracy": 0.26266667544841765
+            },
+            "upgd_high": {
+              "online_mean_mse": 0.13855722546577454,
+              "online_mean_accuracy": 0.1133333370089531,
+              "final_window_mse": 0.12772133946418762,
+              "final_window_accuracy": 0.11999999731779099,
+              "test_mse": 0.11744387298822404,
+              "test_accuracy": 0.214000004529953
+            },
+            "cbp_replace": {
+              "online_mean_mse": 0.10124985873699188,
+              "online_mean_accuracy": 0.3466666638851166,
+              "final_window_mse": 0.09404032677412033,
+              "final_window_accuracy": 0.3499999940395355,
+              "test_mse": 0.0990791916847229,
+              "test_accuracy": 0.2813333421945572
+            }
+          },
+          "resource_weights": {
+            "tracking_mean_weights": {
+              "mlp_static": 0.3787669539451599,
+              "upgd_low": 0.10610387474298477,
+              "upgd_high": 0.083514504134655,
+              "cbp_replace": 0.43161463737487793
+            },
+            "tracking_final_window_mean_weights": {
+              "mlp_static": 0.3897159695625305,
+              "upgd_low": 0.1243748664855957,
+              "upgd_high": 0.10069909691810608,
+              "cbp_replace": 0.3852100670337677
+            },
+            "tracking_last_weights": {
+              "mlp_static": 0.4322023391723633,
+              "upgd_low": 0.046579036861658096,
+              "upgd_high": 0.04212062060832977,
+              "cbp_replace": 0.47909805178642273
+            },
+            "retention_mean_weights": {
+              "mlp_static": 0.39305227994918823,
+              "upgd_low": 0.022616202011704445,
+              "upgd_high": 0.01973903924226761,
+              "cbp_replace": 0.5645924806594849
+            },
+            "retention_final_window_mean_weights": {
+              "mlp_static": 0.3844562768936157,
+              "upgd_low": 0.021423615515232086,
+              "upgd_high": 0.01592917926609516,
+              "cbp_replace": 0.5781908631324768
+            },
+            "retention_last_weights": {
+              "mlp_static": 0.4202096164226532,
+              "upgd_low": 0.0025016232393682003,
+              "upgd_high": 0.0025003207847476006,
+              "cbp_replace": 0.5747883915901184
+            }
+          }
+        },
+        {
+          "seed": 2,
+          "methods": {
+            "resource_manager": {
+              "online_mean_mse": 0.09380695223808289,
+              "online_mean_accuracy": 0.27666667103767395,
+              "final_window_mse": 0.09025870263576508,
+              "final_window_accuracy": 0.30000001192092896,
+              "test_mse": 0.0882114052772522,
+              "test_accuracy": 0.2960000067949295
+            },
+            "resource_manager_retention": {
+              "online_mean_mse": 0.09647522121667862,
+              "online_mean_accuracy": 0.2966666519641876,
+              "final_window_mse": 0.09332756698131561,
+              "final_window_accuracy": 0.30000001192092896,
+              "test_mse": 0.0879342332482338,
+              "test_accuracy": 0.29933333992958067
+            },
+            "mlp_static": {
+              "online_mean_mse": 0.11139986664056778,
+              "online_mean_accuracy": 0.28999999165534973,
+              "final_window_mse": 0.10671380162239075,
+              "final_window_accuracy": 0.3199999928474426,
+              "test_mse": 0.10304402261972427,
+              "test_accuracy": 0.23066667318344117
+            },
+            "upgd_low": {
+              "online_mean_mse": 0.1551254391670227,
+              "online_mean_accuracy": 0.15666666626930237,
+              "final_window_mse": 0.14075066149234772,
+              "final_window_accuracy": 0.1599999964237213,
+              "test_mse": 0.12146094143390655,
+              "test_accuracy": 0.22066667675971985
+            },
+            "upgd_high": {
+              "online_mean_mse": 0.1446303278207779,
+              "online_mean_accuracy": 0.1899999976158142,
+              "final_window_mse": 0.13824011385440826,
+              "final_window_accuracy": 0.1899999976158142,
+              "test_mse": 0.12120131850242614,
+              "test_accuracy": 0.250666669011116
+            },
+            "cbp_replace": {
+              "online_mean_mse": 0.10709541290998459,
+              "online_mean_accuracy": 0.23999999463558197,
+              "final_window_mse": 0.09917324781417847,
+              "final_window_accuracy": 0.23999999463558197,
+              "test_mse": 0.09594717621803284,
+              "test_accuracy": 0.3000000059604645
+            }
+          },
+          "resource_weights": {
+            "tracking_mean_weights": {
+              "mlp_static": 0.4028666615486145,
+              "upgd_low": 0.07933571934700012,
+              "upgd_high": 0.06886802613735199,
+              "cbp_replace": 0.4489296078681946
+            },
+            "tracking_final_window_mean_weights": {
+              "mlp_static": 0.3242856562137604,
+              "upgd_low": 0.09113168716430664,
+              "upgd_high": 0.06459889560937881,
+              "cbp_replace": 0.5199837684631348
+            },
+            "tracking_last_weights": {
+              "mlp_static": 0.3325057923793793,
+              "upgd_low": 0.01675034686923027,
+              "upgd_high": 0.01418285258114338,
+              "cbp_replace": 0.6365610361099243
+            },
+            "retention_mean_weights": {
+              "mlp_static": 0.46634694933891296,
+              "upgd_low": 0.022819437086582184,
+              "upgd_high": 0.02014187164604664,
+              "cbp_replace": 0.4906917214393616
+            },
+            "retention_final_window_mean_weights": {
+              "mlp_static": 0.4927511513233185,
+              "upgd_low": 0.023109804838895798,
+              "upgd_high": 0.014313417486846447,
+              "cbp_replace": 0.4698256254196167
+            },
+            "retention_last_weights": {
+              "mlp_static": 0.5898634791374207,
+              "upgd_low": 0.0025017173029482365,
+              "upgd_high": 0.0025000860914587975,
+              "cbp_replace": 0.40513473749160767
+            }
+          }
+        }
+      ],
+      "aggregate": {
+        "method_stats": {
+          "mlp_static": {
+            "online_mean_mse": {
+              "mean": 0.10658452659845352,
+              "stderr": 0.002655497066572753
+            },
+            "final_window_mse": {
+              "mean": 0.10049031178156535,
+              "stderr": 0.003483188877736697
+            },
+            "test_mse": {
+              "mean": 0.10103153387705487,
+              "stderr": 0.0019586679179473764
+            },
+            "online_mean_accuracy": {
+              "mean": 0.2966666618982951,
+              "stderr": 0.0038490067270959814
+            },
+            "final_window_accuracy": {
+              "mean": 0.3200000027815501,
+              "stderr": 0.005773505789046588
+            },
+            "test_accuracy": {
+              "mean": 0.270444451769193,
+              "stderr": 0.020045627392009567
+            }
+          },
+          "upgd_low": {
+            "online_mean_mse": {
+              "mean": 0.13798768818378448,
+              "stderr": 0.008653225940694073
+            },
+            "final_window_mse": {
+              "mean": 0.1255578175187111,
+              "stderr": 0.007779970146156198
+            },
+            "test_mse": {
+              "mean": 0.11363153705994289,
+              "stderr": 0.004464365475197005
+            },
+            "online_mean_accuracy": {
+              "mean": 0.1733333319425583,
+              "stderr": 0.01071516579191582
+            },
+            "final_window_accuracy": {
+              "mean": 0.18000000218550363,
+              "stderr": 0.011547007276494459
+            },
+            "test_accuracy": {
+              "mean": 0.2513333410024643,
+              "stderr": 0.015506269734489894
+            }
+          },
+          "upgd_high": {
+            "online_mean_mse": {
+              "mean": 0.13952633241812387,
+              "stderr": 0.002710696093007233
+            },
+            "final_window_mse": {
+              "mean": 0.12961539129416147,
+              "stderr": 0.004532754866068573
+            },
+            "test_mse": {
+              "mean": 0.11946003834406536,
+              "stderr": 0.0010933542582186888
+            },
+            "online_mean_accuracy": {
+              "mean": 0.1699999993046125,
+              "stderr": 0.02873892481150348
+            },
+            "final_window_accuracy": {
+              "mean": 0.17999999970197678,
+              "stderr": 0.032145504329050195
+            },
+            "test_accuracy": {
+              "mean": 0.22688889304796853,
+              "stderr": 0.011902898433968497
+            }
+          },
+          "cbp_replace": {
+            "online_mean_mse": {
+              "mean": 0.10485767324765523,
+              "stderr": 0.0018212133972415362
+            },
+            "final_window_mse": {
+              "mean": 0.09785012404123943,
+              "stderr": 0.0019342852599742593
+            },
+            "test_mse": {
+              "mean": 0.09685992747545243,
+              "stderr": 0.0011154389705271565
+            },
+            "online_mean_accuracy": {
+              "mean": 0.3033333271741867,
+              "stderr": 0.03237511625218594
+            },
+            "final_window_accuracy": {
+              "mean": 0.2966666668653488,
+              "stderr": 0.03179797351594446
+            },
+            "test_accuracy": {
+              "mean": 0.2797777831554413,
+              "stderr": 0.012149278724483268
+            }
+          },
+          "resource_manager": {
+            "online_mean_mse": {
+              "mean": 0.08914764970541,
+              "stderr": 0.002379638181918865
+            },
+            "final_window_mse": {
+              "mean": 0.08515354245901108,
+              "stderr": 0.002671243654738383
+            },
+            "test_mse": {
+              "mean": 0.08660510232051215,
+              "stderr": 0.0012266155400337347
+            },
+            "online_mean_accuracy": {
+              "mean": 0.3311111132303874,
+              "stderr": 0.027374855041228278
+            },
+            "final_window_accuracy": {
+              "mean": 0.3533333440621694,
+              "stderr": 0.029059324786104457
+            },
+            "test_accuracy": {
+              "mean": 0.31133334139982866,
+              "stderr": 0.014021146225394356
+            }
+          },
+          "resource_manager_retention": {
+            "online_mean_mse": {
+              "mean": 0.09227749953667323,
+              "stderr": 0.0023096062787267193
+            },
+            "final_window_mse": {
+              "mean": 0.0887242058912913,
+              "stderr": 0.002715582325371892
+            },
+            "test_mse": {
+              "mean": 0.08814437389373779,
+              "stderr": 0.00046137703410098084
+            },
+            "online_mean_accuracy": {
+              "mean": 0.32777777314186096,
+              "stderr": 0.016592430050720256
+            },
+            "final_window_accuracy": {
+              "mean": 0.3333333432674408,
+              "stderr": 0.01763834214885903
+            },
+            "test_accuracy": {
+              "mean": 0.30444445212682086,
+              "stderr": 0.00902944477438447
+            }
+          }
+        },
+        "comparisons": {
+          "resource_manager_vs_mlp_static": {
+            "online_mean_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08914764970541,
+              "baseline_mean": 0.10658452659845352,
+              "paired_diff_mean_positive_favors_resource_manager": 0.017436876893043518,
+              "paired_diff_stderr": 0.0006397656299822977,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 15.735739927610052
+            },
+            "final_window_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "final_window_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08515354245901108,
+              "baseline_mean": 0.10049031178156535,
+              "paired_diff_mean_positive_favors_resource_manager": 0.01533676932255427,
+              "paired_diff_stderr": 0.0009579442238596776,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 9.243427410835311
+            },
+            "test_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "test_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08660510232051215,
+              "baseline_mean": 0.10103153387705487,
+              "paired_diff_mean_positive_favors_resource_manager": 0.014426431556542713,
+              "paired_diff_stderr": 0.0007802183428631728,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 10.675350328281535
+            },
+            "online_mean_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3311111132303874,
+              "baseline_mean": 0.2966666618982951,
+              "paired_diff_mean_positive_favors_resource_manager": 0.034444451332092285,
+              "paired_diff_stderr": 0.02436856874513125,
+              "wins_for_resource_manager": 2,
+              "wins_for_baseline": 1,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 0.8160722714847871
+            },
+            "final_window_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "final_window_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3533333440621694,
+              "baseline_mean": 0.3200000027815501,
+              "paired_diff_mean_positive_favors_resource_manager": 0.0333333412806193,
+              "paired_diff_stderr": 0.027284502637349686,
+              "wins_for_resource_manager": 2,
+              "wins_for_baseline": 1,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 0.7053459547036335
+            },
+            "test_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager",
+              "metric": "test_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.31133334139982866,
+              "baseline_mean": 0.270444451769193,
+              "paired_diff_mean_positive_favors_resource_manager": 0.040888889630635576,
+              "paired_diff_stderr": 0.015320443603831781,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 1.5408960762211854
+            }
+          },
+          "resource_manager_vs_upgd_low": {
+            "online_mean_mse": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08914764970541,
+              "baseline_mean": 0.13798768818378448,
+              "paired_diff_mean_positive_favors_resource_manager": 0.04884003847837448,
+              "paired_diff_stderr": 0.006280641165416279,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 4.489638656318975
+            },
+            "final_window_mse": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "final_window_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08515354245901108,
+              "baseline_mean": 0.1255578175187111,
+              "paired_diff_mean_positive_favors_resource_manager": 0.04040427505970001,
+              "paired_diff_stderr": 0.00512222262638893,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 4.554159548230115
+            },
+            "test_mse": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "test_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08660510232051215,
+              "baseline_mean": 0.11363153705994289,
+              "paired_diff_mean_positive_favors_resource_manager": 0.02702643473943074,
+              "paired_diff_stderr": 0.004373357446911106,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 3.5679039642796795
+            },
+            "online_mean_accuracy": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3311111132303874,
+              "baseline_mean": 0.1733333319425583,
+              "paired_diff_mean_positive_favors_resource_manager": 0.15777778128782907,
+              "paired_diff_stderr": 0.01927705509492279,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 4.72546475849738
+            },
+            "final_window_accuracy": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "final_window_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3533333440621694,
+              "baseline_mean": 0.18000000218550363,
+              "paired_diff_mean_positive_favors_resource_manager": 0.17333334187666574,
+              "paired_diff_stderr": 0.01763833839411904,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 5.673666609401088
+            },
+            "test_accuracy": {
+              "baseline": "upgd_low",
+              "manager_method": "resource_manager",
+              "metric": "test_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.31133334139982866,
+              "baseline_mean": 0.2513333410024643,
+              "paired_diff_mean_positive_favors_resource_manager": 0.060000000397364306,
+              "paired_diff_stderr": 0.012153339121009927,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 2.850329118267648
+            }
+          },
+          "resource_manager_vs_upgd_high": {
+            "online_mean_mse": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08914764970541,
+              "baseline_mean": 0.13952633241812387,
+              "paired_diff_mean_positive_favors_resource_manager": 0.050378682712713875,
+              "paired_diff_stderr": 0.001416623741989245,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 20.53201931005398
+            },
+            "final_window_mse": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "final_window_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08515354245901108,
+              "baseline_mean": 0.12961539129416147,
+              "paired_diff_mean_positive_favors_resource_manager": 0.0444618488351504,
+              "paired_diff_stderr": 0.0028043989339683216,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 9.153498128498612
+            },
+            "test_mse": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "test_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08660510232051215,
+              "baseline_mean": 0.11946003834406536,
+              "paired_diff_mean_positive_favors_resource_manager": 0.03285493602355321,
+              "paired_diff_stderr": 0.0015899125844561705,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 11.930722696867425
+            },
+            "online_mean_accuracy": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3311111132303874,
+              "baseline_mean": 0.1699999993046125,
+              "paired_diff_mean_positive_favors_resource_manager": 0.1611111139257749,
+              "paired_diff_stderr": 0.04431926223168987,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 2.0988062596397583
+            },
+            "final_window_accuracy": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "final_window_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3533333440621694,
+              "baseline_mean": 0.17999999970197678,
+              "paired_diff_mean_positive_favors_resource_manager": 0.17333334436019263,
+              "paired_diff_stderr": 0.037564759877091305,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 2.664040801893293
+            },
+            "test_accuracy": {
+              "baseline": "upgd_high",
+              "manager_method": "resource_manager",
+              "metric": "test_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.31133334139982866,
+              "baseline_mean": 0.22688889304796853,
+              "paired_diff_mean_positive_favors_resource_manager": 0.08444444835186006,
+              "paired_diff_stderr": 0.02251693296768125,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 2.1652160646164793
+            }
+          },
+          "resource_manager_vs_cbp_replace": {
+            "online_mean_mse": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08914764970541,
+              "baseline_mean": 0.10485767324765523,
+              "paired_diff_mean_positive_favors_resource_manager": 0.015710023542245228,
+              "paired_diff_stderr": 0.001540108153156476,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 5.889317774534957
+            },
+            "final_window_mse": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "final_window_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08515354245901108,
+              "baseline_mean": 0.09785012404123943,
+              "paired_diff_mean_positive_favors_resource_manager": 0.012696581582228342,
+              "paired_diff_stderr": 0.0021534836090479257,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 3.4039612669856365
+            },
+            "test_mse": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "test_mse",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.08660510232051215,
+              "baseline_mean": 0.09685992747545243,
+              "paired_diff_mean_positive_favors_resource_manager": 0.010254825154940283,
+              "paired_diff_stderr": 0.0012627881565503102,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 4.688534678588773
+            },
+            "online_mean_accuracy": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "online_mean_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3311111132303874,
+              "baseline_mean": 0.3033333271741867,
+              "paired_diff_mean_positive_favors_resource_manager": 0.027777786056200664,
+              "paired_diff_stderr": 0.010599332055301294,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 1.5130681983887908
+            },
+            "final_window_accuracy": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "final_window_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.3533333440621694,
+              "baseline_mean": 0.2966666668653488,
+              "paired_diff_mean_positive_favors_resource_manager": 0.05666667719682058,
+              "paired_diff_stderr": 0.026034158247307444,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 1.2566767484041725
+            },
+            "test_accuracy": {
+              "baseline": "cbp_replace",
+              "manager_method": "resource_manager",
+              "metric": "test_accuracy",
+              "direction": "positive favors resource_manager",
+              "resource_manager_mean": 0.31133334139982866,
+              "baseline_mean": 0.2797777831554413,
+              "paired_diff_mean_positive_favors_resource_manager": 0.031555558244387306,
+              "paired_diff_stderr": 0.025639476081954462,
+              "wins_for_resource_manager": 2,
+              "wins_for_baseline": 1,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 0.7105687334870514
+            }
+          },
+          "resource_manager_retention_vs_mlp_static": {
+            "online_mean_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "online_mean_mse",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.09227749953667323,
+              "baseline_mean": 0.10658452659845352,
+              "paired_diff_mean_positive_favors_resource_manager": 0.014307027061780294,
+              "paired_diff_stderr": 0.0003461083200738536,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 23.86584039256709
+            },
+            "final_window_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "final_window_mse",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.0887242058912913,
+              "baseline_mean": 0.10049031178156535,
+              "paired_diff_mean_positive_favors_resource_manager": 0.011766105890274048,
+              "paired_diff_stderr": 0.0008195114075040365,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 8.289285958511693
+            },
+            "test_mse": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "test_mse",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.08814437389373779,
+              "baseline_mean": 0.10103153387705487,
+              "paired_diff_mean_positive_favors_resource_manager": 0.012887159983317057,
+              "paired_diff_stderr": 0.0016585597603185167,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 4.486064031861589
+            },
+            "online_mean_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "online_mean_accuracy",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.32777777314186096,
+              "baseline_mean": 0.2966666618982951,
+              "paired_diff_mean_positive_favors_resource_manager": 0.031111111243565876,
+              "paired_diff_stderr": 0.012813957847037215,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 1.4017533587730855
+            },
+            "final_window_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "final_window_accuracy",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.3333333432674408,
+              "baseline_mean": 0.3200000027815501,
+              "paired_diff_mean_positive_favors_resource_manager": 0.013333340485890707,
+              "paired_diff_stderr": 0.01666666070620219,
+              "wins_for_resource_manager": 2,
+              "wins_for_baseline": 1,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 0.46188062830494075
+            },
+            "test_accuracy": {
+              "baseline": "mlp_static",
+              "manager_method": "resource_manager_retention",
+              "metric": "test_accuracy",
+              "direction": "positive favors resource_manager_retention",
+              "resource_manager_mean": 0.30444445212682086,
+              "baseline_mean": 0.270444451769193,
+              "paired_diff_mean_positive_favors_resource_manager": 0.03400000035762785,
+              "paired_diff_stderr": 0.018394846218050397,
+              "wins_for_resource_manager": 3,
+              "wins_for_baseline": 0,
+              "ties": 0,
+              "n": 3,
+              "cohens_d": 1.067141802993791
+            }
+          }
+        }
+      }
+    }
+  },
+  "wall_clock_s": 42.14025902748108,
+  "evidence_level": "learned_contextual_resource_manager_stateful_external"
+}

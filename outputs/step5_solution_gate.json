@@ -1,0 +1,197 @@
+{
+  "accepted_step5_average_reward_horde_actor_critic": true,
+  "accepted_step5_average_reward_prediction": true,
+  "accepted_step5_average_reward_primitive": true,
+  "accepted_step5_nonlinear_average_reward_horde": true,
+  "accepted_step5_off_policy_average_reward_gtd": true,
+  "accepted_step5_step6_continuing_control": true,
+  "accepted_step5_step6_multistate_continuing_control": true,
+  "claim_scope": "average_reward_step5_full_local_completion",
+  "evidence": {
+    "documented_scope": {
+      "passed": true,
+      "path": "docs/research/step5_step6_average_reward.md",
+      "primitive_boundary_documented": true
+    },
+    "facade_smoke": {
+      "average_rewards_shape": [
+        64
+      ],
+      "finite": true,
+      "learner_type": "DifferentialTDLearner",
+      "passed": true,
+      "predictions_shape": [
+        64
+      ],
+      "seed": 0,
+      "steps": 64,
+      "td_errors_shape": [
+        64
+      ]
+    },
+    "implementation_and_tests": {
+      "files": {
+        "docs/research/step5_step6_average_reward.md": true,
+        "src/alberta_framework/core/average_reward.py": true,
+        "src/alberta_framework/steps/step5.py": true,
+        "tests/test_average_reward.py": true,
+        "tests/test_step5_step6_production.py": true
+      },
+      "passed": true
+    },
+    "seeded_average_reward_horde_actor_critic_benchmark": {
+      "aggregate": {
+        "mean_average_reward_abs_error": 0.009685534238815307,
+        "mean_final_policy_match_rate": 0.9891,
+        "mean_final_reward": 0.9891,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0009838599340749599,
+        "stderr_final_policy_match_rate": 0.0006227180564089806,
+        "stderr_final_reward": 0.0006227180564089806
+      },
+      "claim_scope": "nonlinear_shared_feature_average_reward_actor_critic",
+      "passed": true,
+      "path": "outputs/step5_average_reward_horde_actor_critic/results.json",
+      "present": true,
+      "schema": "alberta.step5.average_reward_horde_actor_critic_benchmark.v1",
+      "target": {
+        "optimal_average_reward": 1.0,
+        "optimal_policy": [
+          1,
+          0
+        ]
+      }
+    },
+    "seeded_average_reward_horde_benchmark": {
+      "aggregate": {
+        "max_average_reward_abs_error": 2.0265579223632812e-06,
+        "mean_average_reward_abs_error": 1.055002212524414e-06,
+        "mean_tail_td_error_mse": 7.177632837043757e-13,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 1.5639200730446519e-07,
+        "stderr_tail_td_error_mse": 3.826093320146963e-13
+      },
+      "claim_scope": "nonlinear_shared_trunk_average_reward_horde_prediction",
+      "passed": true,
+      "path": "outputs/step5_average_reward_horde/results.json",
+      "present": true,
+      "schema": "alberta.step5.average_reward_horde_benchmark.v1",
+      "target": {
+        "true_average_rewards": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "seeded_continuing_control_benchmark": {
+      "aggregate": {
+        "mean_average_reward_abs_error": 3.039836883544922e-06,
+        "mean_final_optimal_action_rate": 1.0,
+        "mean_final_reward": 1.0,
+        "mean_tail_td_error_mse": 8.185452315956354e-12,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0,
+        "stderr_final_optimal_action_rate": 0.0,
+        "stderr_final_reward": 0.0,
+        "stderr_tail_td_error_mse": 0.0
+      },
+      "baseline": {
+        "uniform_random_expected_reward": 0.5
+      },
+      "claim_scope": "one_state_average_reward_differential_sarsa_control",
+      "passed": true,
+      "path": "outputs/step5_continuing_control/results.json",
+      "present": true,
+      "schema": "alberta.step5.continuing_control_benchmark.v1",
+      "target": {
+        "optimal_action": 1,
+        "optimal_average_reward": 1.0
+      }
+    },
+    "seeded_multistate_continuing_control_benchmark": {
+      "aggregate": {
+        "mean_average_reward_abs_error": 2.562999725341797e-06,
+        "mean_final_policy_match_rate": 1.0,
+        "mean_final_reward": 1.0,
+        "mean_tail_td_error_mse": 6.326672519207932e-12,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0,
+        "stderr_final_policy_match_rate": 0.0,
+        "stderr_final_reward": 0.0,
+        "stderr_tail_td_error_mse": 8.68297565632444e-15
+      },
+      "baseline": {
+        "uniform_random_expected_reward": 0.5
+      },
+      "claim_scope": "two_state_average_reward_differential_sarsa_control",
+      "passed": true,
+      "path": "outputs/step5_multistate_continuing_control/results.json",
+      "present": true,
+      "schema": "alberta.step5.multistate_continuing_control_benchmark.v1",
+      "target": {
+        "optimal_average_reward": 1.0,
+        "optimal_policy": [
+          1,
+          0
+        ]
+      }
+    },
+    "seeded_off_policy_average_reward_benchmark": {
+      "aggregate": {
+        "mean_average_reward_abs_error": 2.9802322387695312e-06,
+        "mean_final_average_reward": 0.9999970197677612,
+        "mean_weighted_tail_td_error_mse": 3.552713678800501e-11,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0,
+        "stderr_final_average_reward": 0.0,
+        "stderr_weighted_tail_td_error_mse": 0.0
+      },
+      "claim_scope": "off_policy_average_reward_differential_gtd_prediction",
+      "passed": true,
+      "path": "outputs/step5_off_policy_average_reward/results.json",
+      "present": true,
+      "schema": "alberta.step5.off_policy_average_reward_benchmark.v1",
+      "target": {
+        "behavior_policy_average_reward": 0.5,
+        "target_policy_average_reward": 1.0
+      }
+    },
+    "seeded_prediction_benchmark": {
+      "aggregate": {
+        "mean_average_reward_abs_error": 2.5033950805664062e-06,
+        "mean_centered_value_rmse": 2.980232238769531e-07,
+        "mean_tail_td_error_mse": 5.970833202861847e-12,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0,
+        "stderr_centered_value_rmse": 0.0,
+        "stderr_tail_td_error_mse": 0.0
+      },
+      "baseline": {
+        "zero_average_reward_abs_error": 1.0,
+        "zero_value_centered_rmse": 0.4714045524597168
+      },
+      "claim_scope": "closed_form_continuing_differential_td_prediction",
+      "passed": true,
+      "path": "outputs/step5_average_reward_prediction/results.json",
+      "present": true,
+      "schema": "alberta.step5.average_reward_prediction_benchmark.v1",
+      "target": {
+        "centered_differential_values": [
+          -0.6666666865348816,
+          0.3333333134651184,
+          0.3333333134651184
+        ],
+        "true_average_reward": 1.0
+      }
+    }
+  },
+  "missing_full_evidence": [],
+  "schema": "alberta.step5.solution_gate.v1",
+  "solved_step5_full_research_scope": true
+}

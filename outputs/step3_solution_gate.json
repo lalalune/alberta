@@ -1,0 +1,202 @@
+{
+  "accepted_given_feature_step3": true,
+  "claim_scope": "given_feature_gvf_horde_local_completion",
+  "evidence": {
+    "dod2_nexting": {
+      "mlp_horde_lambda09_gamma09_rmse": 0.0017376694401415687,
+      "n_seeds": 12,
+      "passed": true,
+      "path": "output/step3_dod2/summary.json",
+      "td0_gamma09_rmse": 0.44049903750419617
+    },
+    "dod3_pavlovian": {
+      "blocking_boundary": "blocking instrumentation exists but effect is mixed across horizons",
+      "n_seeds": 10,
+      "passed": true,
+      "path": "output/step3_dod3/summary.json",
+      "per_gamma_pass": {
+        "0.0": true,
+        "0.5": true,
+        "0.9": true,
+        "0.99": true
+      }
+    },
+    "dod5_linear_off_policy": {
+      "n_seeds": 12,
+      "passed": true,
+      "path": "output/step3_dod5/summary.json",
+      "per_clip_pass": {
+        "1.0": true,
+        "1000.0": true,
+        "2.0": true,
+        "inf": true
+      }
+    },
+    "dod6_recurrent_state": {
+      "gvf_feedback_boundary": "raw GVF feedback alone is negative in this ablation",
+      "n_seeds": 10.0,
+      "passed": true,
+      "path": "output/step3_dod6/summary.json",
+      "trace_only_better_seeds": 10.0,
+      "trace_plus_gvf_better_seeds": 10.0
+    },
+    "dod7_td_gvf_feature_bridge": {
+      "best_discovery_beats_linear": true,
+      "best_discovery_beats_mlp": true,
+      "best_discovery_method": "td_surprise_interaction_features_linear_gvf",
+      "best_method": "fixed_interaction_linear_gvf",
+      "boundary": "positive TD/GVF feature signal exists; stronger hidden/off-policy evidence is audited separately",
+      "passed": true,
+      "path": "output/step3_dod7/summary.json",
+      "seeds": 5
+    },
+    "dod9_control_bridge": {
+      "baseline_last_window_reward": 2088.6,
+      "horde_cbp_history_last_window_reward": 2197.7,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "output/step3_dod9/summary.json"
+    },
+    "gradient_td_correction": {
+      "boundary": "proves linear multi-demon Gradient-TD/TDC secondary-weight correction; nonlinear shared-trunk GTD remains open",
+      "claim_scope": "linear_multi_demon_off_policy_gradient_td_correction",
+      "mean_abs_error": 1.7881393432617188e-06,
+      "mean_weighted_tail_td_mse": 1.3926637620897964e-12,
+      "n_passed": 10,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step3_gradient_td_correction/results.json"
+    },
+    "hidden_off_policy_feature_discovery": {
+      "best_discovery_beats_linear": true,
+      "best_discovery_beats_mlp": true,
+      "best_discovery_method": "gvf_feedback_features_linear_gvf",
+      "boundary": "positive-control evidence for hidden-state GVF feature discovery and small off-policy predictive-state lift; not a theorem of arbitrary recursive discovery",
+      "claim_scope": "hidden_state_td_gvf_feature_discovery_positive_control",
+      "gvf_feedback_lift_vs_linear": 1.5176488876342773,
+      "gvf_feedback_lift_vs_mlp": 0.6888866901397706,
+      "gvf_feedback_wins_vs_linear": 5,
+      "gvf_feedback_wins_vs_mlp": 2,
+      "hidden_channels": 2,
+      "n_seeds": 5,
+      "observation_dynamics": "coupled_hidden_ar1",
+      "off_policy_novel_lift_vs_raw_is": 0.05971945524215694,
+      "off_policy_novel_predictive_state_rmse": 1.3200954794883728,
+      "off_policy_raw_is_rmse": 1.3798149347305297,
+      "off_policy_raw_no_is_rmse": 2.2054142236709593,
+      "passed": true,
+      "path": "outputs/step3_tdgvf_worker_hidden_novelty_5seed/summary.json"
+    },
+    "independent_nonlinear_trace_horde": {
+      "boundary": "closes full nonlinear gamma-lambda traces through independent demon trunks; shared-trunk Horde still intentionally uses per-head traces only",
+      "claim_scope": "independent_nonlinear_demon_full_gamma_lambda_traces",
+      "mean_abs_error": 4.529953003817866e-06,
+      "mean_tail_td_mse": 8.185452315956354e-13,
+      "mean_trunk_trace_norm": 4.350855374336243,
+      "n_passed": 10,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step3_independent_trace_horde/results.json"
+    },
+    "nonlinear_off_policy_horde": {
+      "boundary": "proves nonlinear per-demon clipped-IS Horde prediction, not full GQ/GTD/TDC MSPBE correction",
+      "claim_scope": "nonlinear_per_demon_importance_weighted_horde_prediction",
+      "mean_abs_error": 4.4107437133789065e-07,
+      "mean_improvement_vs_no_is": 1.9999778151512146,
+      "mean_no_is_abs_error": 1.999978256225586,
+      "n_passed": 10,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step3_off_policy_horde/results.json"
+    },
+    "nonlinear_shared_gtd_horde": {
+      "boundary": "positive-control evidence for nonlinear shared-trunk Gradient-TD/TDC-style correction; semi-gradient is already strong on this benign process, so this does not claim dominance",
+      "claim_scope": "nonlinear_shared_trunk_off_policy_gradient_td_correction",
+      "mean_corrected_abs_error": 0.17934141159057618,
+      "mean_improvement_vs_semi_gradient": -0.15758692622184753,
+      "mean_secondary_norm": 0.01183215957134962,
+      "mean_tail_correction_norm": 0.04096454009413719,
+      "mean_trunk_change_norm": 1.1984633207321167,
+      "n_passed": 10,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step3_nonlinear_shared_gtd_horde/results.json"
+    },
+    "nonlinear_shared_gtd_stress": {
+      "by_regime": {
+        "balanced_gamma05": {
+          "max_abs_error": 0.10805656015872955,
+          "mean_abs_error": 0.06625601649284363,
+          "mean_tail_correction_norm": 0.007032822538167238,
+          "mean_tail_secondary_norm": 0.005701721599325538,
+          "n_passed": 10,
+          "n_seeds": 10,
+          "passed": true
+        },
+        "balanced_gamma08": {
+          "max_abs_error": 0.18036073446273804,
+          "mean_abs_error": 0.14045141339302064,
+          "mean_tail_correction_norm": 0.04451368562877178,
+          "mean_tail_secondary_norm": 0.011824049707502126,
+          "n_passed": 10,
+          "n_seeds": 10,
+          "passed": true
+        },
+        "skewed_gamma08": {
+          "max_abs_error": 0.2990289330482483,
+          "mean_abs_error": 0.15534942150115966,
+          "mean_tail_correction_norm": 0.0438104547560215,
+          "mean_tail_secondary_norm": 0.011590225901454688,
+          "n_passed": 10,
+          "n_seeds": 10,
+          "passed": true
+        }
+      },
+      "claim_scope": "production_nonlinear_shared_gtd_multi_regime_stress",
+      "max_abs_error": 0.2990289330482483,
+      "mean_abs_error": 0.12068561712900798,
+      "n_passed": 30,
+      "n_regimes": 3,
+      "n_rows": 30,
+      "passed": true,
+      "path": "outputs/step3_nonlinear_shared_gtd_stress/results.json"
+    },
+    "production_nonlinear_shared_gtd_backend": {
+      "claim_scope": "production_facing_corrected_off_policy_horde_backend",
+      "files": {
+        "core_export": true,
+        "src/alberta_framework/core/off_policy_horde.py": true,
+        "tests/test_off_policy_horde.py": true,
+        "top_level_export": true
+      },
+      "passed": true
+    },
+    "recursive_gvf_feature_discovery": {
+      "boundary": "bounded constructive evidence for recursive TD/GVF feature reuse; not a theorem of arbitrary recursive feature discovery",
+      "claim_scope": "bounded_recursive_td_gvf_feature_reuse",
+      "history_linear_rmse_mean": 0.532972303032875,
+      "n_seeds": 10,
+      "passed": true,
+      "path": "outputs/step3_recursive_gvf_feature_discovery/results.json",
+      "raw_linear_rmse_mean": 0.5312814712524414,
+      "recursive_gvf_rmse_mean": 0.45258461833000185,
+      "recursive_lift_vs_history_mean": 0.08038768470287323,
+      "recursive_lift_vs_raw_mean": 0.07869685292243958,
+      "recursive_wins_vs_history": 10,
+      "recursive_wins_vs_raw": 10
+    },
+    "test_files_present": {
+      "tests/test_gvf_types.py": true,
+      "tests/test_horde.py": true,
+      "tests/test_independent_demon_horde.py": true,
+      "tests/test_mixed_horde.py": true,
+      "tests/test_off_policy_horde.py": true,
+      "tests/test_step3_production.py": true
+    }
+  },
+  "open_boundaries": [
+    "external rlsecd/security-gym counterfactual action rollout evidence"
+  ],
+  "schema": "alberta.step3.solution_gate.v1",
+  "solved_step3_full_research_scope": false
+}

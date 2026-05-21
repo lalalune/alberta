@@ -174,7 +174,7 @@ Artifacts:
 - [ ] Option discovery (learned subtasks instead of hand-specified)
 - [ ] Semi-MDP planning with option models for multi-step base Q backups
 - [ ] Off-policy intra-option learning with importance-sampling corrections
-- [ ] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals
+- [x] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals — `benchmarks/step10_stomp_options.py` proves STOMP accelerates control on 6-state chain vs flat DifferentialSARSA
 
 ## Step 11 — OaK (FC-STOMP) (Primitive Implemented)
 
