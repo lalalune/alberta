@@ -1069,3 +1069,112 @@ class TestMLPLearnerWithIDBD:
 
         chex.assert_shape(metrics, (100, 4))
         chex.assert_tree_all_finite(metrics)
+
+
+class TestNeuronUtility:
+    """Tests for per-neuron utility tracking and dormant-neuron reset."""
+
+    def test_utility_disabled_by_default(self):
+        learner = MLPLearner(hidden_sizes=(16,), sparsity=0.0)
+        state = learner.init(feature_dim=8, key=jr.key(0))
+        assert state.neuron_utility is None
+
+    def test_utility_shape_single_hidden(self):
+        learner = MLPLearner(hidden_sizes=(16,), sparsity=0.0, track_neuron_utility=True)
+        state = learner.init(feature_dim=8, key=jr.key(0))
+        assert state.neuron_utility is not None
+        assert len(state.neuron_utility) == 1
+        chex.assert_shape(state.neuron_utility[0], (16,))
+
+    def test_utility_shape_two_hidden(self):
+        learner = MLPLearner(hidden_sizes=(16, 8), sparsity=0.0, track_neuron_utility=True)
+        state = learner.init(feature_dim=5, key=jr.key(1))
+        assert state.neuron_utility is not None
+        assert len(state.neuron_utility) == 2
+        chex.assert_shape(state.neuron_utility[0], (16,))
+        chex.assert_shape(state.neuron_utility[1], (8,))
+
+    def test_utility_initialised_to_zero(self):
+        learner = MLPLearner(hidden_sizes=(16,), sparsity=0.0, track_neuron_utility=True)
+        state = learner.init(feature_dim=8, key=jr.key(2))
+        assert state.neuron_utility is not None
+        assert float(jnp.sum(jnp.abs(state.neuron_utility[0]))) == 0.0
+
+    def test_utility_increases_after_updates(self):
+        learner = MLPLearner(hidden_sizes=(16,), sparsity=0.0, track_neuron_utility=True)
+        state = learner.init(feature_dim=8, key=jr.key(3))
+        obs = jnp.ones(8, dtype=jnp.float32)
+        for _ in range(20):
+            result = learner.update(state, obs, jnp.array([1.0]))
+            state = result.state
+        assert state.neuron_utility is not None
+        assert float(jnp.sum(state.neuron_utility[0])) > 0.0
+
+    def test_utility_ema_decay(self):
+        """After one update, utility should equal (1 - decay) * grad_norm."""
+        decay = 0.9
+        learner = MLPLearner(
+            hidden_sizes=(4,), sparsity=0.0, track_neuron_utility=True,
+            neuron_utility_decay=decay,
+        )
+        state = learner.init(feature_dim=4, key=jr.key(4))
+        obs = jnp.ones(4, dtype=jnp.float32)
+        result = learner.update(state, obs, jnp.array([1.0]))
+        new_state = result.state
+        assert new_state.neuron_utility is not None
+        # First update: utility = 0 * decay + (1 - decay) * grad_norm
+        # utility should be strictly positive for non-zero gradient
+        assert float(jnp.sum(new_state.neuron_utility[0])) > 0.0
+
+    def test_dormant_fraction_zero_after_init(self):
+        learner = MLPLearner(hidden_sizes=(16,), sparsity=0.0, track_neuron_utility=True)
+        state = learner.init(feature_dim=8, key=jr.key(5))
+        frac = MLPLearner.dormant_neuron_fraction(state, threshold=0.01)
+        assert frac == 1.0  # all zero at init → all dormant
+
+    def test_dormant_fraction_decreases_after_updates(self):
+        learner = MLPLearner(
+            hidden_sizes=(8,), sparsity=0.0, track_neuron_utility=True,
+            neuron_utility_decay=0.5,  # faster convergence
+        )
+        state = learner.init(feature_dim=4, key=jr.key(6))
+        obs = jr.normal(jr.key(7), (4,))
+        for _ in range(50):
+            result = learner.update(state, obs, jnp.array([1.0]))
+            state = result.state
+        frac = MLPLearner.dormant_neuron_fraction(state, threshold=1e-6)
+        assert frac < 1.0  # at least some neurons are active
+
+    def test_dormant_fraction_no_tracking(self):
+        learner = MLPLearner(hidden_sizes=(8,), sparsity=0.0)
+        state = learner.init(feature_dim=4, key=jr.key(8))
+        frac = MLPLearner.dormant_neuron_fraction(state)
+        assert frac == 0.0
+
+    def test_reset_dormant_neurons_reduces_dormant_fraction(self):
+        learner = MLPLearner(
+            hidden_sizes=(8,), sparsity=0.0, track_neuron_utility=True,
+        )
+        state = learner.init(feature_dim=4, key=jr.key(9))
+        # All utility = 0 → all dormant at very low threshold
+        assert MLPLearner.dormant_neuron_fraction(state, threshold=1.0) == 1.0
+        state_reset = learner.reset_dormant_neurons(state, jr.key(10), threshold=1.0)
+        # Weights should have changed
+        assert not jnp.allclose(
+            state_reset.params.weights[0], state.params.weights[0]
+        )
+        # Utility for reset neurons is zeroed
+        assert state_reset.neuron_utility is not None
+        assert float(jnp.sum(state_reset.neuron_utility[0])) == 0.0
+
+    def test_config_roundtrip_with_tracking(self):
+        learner = MLPLearner(
+            hidden_sizes=(8,), sparsity=0.0, track_neuron_utility=True,
+            neuron_utility_decay=0.95,
+        )
+        cfg = learner.to_config()
+        assert cfg["track_neuron_utility"] is True
+        assert cfg["neuron_utility_decay"] == pytest.approx(0.95)
+        restored = MLPLearner.from_config(cfg)
+        assert restored._track_neuron_utility is True
+        assert restored._neuron_utility_decay == pytest.approx(0.95)

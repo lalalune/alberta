@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Neuron utility tracking** — per-hidden-unit EMA of gradient L2 norm for
+  dormant-neuron detection in long-running continual agents
+  - `MLPLearner(track_neuron_utility=True, neuron_utility_decay=0.99)` stores
+    `MLPLearnerState.neuron_utility: tuple[Array, ...] | None` (one `(h_i,)`
+    array per hidden layer, None when disabled)
+  - `MLPLearner.dormant_neuron_fraction(state, threshold)` returns the fraction
+    of neurons below the utility threshold
+  - `MLPLearner.reset_dormant_neurons(state, key, threshold)` re-initialises
+    incoming weights, eligibility traces, and optimizer states for dormant
+    neurons; zeroes outgoing weights from next layer to prevent signal injection
+  - Config roundtrip via `to_config()` / `from_config()` includes new fields
+  - 11 tests covering shapes, EMA dynamics, dormancy counts, reset, and serialisation
+
 ## [0.22.0] - 2026-05-21
 
 ### Added

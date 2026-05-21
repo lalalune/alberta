@@ -32,7 +32,7 @@ Immediate next steps and near-term work items for the Alberta Framework.
       The merged artifact must preserve these manifests and SHA-256 hashes in
       `manifest.split_results`; `solved_opmnist_step2` stays false unless
       `artifact_provenance.provenance_complete` is true.
-- [ ] Neuron utility tracking (per-hidden-unit EMA of gradient magnitude)
+- [x] Neuron utility tracking (per-hidden-unit EMA of gradient magnitude) — `MLPLearner(track_neuron_utility=True)`, `dormant_neuron_fraction`, `reset_dormant_neurons`
 - [ ] Feature generation and testing ("generate and test" mechanisms)
 - [ ] Nonlinear feature discovery for streaming problems
 - [ ] Comparison studies: MLPLearner across diverse non-stationarity types (drift, abrupt, periodic)

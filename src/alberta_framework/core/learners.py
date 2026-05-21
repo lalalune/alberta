@@ -846,6 +846,8 @@ class MLPLearner:
         leaky_relu_slope: float = 0.01,
         use_layer_norm: bool = True,
         head_optimizer: AnyOptimizer | None = None,
+        track_neuron_utility: bool = False,
+        neuron_utility_decay: float = 0.99,
     ):
         """Initialize MLP learner.
 
@@ -871,6 +873,12 @@ class MLPLearner:
                 layers use ``optimizer`` while the output layer uses
                 ``head_optimizer``. This enables hybrid configurations like
                 stable LMS for the trunk with adaptive Autostep for the head.
+            track_neuron_utility: When True, maintain a per-hidden-unit EMA of
+                the gradient L2 norm in ``MLPLearnerState.neuron_utility``.
+                Enables dormant-neuron detection for long-running continual agents.
+                Default False to avoid overhead when unused.
+            neuron_utility_decay: EMA decay for neuron utility (default 0.99).
+                Higher values track slower, smoother utility signals.
         """
         self._hidden_sizes = hidden_sizes
         self._optimizer: AnyOptimizer = optimizer or LMS(step_size=step_size)
@@ -882,6 +890,8 @@ class MLPLearner:
         self._sparsity = sparsity
         self._leaky_relu_slope = leaky_relu_slope
         self._use_layer_norm = use_layer_norm
+        self._track_neuron_utility = track_neuron_utility
+        self._neuron_utility_decay = neuron_utility_decay
 
     @property
     def normalizer(
@@ -889,6 +899,104 @@ class MLPLearner:
     ) -> Normalizer[EMANormalizerState] | Normalizer[WelfordNormalizerState] | None:
         """The feature normalizer, or None if normalization is disabled."""
         return self._normalizer
+
+    @staticmethod
+    def dormant_neuron_fraction(
+        state: MLPLearnerState, threshold: float = 0.01
+    ) -> float:
+        """Fraction of hidden neurons whose utility EMA is below *threshold*.
+
+        Args:
+            state: Current MLP learner state (must have neuron_utility tracked).
+            threshold: Neurons with utility below this are counted as dormant.
+
+        Returns:
+            Scalar fraction in [0, 1].  Returns 0.0 when neuron_utility is None.
+        """
+        if state.neuron_utility is None:
+            return 0.0
+        total = 0
+        dormant = 0
+        for u in state.neuron_utility:
+            total += u.shape[0]
+            dormant += int(jnp.sum(u < threshold).item())
+        return dormant / total if total > 0 else 0.0
+
+    def reset_dormant_neurons(
+        self,
+        state: MLPLearnerState,
+        key: Array,
+        threshold: float = 0.01,
+    ) -> MLPLearnerState:
+        """Re-initialise weights for dormant hidden neurons.
+
+        For each hidden layer, neurons whose utility EMA is below *threshold*
+        receive fresh sparse-initialised incoming weights and zero eligibility
+        traces and optimizer states.  Out-going weights from dormant neurons
+        to downstream layers are also zeroed so the reset does not inject a
+        sudden large signal.
+
+        This is a Python-level operation (not JIT-compiled) because the
+        dormancy mask changes structure per call.  Call periodically, e.g.
+        every N environment steps.
+
+        Args:
+            state: Current MLP learner state.
+            key: JAX random key for re-initialisation.
+            threshold: Utility below which a neuron is considered dormant.
+
+        Returns:
+            Updated state with dormant neurons re-initialised.
+        """
+        if state.neuron_utility is None:
+            return state
+
+        new_weights = list(state.params.weights)
+        new_biases = list(state.params.biases)
+        new_traces = list(state.traces)
+        new_opt_states = list(state.optimizer_states)
+        new_utility = list(state.neuron_utility)
+
+        n_hidden = len(self._hidden_sizes)
+        for layer_i in range(n_hidden):
+            dormant_mask = state.neuron_utility[layer_i] < threshold
+            if not jnp.any(dormant_mask):
+                continue
+            h_out, h_in = new_weights[layer_i].shape
+            key, subkey = jax.random.split(key)
+            fresh_w = sparse_init(subkey, (h_out, h_in), sparsity=self._sparsity)
+            new_w = jnp.where(dormant_mask[:, None], fresh_w, new_weights[layer_i])
+            zero_b = jnp.zeros_like(new_biases[layer_i])
+            new_b = jnp.where(dormant_mask, zero_b, new_biases[layer_i])
+            new_weights[layer_i] = new_w
+            new_biases[layer_i] = new_b
+            # Zero traces for incoming weights/biases of reset neurons
+            new_traces[2 * layer_i] = jnp.where(dormant_mask[:, None], 0.0, new_traces[2 * layer_i])
+            new_traces[2 * layer_i + 1] = jnp.where(dormant_mask, 0.0, new_traces[2 * layer_i + 1])
+            # Zero optimizer states (per-parameter EMA/traces inside optimizer)
+            def _zero_by_mask(x: Array, m: Array = dormant_mask) -> Array:
+                sel = m[:, None] if x.ndim == 2 else m
+                return jnp.where(sel, jnp.zeros_like(x), x)
+            new_opt_states[2 * layer_i] = jax.tree_util.tree_map(
+                _zero_by_mask, new_opt_states[2 * layer_i]
+            )
+            new_opt_states[2 * layer_i + 1] = jax.tree_util.tree_map(
+                lambda x, m=dormant_mask: jnp.where(m, jnp.zeros_like(x), x),
+                new_opt_states[2 * layer_i + 1],
+            )
+            # Zero outgoing weights from the next layer that feed into this neuron
+            if layer_i + 1 < len(new_weights):
+                out_w = new_weights[layer_i + 1]  # shape (h_{i+1}, h_i)
+                new_weights[layer_i + 1] = jnp.where(dormant_mask[None, :], 0.0, out_w)
+            # Reset utility for reset neurons
+            new_utility[layer_i] = jnp.where(dormant_mask, 0.0, new_utility[layer_i])
+
+        return state.replace(  # type: ignore[attr-defined, no-any-return]
+            params=MLPParams(weights=tuple(new_weights), biases=tuple(new_biases)),
+            traces=tuple(new_traces),
+            optimizer_states=tuple(new_opt_states),
+            neuron_utility=tuple(new_utility),
+        )
 
     def to_config(self) -> dict[str, Any]:
         """Serialize learner configuration to dict.
@@ -913,6 +1021,8 @@ class MLPLearner:
             "use_layer_norm": self._use_layer_norm,
             "gamma": self._gamma,
             "lamda": self._lamda,
+            "track_neuron_utility": self._track_neuron_utility,
+            "neuron_utility_decay": self._neuron_utility_decay,
         }
         return config
 
@@ -1001,11 +1111,19 @@ class MLPLearner:
         if self._normalizer is not None:
             normalizer_state = self._normalizer.init(feature_dim)
 
+        neuron_utility: tuple[Array, ...] | None = None
+        if self._track_neuron_utility:
+            neuron_utility = tuple(
+                jnp.zeros(layer_sizes[i + 1], dtype=jnp.float32)
+                for i in range(len(layer_sizes) - 2)  # hidden layers only
+            )
+
         return MLPLearnerState(
             params=params,
             optimizer_states=tuple(opt_states_list),
             traces=tuple(traces_list),
             normalizer_state=normalizer_state,
+            neuron_utility=neuron_utility,
             step_count=jnp.array(0, dtype=jnp.int32),
             birth_timestamp=time.time(),
             uptime_s=0.0,
@@ -1180,11 +1298,23 @@ class MLPLearner:
         new_params = MLPParams(
             weights=tuple(new_weights), biases=tuple(new_biases)
         )
+
+        # Per-hidden-unit gradient utility: EMA of row-wise L2 norm of weight gradients
+        new_neuron_utility: tuple[Array, ...] | None = state.neuron_utility
+        if state.neuron_utility is not None:
+            decay = jnp.array(self._neuron_utility_decay, dtype=jnp.float32)
+            new_neuron_utility = tuple(
+                decay * state.neuron_utility[i]
+                + (1.0 - decay) * jnp.sqrt(jnp.sum(weight_grads[i] ** 2, axis=1) + 1e-12)
+                for i in range(len(self._hidden_sizes))
+            )
+
         new_state = MLPLearnerState(
             params=new_params,
             optimizer_states=tuple(new_opt_states),
             traces=tuple(new_traces),
             normalizer_state=new_normalizer_state,
+            neuron_utility=new_neuron_utility,
             step_count=state.step_count + 1,
             birth_timestamp=state.birth_timestamp,
             uptime_s=state.uptime_s,

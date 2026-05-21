@@ -398,12 +398,16 @@ class MLPLearnerState:
         optimizer_states: Tuple of per-parameter optimizer states (weights + biases)
         traces: Tuple of per-parameter eligibility traces
         normalizer_state: Optional state for online feature normalization
+        neuron_utility: Per-hidden-unit EMA of gradient L2 norm; one array of
+            shape ``(h_i,)`` per hidden layer.  ``None`` when tracking is
+            disabled (``MLPLearner(track_neuron_utility=False)``).
     """
 
     params: MLPParams
     optimizer_states: tuple[LMSState | AutostepState | AutostepParamState | IDBDParamState, ...]
     traces: tuple[Array, ...]
     normalizer_state: AnyNormalizerState | None = None
+    neuron_utility: tuple[Array, ...] | None = None
     step_count: Int[Array, ""] = None  # type: ignore[assignment]
     birth_timestamp: float = 0.0
     uptime_s: float = 0.0
