@@ -464,6 +464,25 @@ class TestAgentFactories:
 
         assert agent._agent.config.actor_gradient_clip_norm == 0.5
 
+    def test_nlhac_adaptive_bounder_configures_critic_and_actor(self) -> None:
+        """NLHAC adapter exposes adaptive ObGD for critic and actor bounds."""
+        from alberta_framework import AdaptiveObGDBounding
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            bounder_name="adaptive_obgd",
+            actor_bounder_name="adaptive_obgd",
+        )
+
+        assert isinstance(agent._agent.critic.learner._bounder, AdaptiveObGDBounding)
+        assert isinstance(agent._agent.actor_bounder, AdaptiveObGDBounding)
+
     def test_nlqhorde_ac_creates_agent(self) -> None:
         """Nonlinear Q-Horde AC factory creates an action-value critic agent."""
         from benchmarks.bsuite.agents import nlqhorde_ac

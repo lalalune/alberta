@@ -19,6 +19,7 @@ import numpy as np
 
 from alberta_framework import (
     LMS,
+    AdaptiveObGDBounding,
     Autostep,
     DemonType,
     EMANormalizer,
@@ -215,6 +216,8 @@ def default_agent(
     actor_initial_step_size: float = 0.01,
     actor_meta_step_size: float = 0.01,
     actor_tau: float = 10000.0,
+    bounder_name: str = "obgd",
+    actor_bounder_name: str | None = None,
     normalizer_decay: float = 0.99,
     discount: float = 0.99,
     temperature: float = 0.5,
@@ -248,8 +251,21 @@ def default_agent(
         meta_step_size=actor_meta_step_size,
         tau=actor_tau,
     )
-    bounder = ObGDBounding(kappa=kappa)
-    actor_bounder = bounder if actor_kappa is None else ObGDBounding(kappa=actor_kappa)
+    if bounder_name == "obgd":
+        bounder = ObGDBounding(kappa=kappa)
+    elif bounder_name == "adaptive_obgd":
+        bounder = AdaptiveObGDBounding(kappa=kappa)
+    else:
+        raise ValueError("bounder_name must be 'obgd' or 'adaptive_obgd'")
+
+    actor_bounder_choice = actor_bounder_name or bounder_name
+    actor_kappa_value = kappa if actor_kappa is None else actor_kappa
+    if actor_bounder_choice == "obgd":
+        actor_bounder = ObGDBounding(kappa=actor_kappa_value)
+    elif actor_bounder_choice == "adaptive_obgd":
+        actor_bounder = AdaptiveObGDBounding(kappa=actor_kappa_value)
+    else:
+        raise ValueError("actor_bounder_name must be 'obgd' or 'adaptive_obgd'")
     normalizer = EMANormalizer(decay=normalizer_decay)
     agent = _make_nlhac_agent(
         n_actions=action_spec.num_values,

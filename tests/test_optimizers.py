@@ -7,6 +7,7 @@ import pytest
 from alberta_framework import (
     IDBD,
     LMS,
+    AdaptiveObGDBounding,
     Autostep,
     AutostepGTDLambda,
     ObGD,
@@ -508,6 +509,64 @@ class TestObGD:
 
         chex.assert_tree_all_finite(result.weight_delta)
         chex.assert_tree_all_finite(result.bias_delta)
+
+
+class TestAdaptiveObGDBounding:
+    """Tests for the adaptive ObGD bounder."""
+
+    def test_matches_obgd_scale_when_rms_below_one(self):
+        """Small bounded steps should only receive the global ObGD scale."""
+        bounder = AdaptiveObGDBounding(kappa=2.0)
+        steps = (
+            jnp.array([0.1, -0.2], dtype=jnp.float32),
+            jnp.array([0.05], dtype=jnp.float32),
+        )
+
+        bounded, scale = bounder.bound(
+            steps,
+            jnp.array(1.0, dtype=jnp.float32),
+            tuple(jnp.zeros_like(step) for step in steps),
+        )
+
+        total_step = sum(jnp.sum(jnp.abs(step)) for step in steps)
+        expected_scale = 1.0 / jnp.maximum(2.0 * total_step, 1.0)
+        assert scale == pytest.approx(float(expected_scale))
+        for actual, step in zip(bounded, steps, strict=True):
+            chex.assert_trees_all_close(actual, expected_scale * step)
+
+    def test_rms_stage_reduces_large_bounded_steps(self):
+        """RMS normalization should further shrink large post-ObGD steps."""
+        bounder = AdaptiveObGDBounding(kappa=0.0, eps=0.0)
+        steps = (
+            jnp.array([3.0, 4.0], dtype=jnp.float32),
+            jnp.array([0.0], dtype=jnp.float32),
+        )
+
+        bounded, scale = bounder.bound(
+            steps,
+            jnp.array(1.0, dtype=jnp.float32),
+            tuple(jnp.zeros_like(step) for step in steps),
+        )
+
+        rms = jnp.sqrt((3.0**2 + 4.0**2) / 3.0)
+        assert scale == pytest.approx(1.0)
+        chex.assert_trees_all_close(bounded[0], steps[0] / rms)
+        chex.assert_trees_all_close(bounded[1], steps[1] / rms)
+
+    def test_produces_finite_zero_steps(self):
+        """Zero steps should remain finite and unchanged."""
+        bounder = AdaptiveObGDBounding()
+        steps = (jnp.zeros((3,), dtype=jnp.float32),)
+
+        bounded, scale = bounder.bound(
+            steps,
+            jnp.array(0.0, dtype=jnp.float32),
+            tuple(jnp.zeros_like(step) for step in steps),
+        )
+
+        assert scale == pytest.approx(1.0)
+        chex.assert_tree_all_finite(bounded)
+        chex.assert_trees_all_close(bounded[0], steps[0])
 
 
 class TestIDBDParamState:
