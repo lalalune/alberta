@@ -1702,7 +1702,6 @@ class NonlinearQHordeActorCriticAgent:
         """Update actor and action-value Horde critic from one transition."""
         cfg = self._config
         prev_obs = state.last_observation
-        old_policy = self.policy(state, prev_obs)
         next_policy = self.policy(state, observation)
         sampled_next_action, sampled_key, sampled_policy = self.select_action(
             state,
@@ -1749,8 +1748,15 @@ class NonlinearQHordeActorCriticAgent:
             cfg.use_layer_norm,
             cfg.temperature,
         )
+        grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = grads
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = (
-            _clip_nlhac_actor_grads(*grads, cfg.actor_gradient_clip_norm)
+            _clip_nlhac_actor_grads(
+                grad_trunk_w,
+                grad_trunk_b,
+                grad_head_w,
+                grad_head_b,
+                cfg.actor_gradient_clip_norm,
+            )
         )
 
         actor_decay = effective_gamma * cfg.actor_lamda

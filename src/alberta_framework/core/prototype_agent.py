@@ -439,6 +439,67 @@ class PrototypeAgent:
         all_q = self._oak.base_q_values(state.oak_state, obs)
         return jnp.argmax(all_q[:n_prim]).astype(jnp.int32)
 
+    # -- Dreaming scan (JIT-compiled as a method so the closure is stable) ----
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def _run_dreams(
+        self,
+        oak_state: OaKState,
+        wm_state: Any,
+        buf_state: Any,
+        rng_key: Array,
+    ) -> tuple[OaKState, Float[Array, " n_dreams"]]:
+        n_prim = self._config.oak.n_primitive_actions
+
+        def _dream_step(
+            carry: tuple[OaKState, Array], _: Any
+        ) -> tuple[tuple[OaKState, Array], Float[Array, ""]]:
+            oak_s, k = carry
+            k, sample_key, action_key = jr.split(k, 3)
+            anchor_obs, _ = self._buffer.sample(buf_state, sample_key)
+            action = jr.randint(action_key, (), 0, n_prim, dtype=jnp.int32)
+            proposal = self._dreamer.propose(self._world_model, wm_state, anchor_obs, action)
+
+            real_last_obs = oak_s.stomp_state.base_last_obs
+            real_last_action = oak_s.stomp_state.base_last_action
+
+            temp_stomp = oak_s.stomp_state.replace(
+                base_last_obs=anchor_obs,
+                base_last_action=action,
+            )
+            temp_oak = cast(OaKState, oak_s.replace(stomp_state=temp_stomp))
+            dream_result = self._oak.update(
+                temp_oak,
+                proposal.transition.reward,
+                proposal.transition.next_observation,
+            )
+
+            restored_stomp = dream_result.state.stomp_state.replace(
+                base_last_obs=real_last_obs,
+                base_last_action=real_last_action,
+            )
+            restored = cast(
+                OaKState, dream_result.state.replace(stomp_state=restored_stomp)
+            )
+            new_oak_s = jax.tree_util.tree_map(
+                lambda n, o: jnp.where(proposal.accepted, n, o),
+                restored,
+                oak_s,
+            )
+            td_err = jnp.where(
+                proposal.accepted,
+                dream_result.td_error,
+                jnp.array(0.0, dtype=jnp.float32),
+            )
+            return (new_oak_s, k), td_err
+
+        (new_oak_state, _), dream_td_errors = jax.lax.scan(
+            _dream_step,
+            (oak_state, rng_key),
+            jnp.arange(self._config.n_dreams_per_step),
+        )
+        return new_oak_state, dream_td_errors
+
     # -- Core update ----------------------------------------------------------
 
     def update(
@@ -514,65 +575,9 @@ class PrototypeAgent:
             and self._dreamer is not None
             and self._config.n_dreams_per_step > 0
         ):
-            n_prim = self._config.oak.n_primitive_actions
-            _wm_state = new_wm_state
-            _buf_state = new_buf_state
-            _world_model = self._world_model
-            _dreamer = self._dreamer
-            _buffer = self._buffer
-            _oak = self._oak
-
-            def _dream_step(
-                carry: tuple[OaKState, Array], _: Any
-            ) -> tuple[tuple[OaKState, Array], Float[Array, ""]]:
-                oak_s, k = carry
-                k, sample_key, action_key = jr.split(k, 3)
-                anchor_obs, _ = _buffer.sample(_buf_state, sample_key)
-                action = jr.randint(action_key, (), 0, n_prim, dtype=jnp.int32)
-                proposal = _dreamer.propose(_world_model, _wm_state, anchor_obs, action)
-
-                real_last_obs = oak_s.stomp_state.base_last_obs
-                real_last_action = oak_s.stomp_state.base_last_action
-
-                # Graft anchor into state so OaK update starts from dream obs
-                temp_stomp = oak_s.stomp_state.replace(
-                    base_last_obs=anchor_obs,
-                    base_last_action=action,
-                )
-                temp_oak = cast(OaKState, oak_s.replace(stomp_state=temp_stomp))
-                dream_result = _oak.update(
-                    temp_oak,
-                    proposal.transition.reward,
-                    proposal.transition.next_observation,
-                )
-
-                # Restore real trajectory position
-                restored_stomp = dream_result.state.stomp_state.replace(
-                    base_last_obs=real_last_obs,
-                    base_last_action=real_last_action,
-                )
-                restored = cast(
-                    OaKState, dream_result.state.replace(stomp_state=restored_stomp)
-                )
-
-                # Gate: only apply dream when proposal accepted
-                new_oak_s = jax.tree_util.tree_map(
-                    lambda n, o: jnp.where(proposal.accepted, n, o),
-                    restored,
-                    oak_s,
-                )
-                td_err = jnp.where(
-                    proposal.accepted,
-                    dream_result.td_error,
-                    jnp.array(0.0, dtype=jnp.float32),
-                )
-                return (new_oak_s, k), td_err
-
             rng_key = new_oak_state.stomp_state.rng_key
-            (new_oak_state, _), dream_td_errors = jax.lax.scan(
-                _dream_step,
-                (new_oak_state, rng_key),
-                jnp.arange(self._config.n_dreams_per_step),
+            new_oak_state, dream_td_errors = self._run_dreams(
+                new_oak_state, new_wm_state, new_buf_state, rng_key
             )
 
         # -- Step 3: Horde GVF update -----------------------------------------

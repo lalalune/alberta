@@ -362,6 +362,15 @@ Findings:
   at `+1.6`, below SARSA's `+6.0`; base `nlhac_gradclip` regressed to
   `-4.0` on this 5-seed slice. This rules out simple retuning around the
   gradient-clip hook as a Step 4 closure path.
+- A follow-up action-value critic path
+  (`NonlinearQHordeActorCriticAgent`) replaced the scalar value Horde critic
+  with one control head per action and expected-SARSA targets. The 3-seed
+  catch/0 variant search at 500 steps
+  (`outputs/bsuite/nlqhorde_ac_variant_catch3_500/report.md`) tested base,
+  actor step-size `0.03`, temperature `0.3`, and gradient clip norm `0.5`.
+  SARSA improved `+12.0` regret over Q; the best NLQHorde variant only tied
+  Q at `0.0`, with the other variants negative. This rules out the simple
+  action-value critic substitution as a Step 4 closure path.
 
 ### Verdict
 

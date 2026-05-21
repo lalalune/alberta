@@ -27,7 +27,6 @@ import json
 import time
 from pathlib import Path
 
-import chex
 import gymnasium as gym
 import jax
 import jax.numpy as jnp
@@ -201,8 +200,13 @@ def run_prototype_seed(seed: int) -> np.ndarray:
         obs = next_obs
 
     wrapped.close()
-    # Verify no NaN weights
-    chex.assert_tree_all_finite(state.oak_state)
+    # Verify no NaN weights (skip PRNG key leaves which have non-float dtypes)
+    numeric_leaves = [
+        x for x in jax.tree_util.tree_leaves(state.oak_state)
+        if hasattr(x, "dtype") and jnp.issubdtype(x.dtype, jnp.floating)
+    ]
+    for leaf in numeric_leaves:
+        assert bool(jnp.all(jnp.isfinite(leaf))), "NaN/Inf detected in oak_state"
     return rewards
 
 

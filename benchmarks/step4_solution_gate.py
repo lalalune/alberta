@@ -445,6 +445,51 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "find a SARSA-beating NLHAC variant"
         ),
     }
+    nlqhorde_variant_search_path = (
+        root / "outputs/bsuite/nlqhorde_ac_variant_catch3_500/report.md"
+    )
+    nlqhorde_variant_search_exists = nlqhorde_variant_search_path.exists()
+    nlqhorde_variant_search_rows = (
+        parse_markdown_summary_table(read_text(nlqhorde_variant_search_path))
+        if nlqhorde_variant_search_exists
+        else {}
+    )
+    nlqhorde_variant_search_values = nlqhorde_variant_search_rows.get(
+        "catch", {}
+    ).get("numeric_values", [])
+    # Table columns after n are: SARSA mean/wins, then NLQHorde variants.
+    nlqhorde_best_mean = (
+        max(nlqhorde_variant_search_values[3::2])
+        if len(nlqhorde_variant_search_values) >= 5
+        else None
+    )
+    nlqhorde_sarsa_mean = (
+        nlqhorde_variant_search_values[1]
+        if len(nlqhorde_variant_search_values) >= 2
+        else None
+    )
+    evidence["nonlinear_q_horde_actor_critic_variant_search"] = {
+        "path": str(nlqhorde_variant_search_path),
+        "exists": nlqhorde_variant_search_exists,
+        "summary": nlqhorde_variant_search_rows.get("catch", {}),
+        "best_mean_improvement_vs_q": nlqhorde_best_mean,
+        "sarsa_mean_improvement_vs_q": nlqhorde_sarsa_mean,
+        "passed": nlqhorde_variant_search_exists,
+        "promotion_vs_q_passed": bool(
+            nlqhorde_best_mean is not None and nlqhorde_best_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            nlqhorde_best_mean is not None
+            and nlqhorde_sarsa_mean is not None
+            and nlqhorde_best_mean > nlqhorde_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 action-value NLQHorde search over actor step-size, "
+            "temperature, and actor gradient clip strength did not find a "
+            "Q- or SARSA-beating variant; the best mean improvement was a tie "
+            "with the Q baseline"
+        ),
+    }
 
     tests = {
         "tests/test_sarsa.py": (root / "tests/test_sarsa.py").exists(),
@@ -512,7 +557,8 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "Horde actor-critic positive control passes, but bsuite promotion "
             "over SARSA remains unproven; gradient-clipped NLHAC now beats "
             "the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 "
-            "steps, but SARSA remains stronger"
+            "steps, but SARSA remains stronger; the action-value NLQHorde "
+            "actor-critic search did not improve the catch boundary"
         ),
         (
             "local security-gym counterfactual rollout passes, but active-defense "
