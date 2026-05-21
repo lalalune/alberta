@@ -14,7 +14,7 @@
 | 1 | Representation I — Continual supervised learning | Full implementation | 30-seed factorial, multiple non-stationarity types | **YES** |
 | 2 | Representation II — Supervised feature finding | FixedBudgetFeatureLearner + UPGD + memory | Lifecycle beats MLP on 1/3 out-of-class streams (30 seeds, d=+3.213); UPGD on 3/3; single-seed OPMNIST | **PARTIAL (lifecycle proven on polynomial)** |
 | 3 | Prediction I — Continual GVF prediction | HordeLearner + TD(λ) + off-policy | 6-category solution gate; nonlinear off-policy open | **PARTIAL** |
-| 4 | Control I — Continual actor-critic control | SARSA complete; AC underperforms | 10-seed bsuite Q/SARSA/AC comparison | **PARTIAL** |
+| 4 | Control I — Continual actor-critic control | SARSA complete; AC tuned wins CartPole | Positive ctrl 10/10 seeds (0.9976). Tuned AC 78.2 > Q 69.9 > SARSA 67.1 on CartPole | **PARTIAL (SARSA proven, AC working)** |
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907, 97.5% right) | **LOCAL+STOCHASTIC: YES / FULL SCOPE: NO** |
 | 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | 6-state chain: Dyna +41.7% cum reward, 8/10 wins. 20-state chain: async DP 8/10 wins, 0.7368 vs 0.7302 | **PARTIAL (tabular proven, FA open)** |
@@ -83,13 +83,19 @@
 
 **Paper requirement**: Continual actor-critic from bandit → contextual bandit → sequential → sequential with feature finding.
 
-**Implemented**: SARSA (complete), HordeActorCriticAgent (implemented but underperforms), standard ActorCriticAgent.
+**Implemented**: SARSA (complete), HordeActorCriticAgent (implemented), NonlinearHordeActorCriticAgent (MLP actor + jax.grad).
 
-**Key gap**: The paper's Step 4 calls for actor-critic as the canonical control mechanism. The framework has SARSA (strong) and actor-critic (implemented, tuned, but not dominant). On bsuite catch/0, actor-critic is ~110 regret units behind SARSA. Solution gate: `solved_step4_full_actor_critic_scope: false`.
+**Evidence** (2026-05-21):
+- **Positive control (10/10 seeds)**: HordeActorCriticAgent on 2-action continuing task: `mean_final_optimal_action_probability: 0.9976`, `mean_final_reward_rate: 0.9969`. All seeds pass. `outputs/step4_horde_actor_critic_control/results.json`.
+- **CartPole/0, 10 seeds**: `actor_critic_tuned` (temperature=0.5) gets **78.2** vs Q-autostep **69.9** vs SARSA **67.1** — tuned AC wins. Default AC (temperature=1.0) is bimodal: mean 61.3 with some seeds stuck at 29, others at 100+.
+- **Full bsuite catch+cartpole**: Default AC underperforms autostep_bottleneck (-8.1 improvement vs autostep's 0). This uses the untuned AC.
+- **Key insight**: Temperature=0.5 (more decisive policy) is critical. Default temperature=1.0 produces nearly-uniform policies that don't converge reliably.
 
-**Evidence**: 10-seed bsuite Q/SARSA/AC comparisons across 140 environments. Horde-AC head-to-head on catch/0 and cartpole/0.
+**Remaining gaps**:
+1. AC not dominant across all bsuite environments (catch total_regret is worse)
+2. `solved_step4_full_actor_critic_scope: false` — actor-critic not yet as broadly proven as SARSA
 
-**Verdict**: On-policy control (SARSA) is solid and dominant. Actor-critic is functional research surface, not canonical. Honestly documented.
+**Verdict**: SARSA is solid and dominant across bsuite. Actor-critic positive control passes (99.76% optimal, 10/10 seeds). Tuned AC (temperature=0.5) WINS on CartPole. Catch/bsuite sweep gaps remain.
 
 ---
 
@@ -252,7 +258,7 @@ Solution gate: `solved_step5_full_research_scope: true`.
 ### What IS partial but honestly documented:
 - **Step 2**: MLP continual learning solid. Feature discovery lifecycle partial. OPMNIST evidence strong for what's implemented.
 - **Step 3**: Given-feature HordeLearner complete. Nonlinear off-policy and feature discovery open.
-- **Step 4**: SARSA dominant. Actor-critic functional but underperforms. Scoped as "Step 4a complete."
+- **Step 4**: SARSA dominant on bsuite. AC positive control proven (99.76%, 10/10). Tuned AC (temp=0.5) wins on CartPole (78.2 vs Q 69.9 vs SARSA 67.1). Not dominant across all bsuite environments.
 - **Step 6**: Multi-state continuing control works on deterministic chain (10/10 seeds, 0.9938 reward). Stochastic and gymnasium environments open.
 - **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP (prioritized sweeping) also proven on 20-state chain (8/10 wins, 0.7368 vs 0.7302). Function approximation planning open.
 - **Step 10**: STOMP mechanics + auto-discovery (`subtasks_from_feature_scores`) + semi-MDP Bellman backup + benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
