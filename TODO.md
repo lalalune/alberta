@@ -197,6 +197,30 @@ Artifacts:
 - [ ] Exo-cortex with nonlinear function approximation
 - [ ] Seeded benchmark evidence that IA augmentation improves partner decision-making
 
+## PrototypeAgent — All 12 Steps Integrated (v0.21.0)
+
+- [x] `PrototypeAgentConfig`: unified config for OaK + world model + dreaming + Horde + IA
+- [x] `PrototypeAgentState`: combined state (oak, world_model, buffer, horde, ia, step_count)
+- [x] `PrototypeAgent`: single agent integrating all 12 Alberta Plan steps
+  - Step 1/2: IDBD / nonlinear FA (internal to OaK's differential Q-learner)
+  - Step 3: Parallel GVF prediction demons via HordeLearner (optional)
+  - Step 4: SARSA on-policy control (internal to OaK/STOMP)
+  - Steps 5/6: Average-reward / differential SARSA (internal to OaK/STOMP)
+  - Step 7: Dyna planning budget (n_dreams_per_step)
+  - Step 8: ActionConditionedWorldModel dynamics (optional)
+  - Step 9: GuardedDreamer + RecentObservationBuffer anchored dreaming (optional)
+  - Steps 10/11: STOMPAgent wrapped by OaKAgent — temporal abstraction + curation
+  - Step 12: IAAgent companion cerebellum + cortex (optional)
+- [x] `feature_to_subtask_specs`: extract SubtaskSpecs from OaK Q-weight feature importance
+- [x] `PrototypeUpdateResult` / `PrototypeArrayResult`: per-step diagnostics
+- [x] `run_prototype_scan` / `run_prototype_smoke`: JIT-compiled loop and quick validity check
+- [x] 50 tests: config validation, roundtrip, init, act, update (minimal+full), scan, curation,
+      auto-subtask specs, feature_to_subtask_specs, serialization, dreaming mechanics, 200-step
+      fineness
+- [x] Exported from `alberta_framework.core` public API
+- [ ] End-to-end benchmark on continuous gym task showing value from each added component
+- [ ] Real robot / sim-to-real demonstration
+
 ## Infrastructure
 
 - [ ] Update CHANGELOG.md with each release (moved from CLAUDE.md)

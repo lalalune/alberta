@@ -398,6 +398,31 @@ Reference: Mathewson et al. (2023, "Communicative Capital").
 - Exo-cortex with nonlinear function approximation
 - Seeded benchmark evidence that IA augmentation improves partner decision-making
 
+## PrototypeAgent — All 12 Steps Integrated (v0.21.0)
+
+**Goal**: A single, continuing-learning agent embodying every Alberta Plan step, capable of
+running in real time on a robot trained in simulator and transferred to the real world.
+
+**Delivered**:
+- `PrototypeAgent` (`core/prototype_agent.py`) integrates all 12 steps in a single `.update()`:
+  1. World model update on real transition (Step 8)
+  2. Buffer store (Step 9 anchor ring buffer)
+  3. OaK update — differential Q + curation + options (Steps 5/6/10/11 internally)
+  4. Dreaming scan: `n_dreams_per_step` × GuardedDreamer proposals via `jax.lax.scan` (Steps 7/9)
+  5. Horde update: parallel GVF prediction demons (Step 3)
+  6. IA update: exo-cerebellum + exo-cortex recommendation (Step 12)
+- `feature_to_subtask_specs`: automatic SubtaskSpec extraction from OaK Q-weight importances
+- `PrototypeAgentConfig`: minimal defaults let `PrototypeAgent()` run with just `n_primitive_actions`
+  and `observation_dim`; all components are opt-in
+- Full production suite: `run_prototype_scan`, `run_prototype_smoke`, config roundtrip
+- 50 tests exported from `alberta_framework.core`
+
+**Remaining research boundary**:
+- End-to-end seeded benchmark: simulator training → real-world transfer for each Alberta Plan step
+- Learned subtask feature construction at scale
+- Communication protocol for IA recommendation acceptance/rejection
+- Full prioritized sweeping queues with recursive priority propagation
+
 ## References
 
 - Sutton, R.S. (1992). "Adapting Bias by Gradient Descent: An Incremental Version of Delta-Bar-Delta"

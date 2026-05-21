@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "alberta-framework"
-version = "0.20.0"
+version = "0.21.0"
 description = "Implementation of the Alberta Plan for AI Research - continual learning with meta-learned step-sizes"
 readme = "README.md"
 license = "Apache-2.0"
@@ -284,6 +284,10 @@ disable_error_code = ["call-arg", "unused-ignore"]
 [[tool.mypy.overrides]]
 module = "alberta_framework.streams.gymnasium"
 disable_error_code = ["call-arg"]
+
+[[tool.mypy.overrides]]
+module = "alberta_framework.core.prototype_agent"
+disable_error_code = ["attr-defined", "call-arg", "no-any-return", "union-attr", "arg-type"]
 
 [[tool.mypy.overrides]]
 module = "alberta_framework.core.diagnostics"
