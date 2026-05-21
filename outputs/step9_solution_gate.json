@@ -1,0 +1,36 @@
+{
+  "schema": "alberta.step9.solution_gate.v1",
+  "accepted_step9_guarded_dreaming": true,
+  "claim_scope": "error_gated_dreaming_local_completion",
+  "solved_step9_search_control": false,
+  "critical_gap": "The code labeled 'Step 9' implements error-gated dreaming, which is a form of dream acceptance filtering. The paper's Step 9 is 'Planning II: Search control and exploration' — algorithms for *which states to back up* (flexible state update ordering, prioritized sweeping, MCTS-style approaches). These are related but distinct concepts.",
+  "concept_alignment": {
+    "paper_step9_is": "Planning II — flexible state update ordering, prioritized sweeping generalized to function approximation, uncertainty quantification for planning decisions",
+    "code_step9_is": "Guarded dreaming — error-gated acceptance/rejection of model-generated imagined transitions, buffer-anchored dream anchors",
+    "overlap": "Dream gating is a narrow form of search control (decide whether to accept a backup), but the paper envisions choosing *which state to back up* flexibly, not just accept/reject",
+    "missing": "Prioritized sweeping with function approximation, flexible state update ordering, MCTS-style search control"
+  },
+  "evidence": {
+    "guarded_dreaming_smoke_tests": {
+      "passed": true,
+      "claim_scope": "error_gated_buffer_anchored_dreaming",
+      "n_tests": 22,
+      "files": {
+        "src/alberta_framework/core/dreaming.py": true,
+        "src/alberta_framework/steps/step9.py": true,
+        "tests/test_step9_production.py": true,
+        "tests/test_dreaming.py": true
+      }
+    }
+  },
+  "open_boundaries": [
+    "Prioritized sweeping generalized to linear/nonlinear function approximation not implemented",
+    "Flexible state update ordering (core of paper's Step 9) not implemented",
+    "MCTS-style search control not implemented",
+    "Uncertainty quantification for planning decisions not implemented",
+    "Multi-step rollout dreaming (horizon > 1) not implemented",
+    "Seeded benchmark evidence that guarded dreaming improves control over Step 7 Dyna missing",
+    "No comparison against Step 7 Dyna on non-trivial problems"
+  ],
+  "note": "IMPORTANT: The code's 'Step 9' (guarded dreaming) is partially misaligned with the paper's Step 9 (search control). Guarded dreaming does control WHICH imagined backups to apply, but the paper envisions controlling the ORDER of state updates in asynchronous DP. The implementation is closer to 'improved model usage' (Step 8 extension) than 'search control'. This is an important conceptual gap."
+}

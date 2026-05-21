@@ -1,0 +1,56 @@
+{
+  "schema": "alberta.step6.solution_gate.v1",
+  "accepted_step6_continuing_control_chain": true,
+  "accepted_step6_average_reward_multistate": true,
+  "claim_scope": "continuing_control_average_reward_local_completion",
+  "solved_step6_full_research_scope": false,
+  "evidence": {
+    "seeded_chain_continuing_control": {
+      "passed": true,
+      "path": "outputs/step6_riverswim/results.json",
+      "schema": "alberta.step6.chain_continuing_control.v1",
+      "claim_scope": "six_state_chain_average_reward_differential_sarsa_control",
+      "environment": "deterministic_6state_chain",
+      "n_seeds": 10,
+      "n_passed": 10,
+      "mean_final_window_reward": 0.9938,
+      "optimal_average_reward": 1.0,
+      "random_baseline": 0.085,
+      "improvement_over_random_factor": 11.7,
+      "mean_right_action_rate": 0.9938
+    },
+    "seeded_one_state_continuing_control": {
+      "passed": true,
+      "path": "outputs/step5_continuing_control/results.json",
+      "claim_scope": "one_state_average_reward_differential_sarsa_control",
+      "n_seeds": 10,
+      "mean_final_reward": 1.0,
+      "optimal_average_reward": 1.0
+    },
+    "seeded_two_state_continuing_control": {
+      "passed": true,
+      "path": "outputs/step5_multistate_continuing_control/results.json",
+      "claim_scope": "two_state_average_reward_differential_sarsa_control",
+      "n_seeds": 10,
+      "mean_final_reward": 1.0,
+      "optimal_average_reward": 1.0
+    },
+    "implementation_and_tests": {
+      "passed": true,
+      "files": {
+        "src/alberta_framework/core/average_reward.py": true,
+        "src/alberta_framework/steps/step6.py": true,
+        "tests/test_step5_step6_production.py": true,
+        "benchmarks/bsuite/wrappers.py": true
+      }
+    }
+  },
+  "open_boundaries": [
+    "Stochastic continuing environments (RiverSwim, Acrobot-control Queuing) not yet demonstrated",
+    "Jellybean World / foraging problems not yet integrated",
+    "GARNET / gymnasium continuing conversion needs full nonlinear (MLP) DifferentialSARSA",
+    "Nonlinear average-reward Horde/GVF integration on continuing gymnasium tasks",
+    "Average-reward actor-critic validated only on trivial bandits, not real continuing tasks"
+  ],
+  "note": "Step 6 is locally complete for linear average-reward control on deterministic multi-state chains. The full paper scope (stochastic RiverSwim, Acrobot, Jellybean World) requires nonlinear function approximation and better exploration — open research boundary."
+}

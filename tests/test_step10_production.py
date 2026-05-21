@@ -13,6 +13,7 @@ from alberta_framework.core.options import (
     STOMPConfig,
     STOMPState,
     SubtaskSpec,
+    subtasks_from_feature_scores,
 )
 from alberta_framework.steps.step10 import (
     Step10SmokeResult,
@@ -453,3 +454,61 @@ def test_step10_option_model_completions_nonnegative() -> None:
     obs = jr.normal(jr.key(20), (n_steps, cfg.observation_dim))
     result = run_step10_scan(agent, state, rewards, obs)
     assert bool(jnp.all(result.state.option_models.n_completions >= 0))
+
+
+# ---------------------------------------------------------------------------
+# Auto-discovery: subtasks_from_feature_scores
+# ---------------------------------------------------------------------------
+
+
+def test_subtasks_from_feature_scores_selects_top_k() -> None:
+    scores = [0.1, 0.9, 0.3, 0.7, 0.2]
+    specs = subtasks_from_feature_scores(scores, top_k=2)
+    assert len(specs) == 2
+    assert specs[0].feature_index == 1
+    assert specs[1].feature_index == 3
+
+
+def test_subtasks_from_feature_scores_returns_subtask_specs() -> None:
+    scores = [0.5, 0.8, 0.2]
+    specs = subtasks_from_feature_scores(scores, top_k=2, threshold=0.4, max_option_steps=8)
+    assert all(isinstance(s, SubtaskSpec) for s in specs)
+    assert specs[0].threshold == 0.4
+    assert specs[0].max_option_steps == 8
+
+
+def test_subtasks_from_feature_scores_min_score_filter() -> None:
+    scores = [0.9, 0.05, 0.7]
+    specs = subtasks_from_feature_scores(scores, top_k=3, min_score=0.1)
+    assert len(specs) == 2
+    feature_indices = [s.feature_index for s in specs]
+    assert 1 not in feature_indices
+
+
+def test_subtasks_from_feature_scores_fewer_than_top_k_eligible() -> None:
+    scores = [0.9, 0.01, 0.02]
+    specs = subtasks_from_feature_scores(scores, top_k=3, min_score=0.1)
+    assert len(specs) == 1
+    assert specs[0].feature_index == 0
+
+
+def test_subtasks_from_feature_scores_works_with_jax_array() -> None:
+    scores = jnp.array([0.1, 0.8, 0.5, 0.2])
+    specs = subtasks_from_feature_scores(scores, top_k=2)
+    assert len(specs) == 2
+    assert specs[0].feature_index == 1
+    assert specs[1].feature_index == 2
+
+
+def test_subtasks_from_feature_scores_integrates_with_stomp() -> None:
+    scores = jnp.array([0.1, 0.9, 0.4, 0.7])
+    specs = subtasks_from_feature_scores(scores, top_k=2, threshold=0.5, max_option_steps=4)
+    cfg = Step10STOMPConfig(
+        subtask_specs=tuple(specs),
+        observation_dim=4,
+        n_primitive_actions=2,
+    )
+    agent = make_step10_stomp_agent(cfg)
+    state = init_step10_state(agent, key=jr.key(0), initial_observation=jnp.zeros(4))
+    result = step10_update(agent, state, jnp.array(0.0), jnp.ones(4))
+    assert bool(jnp.isfinite(result.td_error))

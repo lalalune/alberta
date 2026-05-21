@@ -337,6 +337,62 @@ def _differential_q_update(
     return new_q_weights, new_traces, new_average_reward, td_error
 
 
+def _differential_semidp_q_update(
+    q_weights: Array,
+    traces: Array,
+    average_reward: Array,
+    last_obs: Array,
+    last_action: Array,
+    reward: Array,
+    next_obs: Array,
+    *,
+    step_size: float,
+    avg_reward_step_size: float,
+    trace_decay: float,
+    n_actions: int,
+    duration: Array,
+    discount: Array,
+) -> tuple[Array, Array, Array, Array]:
+    """Differential Q-update supporting semi-MDP option returns.
+
+    Extends :func:`_differential_q_update` to correctly account for
+    multi-step option duration and cumulative discount:
+
+    .. code-block::
+
+        td = R_o - avg_r * T_o + γ_o * V(s') - Q(s, o)
+
+    For primitive steps pass ``duration=1, discount=1`` to recover the
+    standard single-step update exactly.
+
+    Args:
+        duration: Effective number of primitive steps the option ran (T_o).
+            ``1`` for primitive actions.
+        discount: Cumulative per-step discount across the option (γ^{T_o}).
+            ``1.0`` for primitive actions.
+
+    Returns:
+        ``(new_q_weights, new_traces, new_average_reward, td_error)``.
+    """
+    alpha = jnp.asarray(step_size, dtype=jnp.float32)
+    beta = jnp.asarray(avg_reward_step_size, dtype=jnp.float32)
+    lam = jnp.asarray(trace_decay, dtype=jnp.float32)
+    t_o = jnp.asarray(duration, dtype=jnp.float32)
+    gamma_o = jnp.asarray(discount, dtype=jnp.float32)
+
+    q_prev = q_weights[last_action] @ last_obs
+    q_next = jnp.max(_q_values_for_obs(q_weights, next_obs))
+    # Semi-MDP Bellman target: deduct avg_r for t_o steps, scale V(s') by γ_o
+    td_error = reward - average_reward * t_o + gamma_o * q_next - q_prev
+
+    action_mask = jax.nn.one_hot(last_action, n_actions, dtype=jnp.float32)
+    new_traces = lam * traces + action_mask[:, None] * last_obs[None, :]
+    delta_w = alpha * td_error * new_traces
+    new_q_weights = q_weights + delta_w
+    new_average_reward = average_reward + beta * td_error
+    return new_q_weights, new_traces, new_average_reward, td_error
+
+
 def _update_option_model(
     models: OptionModelsState,
     option_idx: Array,
@@ -703,11 +759,23 @@ class STOMPAgent:
             new_option_cumreward,
             reward,
         )
+        # Semi-MDP corrections: duration=T_o, discount=γ_o for option termination;
+        # duration=1, discount=1.0 for primitive steps (recovers standard update).
+        base_duration = jnp.where(
+            is_executing & option_terminates,
+            jnp.asarray(new_option_steps, dtype=jnp.float32),
+            jnp.array(1.0, dtype=jnp.float32),
+        )
+        base_discount = jnp.where(
+            is_executing & option_terminates,
+            new_option_discount,
+            jnp.array(1.0, dtype=jnp.float32),
+        )
         # Only update base Q on: (a) primitive steps, or (b) option termination
         should_update_base = (~is_executing) | (is_executing & option_terminates)
 
         def do_base_update(_: None) -> tuple[Array, Array, Array, Array]:
-            return _differential_q_update(
+            return _differential_semidp_q_update(
                 state.base_q_weights,
                 state.base_traces,
                 state.base_average_reward,
@@ -719,6 +787,8 @@ class STOMPAgent:
                 avg_reward_step_size=cfg.base_avg_reward_step_size,
                 trace_decay=cfg.base_trace_decay,
                 n_actions=cfg.n_total_actions,
+                duration=base_duration,
+                discount=base_discount,
             )
 
         def skip_base_update(_: None) -> tuple[Array, Array, Array, Array]:
@@ -872,6 +942,71 @@ class STOMPAgent:
         )
 
 
+def subtasks_from_feature_scores(
+    feature_scores: Float[Array, " feature_dim"] | list[float],
+    *,
+    top_k: int = 2,
+    threshold: float = 0.5,
+    pseudo_reward_scale: float = 1.0,
+    max_option_steps: int = 16,
+    min_score: float = 0.0,
+) -> list[SubtaskSpec]:
+    """Create SubtaskSpecs for the top-K highest-scoring features.
+
+    This is the auto-discovery pathway for Step 10 STOMP: instead of
+    hand-specifying subtasks, caller computes a per-feature relevance score
+    (e.g. from ``compute_feature_relevance``) and this function converts the
+    top-ranked features into ``SubtaskSpec`` objects.
+
+    The feature scores may come from any source:
+    - ``jnp.sum(relevance.weight_relevance, axis=0)`` for path-norm relevance
+    - Per-head weight norms for a specific prediction target
+    - Domain-specific utility signal
+
+    Args:
+        feature_scores: 1-D array or list of per-feature importance scores.
+            Higher score = more relevant feature → higher-priority subtask.
+        top_k: Number of subtasks to create. Selects features with the
+            ``top_k`` highest scores.
+        threshold: Pseudo-reward threshold for subtask completion. The option
+            terminates when ``pseudo_reward_scale * obs[feature_index] >= threshold``.
+        pseudo_reward_scale: Multiplier for the feature value in the
+            pseudo-reward signal.
+        max_option_steps: Maximum primitive steps per option execution.
+        min_score: Features with score below this value are excluded even if
+            they would otherwise be in the top-K. Set to 0.0 to keep all.
+
+    Returns:
+        List of up to ``top_k`` :class:`SubtaskSpec` objects sorted by
+        descending feature score. May be shorter than ``top_k`` if fewer
+        features exceed ``min_score``.
+
+    Example:
+        Build subtasks from a HordeLearner's weight relevance::
+
+            relevance = compute_feature_relevance(horde_state.learner_state)
+            agg_scores = jnp.sum(relevance.weight_relevance, axis=0)
+            specs = subtasks_from_feature_scores(agg_scores, top_k=3)
+            stomp_config = Step10STOMPConfig(subtask_specs=tuple(specs), ...)
+    """
+    import numpy as _np
+
+    scores = _np.asarray(feature_scores, dtype=_np.float32)
+    eligible = [i for i in range(len(scores)) if float(scores[i]) >= min_score]
+    eligible.sort(key=lambda i: float(scores[i]), reverse=True)
+    selected = eligible[:top_k]
+
+    return [
+        SubtaskSpec(
+            feature_index=int(i),
+            threshold=threshold,
+            pseudo_reward_scale=pseudo_reward_scale,
+            max_option_steps=max_option_steps,
+        )
+        for i in selected
+    ]
+
+
 __all__ = [
     "IntraOptionPoliciesState",
     "OptionModelsState",
@@ -884,4 +1019,5 @@ __all__ = [
     "SubtaskSpec",
     "check_option_terminated",
     "compute_pseudo_reward",
+    "subtasks_from_feature_scores",
 ]

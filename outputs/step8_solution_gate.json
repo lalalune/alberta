@@ -1,0 +1,38 @@
+{
+  "schema": "alberta.step8.solution_gate.v1",
+  "accepted_step8_world_model_facade": true,
+  "claim_scope": "one_step_world_model_component_local_completion",
+  "solved_step8_prototype_ai_i": false,
+  "critical_gap": "The code labeled 'Step 8' implements only sub-component (b) of the paper's Step 8 Prototype-AI I. The paper requires a COMPLETE integrated AI prototype with six sub-components. What is implemented is one building block.",
+  "paper_step8_requirements": {
+    "a_recursive_state_update": false,
+    "b_one_step_environment_model": true,
+    "c_feature_finding_with_importance_feedback": false,
+    "d_feature_ranking": false,
+    "e_model_planning_feature_ranking_cycling": false,
+    "f_search_control": false
+  },
+  "evidence": {
+    "world_model_smoke_tests": {
+      "passed": true,
+      "claim_scope": "one_step_reward_and_next_state_prediction",
+      "files": {
+        "src/alberta_framework/core/world_model.py": true,
+        "src/alberta_framework/steps/step8.py": true,
+        "tests/test_action_conditioned_world_model.py": true,
+        "tests/test_step8_production.py": true
+      }
+    }
+  },
+  "open_boundaries": [
+    "Prototype-AI I requires ALL 6 sub-components working together — not just the world model",
+    "Recursive state-update (perception component) not implemented as part of Step 8",
+    "Feature finding with importance feedback from model not implemented",
+    "Feature ranking for inclusion in environment model not implemented",
+    "Model-learning / planning feedback cycling (sub-step e) not implemented",
+    "Proper search control (sub-step f) not implemented",
+    "Multi-step world models not implemented",
+    "No benchmark evidence showing world-model prediction accuracy on multi-state problems"
+  ],
+  "note": "IMPORTANT: The code's 'Step 8' is mislabeled relative to the paper. The paper's Step 8 is 'Prototype-AI I' — the first complete AI prototype integrating all prior steps. The code implements only the OneStepWorldModel building block. This is ~1/6 of the paper's Step 8 vision. The remaining 5 sub-components (recursive state update, feature finding with feedback, feature ranking, cycling feedback, search control) are not implemented."
+}

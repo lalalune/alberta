@@ -1,0 +1,71 @@
+{
+  "schema": "alberta.step10.solution_gate.v3",
+  "accepted_step10_stomp_mechanics": true,
+  "accepted_step10_semidp_planning": true,
+  "claim_scope": "stomp_mechanics_auto_discovery_semidp_planning",
+  "solved_step10_full_stomp_progression": false,
+  "evidence": {
+    "stomp_unit_tests": {
+      "passed": true,
+      "claim_scope": "stomp_mechanics_auto_discovery_semidp",
+      "n_tests": 42,
+      "files": {
+        "src/alberta_framework/core/options.py": true,
+        "src/alberta_framework/steps/step10.py": true,
+        "tests/test_step10_production.py": true
+      },
+      "verified": [
+        "SubtaskSpec validation",
+        "Config roundtrip serialization",
+        "STOMPAgent factory",
+        "State initialization",
+        "Option termination at threshold",
+        "Option termination at max_steps cap",
+        "Base Q update with extended action space (semi-MDP corrected)",
+        "Option model update at completion",
+        "Scan shapes and fineness",
+        "200-step fineness check",
+        "subtasks_from_feature_scores top-k selection",
+        "subtasks_from_feature_scores returns SubtaskSpec objects",
+        "subtasks_from_feature_scores min_score filter",
+        "subtasks_from_feature_scores fewer-than-top-k eligible",
+        "subtasks_from_feature_scores works with JAX arrays",
+        "subtasks_from_feature_scores integrates with STOMPAgent"
+      ]
+    }
+  },
+  "paper_step10_requirements": {
+    "subtasks_from_feature_ranking": {
+      "implemented": true,
+      "note": "subtasks_from_feature_scores() in core/options.py converts per-feature importance scores (e.g. from compute_feature_relevance) into SubtaskSpec objects. Top-K highest-scoring features become subtasks as the paper describes."
+    },
+    "intra_option_policies": {
+      "implemented": true,
+      "note": "Linear differential Q-function per option, updated with pseudo-rewards"
+    },
+    "option_outcome_models": {
+      "implemented": true,
+      "note": "EMA cumulative reward, cumulative discount, linear next-state predictor. Updated at option termination."
+    },
+    "planning_with_option_models": {
+      "implemented": true,
+      "note": "Semi-MDP Bellman backup implemented in _differential_semidp_q_update: Q(s,o) += alpha * (R_o - avg_r * T_o + gamma_o * V(s') - Q(s,o)). At option termination, base Q uses option duration (T_o) and cumulative discount (gamma_o) for correct differential semi-MDP update. Verified in 42 tests (2026-05-21)."
+    },
+    "utility_assessment_feedback": {
+      "implemented": false,
+      "note": "Paper describes continuous utility feedback driving dynamic option removal/creation. Not implemented as a live loop. subtasks_from_feature_scores provides the scoring function; wiring into a continuous reassessment loop is open."
+    },
+    "continual_learning_integration": {
+      "implemented": "partial",
+      "note": "Average-reward formulation carried through from Step 6. IDBD/Autostep meta-learning and Horde feature construction are not wired into STOMP as a live training integration."
+    }
+  },
+  "open_boundaries": [
+    "Live auto-discovery loop: subtasks_from_feature_scores exists but not wired into a training run that continuously reassesses feature relevance and adds/removes options",
+    "Utility assessment: no feedback process removes/replaces unhelpful options/subtasks dynamically",
+    "Steps 1-3 integration: IDBD/Autostep meta-learning and Horde feature learning not wired into STOMP",
+    "Benchmark evidence on continuing tasks showing STOMP options genuinely accelerate control over flat Step 6 baseline missing",
+    "Off-policy intra-option learning not implemented"
+  ],
+  "note": "Step 10 now implements: (1) STOMP mechanics (options, intra-option policies, outcome models, extended action space), (2) subtasks_from_feature_scores() for feature-ranking-to-subtask auto-discovery, (3) _differential_semidp_q_update with correct semi-MDP Bellman target (R_o - avg_r*T_o + gamma_o*V(s')). 42 passing tests (2026-05-21). Remaining open: live continuous reassessment loop, utility-driven option removal, Steps 1-3 integration, and seeded benchmark showing options accelerate convergence over flat baseline."
+}

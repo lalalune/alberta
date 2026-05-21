@@ -1,0 +1,50 @@
+{
+  "schema": "alberta.step7.solution_gate.v2",
+  "accepted_step7_dyna_planning": true,
+  "accepted_step7_sample_efficiency": true,
+  "claim_scope": "one_step_dyna_planning_sample_efficiency",
+  "solved_step7_full_research_scope": false,
+  "evidence": {
+    "seeded_dyna_vs_real_six_state_chain": {
+      "passed": true,
+      "path": "outputs/step7_chain_planning/results_numpy.json",
+      "schema": "alberta.step7.numpy_planning.v1",
+      "claim_scope": "tabular_dyna_vs_real_only_six_state_chain_differential_sarsa",
+      "seeds": 10,
+      "steps": 500,
+      "mean_real_only_cumulative_reward": 206.3,
+      "mean_dyna_cumulative_reward": 292.2,
+      "mean_cumulative_improvement_pct": 41.7,
+      "dyna_wins_cumulative": "8/10",
+      "mean_convergence_speedup_steps": 132,
+      "environment": "deterministic_6_state_chain"
+    },
+    "seeded_dyna_vs_real_one_state": {
+      "passed": true,
+      "path": "outputs/step7_dyna/results.json",
+      "schema": "alberta.step7.dyna_sample_efficiency.v1",
+      "claim_scope": "one_state_average_reward_dyna_sample_efficiency",
+      "seeds": 5,
+      "mean_dyna_reward": 1.0,
+      "mean_real_only_reward": 0.92,
+      "note": "1-state bandit — non-trivial because model compresses R(s,a) but not meaningful as planning test"
+    },
+    "implementation_and_tests": {
+      "passed": true,
+      "files": {
+        "src/alberta_framework/core/world_model.py": true,
+        "src/alberta_framework/steps/step7.py": true,
+        "benchmarks/step7_numpy_planning.py": true
+      }
+    }
+  },
+  "open_boundaries": [
+    "Asynchronous dynamic programming (the paper's actual Step 7 algorithm) not implemented — current code uses Dyna",
+    "Tabular case with asynchronous DP not implemented",
+    "Prioritized sweeping not implemented (only random, reward, and surprise-score strategies)",
+    "No multi-state stochastic environment benchmark (RiverSwim, CartPole) with confirmed planning advantage",
+    "Off-policy accounting for imagined transitions missing",
+    "Function approximation in the model is linear; nonlinear model-based planning absent"
+  ],
+  "note": "Step 7 (2026-05-21): Dyna planning is proven to help on 6-state chain (tabular, differential SARSA, 10 seeds). Dyna accumulates 41.7% more reward and converges to 0.85 reward 132 steps faster. The 1-state bandit baseline also passes. Critical gap: paper calls for asynchronous DP with function approximation and prioritized sweeping — this is a different algorithm than Dyna. Current implementation is strong planning scaffolding but not the paper's Step 7 algorithm."
+}
