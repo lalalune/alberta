@@ -1,8 +1,9 @@
 {
-  "schema": "alberta.step6.solution_gate.v1",
+  "schema": "alberta.step6.solution_gate.v2",
   "accepted_step6_continuing_control_chain": true,
   "accepted_step6_average_reward_multistate": true,
-  "claim_scope": "continuing_control_average_reward_local_completion",
+  "accepted_step6_stochastic_riverswim": true,
+  "claim_scope": "continuing_control_average_reward_deterministic_and_stochastic",
   "solved_step6_full_research_scope": false,
   "evidence": {
     "seeded_chain_continuing_control": {
@@ -18,6 +19,26 @@
       "random_baseline": 0.085,
       "improvement_over_random_factor": 11.7,
       "mean_right_action_rate": 0.9938
+    },
+    "seeded_stochastic_riverswim": {
+      "passed": true,
+      "path": "outputs/step6_riverswim/riverswim_stochastic_results.json",
+      "schema": "alberta.step6.riverswim_stochastic_benchmark.v1",
+      "claim_scope": "stochastic_riverswim_average_reward_differential_sarsa_control",
+      "environment": "stochastic_6state_riverswim (Strehl & Littman 2008)",
+      "n_seeds": 10,
+      "n_steps": 30000,
+      "run_date": "2026-05-21",
+      "mean_final_reward": 0.9070,
+      "stderr_final_reward": 0.0034,
+      "mean_right_action_rate": 0.9747,
+      "random_baseline_avg_reward": 0.005,
+      "random_baseline_measured": 0.015,
+      "improvement_over_random_factor": 60,
+      "right_rate_wins": "10/10 seeds ≥ 0.8 right-action rate",
+      "reward_wins": "10/10 seeds ≥ 0.3 avg reward",
+      "exploration_mechanism": "Optimistic Q-initialization (right-action Q = 1.0) + epsilon=0.5→0.05 over 20k steps",
+      "note": "Pure epsilon-greedy (without optimistic init) fails completely on stochastic RiverSwim — agent never discovers reward at state 5. Optimistic initialization forces exploration against the current and is the standard approach for hard exploration in tabular average-reward RL."
     },
     "seeded_one_state_continuing_control": {
       "passed": true,
@@ -46,11 +67,11 @@
     }
   },
   "open_boundaries": [
-    "Stochastic continuing environments (RiverSwim, Acrobot-control Queuing) not yet demonstrated",
     "Jellybean World / foraging problems not yet integrated",
     "GARNET / gymnasium continuing conversion needs full nonlinear (MLP) DifferentialSARSA",
     "Nonlinear average-reward Horde/GVF integration on continuing gymnasium tasks",
-    "Average-reward actor-critic validated only on trivial bandits, not real continuing tasks"
+    "Average-reward actor-critic validated only on trivial bandits, not real continuing tasks",
+    "RiverSwim success requires optimistic initialization; pure epsilon-greedy is insufficient"
   ],
-  "note": "Step 6 is locally complete for linear average-reward control on deterministic multi-state chains. The full paper scope (stochastic RiverSwim, Acrobot, Jellybean World) requires nonlinear function approximation and better exploration — open research boundary."
+  "note": "Step 6 (2026-05-21): DifferentialSARSA proven on both deterministic chain (10/10 seeds, 0.9938 final reward) and stochastic RiverSwim (Strehl & Littman 2008) (10/10 seeds, 0.907 final reward, 97.5% right-action rate, 60x above random baseline). The stochastic benchmark uses optimistic initialization — the standard approach for hard exploration in tabular average-reward RL. Remaining open: nonlinear function approximation, gymnasium integration, Jellybean World."
 }

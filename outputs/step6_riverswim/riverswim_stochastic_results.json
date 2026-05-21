@@ -1,0 +1,22 @@
+{
+  "schema": "alberta.step6.riverswim_stochastic_benchmark.v1",
+  "config": {
+    "n_seeds": 10,
+    "steps": 30000,
+    "final_window": 5000,
+    "min_right_rate": 0.8,
+    "min_avg_reward": 0.3,
+    "environment": "stochastic_riverswim_6state"
+  },
+  "mean_final_reward": 0.907001793384552,
+  "stderr_final_reward": 0.0034245399734732155,
+  "mean_final_right_rate": 0.9746600000000001,
+  "stderr_final_right_rate": 0.0006412799700598778,
+  "right_wins": 10,
+  "reward_wins": 10,
+  "n_seeds": 10,
+  "random_baseline_avg_reward": 0.005,
+  "optimal_avg_reward_approx": 0.43,
+  "wall_clock_s": 70.84091401100159,
+  "passed": true
+}
