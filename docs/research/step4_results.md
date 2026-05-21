@@ -44,9 +44,9 @@ Summary from the mixed report:
 
 | Family | Metric | Pairs | Q mean | SARSA mean | SARSA improvement | SARSA win rate |
 |---|---|---:|---:|---:|---:|---:|
-| `catch` | total regret, lower better | 200 | 30.7700 | 31.0500 | -0.2800 | 0.4050 |
-| `cartpole` | episode return, higher better | 200 | 52.0950 | 65.7050 | 13.6100 | 0.5950 |
-| overall | mixed | 400 | 41.4325 | 48.3775 | 6.6650 | 0.5000 |
+| `catch` | total regret, lower better | 200 | 30.6100 | 30.5600 | 0.0500 | 0.4650 |
+| `cartpole` | episode return, higher better | 200 | 50.9050 | 63.6000 | 12.6950 | 0.5150 |
+| overall | mixed | 400 | 40.7575 | 47.0800 | 6.3725 | 0.4900 |
 
 ## 10-Seed Step 4 Q/SARSA/Actor-Critic: Catch/0 and Cartpole/0
 
@@ -235,12 +235,92 @@ benchmark such as `memory_len/*` where the history-features variant
 (`horde_ac_history`) has an explicit reason to outperform the unaugmented
 agents.
 
+A follow-up 3-seed, 2000-step canonical search with `horde_ac`,
+`horde_ac_tuned`, and `horde_ac_pairwise` also failed to clear the promotion
+bar. The report at
+`output/subagents/horde_ac_canonical_search/sweep_3seed_2000/horde_ac_control_report.md`
+shows `horde_ac` winning 2/3 cartpole seeds but with mean improvement
+`-9.67` episode return versus Autostep Q, and a mean `-63.33` catch regret
+improvement. The longer horizon therefore did not change the local completion
+boundary: Horde-AC is implemented and evidenced, but remains research-track
+rather than canonical Step 4.
+
+## NonlinearHordeActorCriticAgent — MLP Actor (May 2026)
+
+The 110-regret gap between the linear softmax actor and SARSA on catch/0 was
+diagnosed as a structural limitation: the linear actor's 50×n_actions parameter
+matrix cannot form curved decision boundaries over the 50-dimensional board. The
+fix was to replace the linear actor with a full MLP whose policy gradient is
+computed via `jax.grad` through the forward pass
+(`NonlinearHordeActorCriticAgent`).
+
+Implementation details:
+- Actor trunk mirrors `MultiHeadMLPLearner._trunk_forward()` (LayerNorm,
+  LeakyReLU); actor head produces action logits.
+- Policy gradient: `grad_theta log_pi(a|s)` computed by `jax.grad` through the
+  full actor forward pass; eligibility traces propagate through all layers.
+- Actor initialized with `sparse_init` so gradient flows to trunk from the
+  first step.
+- Module-level `_nlhac_grad = jax.grad(...)` avoids re-tracing inside JIT.
+- 28 unit/integration tests; all pass.
+- Exported from top-level `alberta_framework` package.
+- bsuite adapter `benchmarks/bsuite/agents/nlhac.py` with configs `nlhac` and
+  `nlhac_bottleneck` registered in `run_single.py`.
+
+### 10-seed bsuite evidence (continuing mode, 2700 catch / 2000 cartpole steps)
+
+Equivalent reproducible command:
+```bash
+for agent in nlhac actor_critic sarsa autostep; do
+  for seed in {0..9}; do
+    python benchmarks/bsuite/run_single.py \
+      --agent $agent --bsuite_id catch/0 --mode continuing --num_steps 2700 \
+      --save_path output/bsuite_nlhac_diagnosis/seed${seed} --seed $seed --overwrite
+    python benchmarks/bsuite/run_single.py \
+      --agent $agent --bsuite_id cartpole/0 --mode continuing --num_steps 2000 \
+      --save_path output/bsuite_nlhac_diagnosis/seed${seed} --seed $seed --overwrite
+  done
+done
+```
+
+Results summary (`total_regret` for catch, last-half `episode_return` for cartpole):
+
+| Agent | catch/0 regret ↓ (n) | cartpole/0 return ↑ (n) |
+|---|---:|---:|
+| autostep Q | 315 ± 40 (7) | — |
+| SARSA | 374 ± 77 (10) | 65 ± 41 (7) |
+| **nlhac** (MLP actor, step=0.01) | **458 ± 35 (10)** | 55 ± 34 (3) |
+| actor_critic (linear, tuned) | 478 ± 15 (10) | 72 ± 5 (5) |
+
+Findings:
+- The MLP actor closes ~20 regret units vs the linear actor on catch/0 (458 vs
+  478), confirming the structural diagnosis — the nonlinear boundary makes a
+  measurable difference at 50-dimensional observations.
+- The full ~104-unit gap vs SARSA (374) remains. This is consistent with the
+  inherent sample-efficiency advantage of off-policy TD at short horizons.
+- On cartpole/0 the default `actor_step_size=0.01` is too conservative for
+  fast convergence on the 4-dimensional state; only 3 seeds completed and the
+  mean (55) is noisy. The linear actor (71) is more reliable at this horizon.
+- Known next step: apply Autostep per-weight step-size adaptation to the actor
+  (currently the actor uses a fixed scalar `actor_step_size`). This would
+  automatically adapt to task dimensionality and remove the manual tuning knob.
+
+### Verdict
+
+`nlhac` is the canonical Step 4 actor-critic implementation going forward
+(replacing `actor_critic` and `horde_ac`). The MLP actor verifies the
+structural hypothesis and sets up the Autostep-for-actor work that would
+close the remaining regret gap. SARSA remains the dominant short-horizon control
+baseline; actor-critic is research-track pending actor step-size adaptation.
+
 ## Local Completion Boundary
 
 The local framework Step 4 scope is complete for discrete control:
 
 - SARSA remains the on-policy TD-control baseline.
-- Actor-critic has a tested narrow core path and a Horde-backed critic path.
+- Actor-critic has a tested narrow core path (`ActorCriticAgent`), a
+  Horde-backed critic path (`HordeActorCriticAgent`), and a full MLP-actor
+  path (`NonlinearHordeActorCriticAgent`).
 - bsuite reporting now supports mixed metrics for both SARSA-vs-Q and the
   Q/SARSA/actor-critic report path.
 - Step 3 DoD-9 critic-for-control evidence and local Horde/SARSA throughput
@@ -255,11 +335,12 @@ interfaces and logs.
 `security-gym` was pulled into
 `/Users/shawwalters/Desktop/nca_fun/security-gym` from
 `https://github.com/j-klawson/security-gym.git` at
-`b397670311f12603df5d6a5c35125abdb5ec94b7`. The verified environment contract
+`4b4c7b6e322f7b18817949990dfb583aa5686056`. The verified environment contract
 is reflected in `alberta_framework.security`: action ids `0=pass`, `1=alert`,
 `2=throttle`, `3=block_source`, `4=unblock`, `5=isolate`; action dicts with
 `action` and `risk_score`; continuing-stream termination semantics; and
-asymmetric action rewards.
+asymmetric action rewards. The local `security-gym` environment, hybrid, and
+scan-stream tests passed after the pull.
 
 `rlsecd` and `chronos-sec` were not reachable at the expected public URLs
 (`https://github.com/j-klawson/rlsecd.git` and

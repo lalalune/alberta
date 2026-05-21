@@ -42,6 +42,7 @@ from benchmarks.bsuite.agents import (  # noqa: E402
     autostep_dqn,
     horde_actor_critic,
     lms_dqn,
+    nlhac,
     sarsa,
 )
 from benchmarks.bsuite.configs import CONFIGS  # noqa: E402
@@ -67,6 +68,7 @@ AGENT_FACTORIES = {
     "sarsa": sarsa.default_agent,
     "actor_critic": actor_critic.default_agent,
     "horde_ac": horde_actor_critic.default_agent,
+    "nlhac": nlhac.default_agent,
 }
 
 
@@ -121,7 +123,7 @@ def make_agent(
 
     # Add common kwargs
     kwargs["seed"] = seed
-    if actual_type not in {"adam", "actor_critic", "sarsa", "horde_ac"}:
+    if actual_type not in {"adam", "actor_critic", "sarsa", "horde_ac", "nlhac"}:
         kwargs["log_representation"] = log_representation
         kwargs["log_interval"] = log_interval
 

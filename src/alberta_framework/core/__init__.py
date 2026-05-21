@@ -117,7 +117,13 @@ from alberta_framework.core.horde_actor_critic import (
     HordeActorCriticConfig,
     HordeActorCriticState,
     HordeActorCriticUpdateResult,
+    NonlinearHordeActorCriticAgent,
+    NonlinearHordeActorCriticArrayResult,
+    NonlinearHordeActorCriticConfig,
+    NonlinearHordeActorCriticState,
+    NonlinearHordeActorCriticUpdateResult,
     run_horde_actor_critic_from_arrays,
+    run_nonlinear_horde_actor_critic_from_arrays,
 )
 from alberta_framework.core.latent_world_model import (
     LatentWorldModel,
@@ -130,11 +136,23 @@ from alberta_framework.core.latent_world_model import (
 )
 from alberta_framework.core.learners import LinearLearner, TDLinearLearner, TDUpdateResult
 from alberta_framework.core.off_policy_horde import (
+    NonlinearSharedGTDHordeLearner,
+    NonlinearSharedGTDHordeLearningResult,
+    NonlinearSharedGTDHordeState,
+    NonlinearSharedGTDHordeUpdateResult,
     OffPolicyHordeLearner,
     OffPolicyHordeLearningResult,
     OffPolicyHordeUpdateResult,
     run_off_policy_horde_learning_loop,
     run_off_policy_horde_learning_loop_batched,
+)
+from alberta_framework.core.off_policy_td import (
+    GradientTDArrayResult,
+    GradientTDLinearLearner,
+    GradientTDState,
+    GradientTDUpdateResult,
+    OffPolicyTDLinearLearner,
+    run_gradient_td_learning_loop,
 )
 from alberta_framework.core.optimizers import (
     IDBD,
@@ -264,10 +282,20 @@ __all__ = [
     "OffPolicyHordeLearner",
     "OffPolicyHordeLearningResult",
     "OffPolicyHordeUpdateResult",
+    "NonlinearSharedGTDHordeLearner",
+    "NonlinearSharedGTDHordeLearningResult",
+    "NonlinearSharedGTDHordeState",
+    "NonlinearSharedGTDHordeUpdateResult",
+    "OffPolicyTDLinearLearner",
+    "GradientTDArrayResult",
+    "GradientTDLinearLearner",
+    "GradientTDState",
+    "GradientTDUpdateResult",
     "create_horde_spec",
     "run_horde_learning_loop",
     "run_horde_learning_loop_batched",
     "run_horde_learning_loop_final_state",
+    "run_gradient_td_learning_loop",
     "run_off_policy_horde_learning_loop",
     "run_off_policy_horde_learning_loop_batched",
     # World model (Steps 7/8)
@@ -299,7 +327,13 @@ __all__ = [
     "HordeActorCriticConfig",
     "HordeActorCriticState",
     "HordeActorCriticUpdateResult",
+    "NonlinearHordeActorCriticAgent",
+    "NonlinearHordeActorCriticArrayResult",
+    "NonlinearHordeActorCriticConfig",
+    "NonlinearHordeActorCriticState",
+    "NonlinearHordeActorCriticUpdateResult",
     "run_horde_actor_critic_from_arrays",
+    "run_nonlinear_horde_actor_critic_from_arrays",
     "run_actor_critic_from_arrays",
     "run_continuous_actor_critic_from_arrays",
     "run_associative_memory_arrays",

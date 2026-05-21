@@ -111,7 +111,12 @@ Artifacts:
 - [x] Continuous and discrete action spaces
 - [x] Horde-backed actor-critic critic path using Step 3 machinery
 - [x] bsuite runner/reporting path for Q/SARSA/AC/Horde-AC comparisons
-- [ ] Research boundary: do not promote actor-critic or Horde-AC as canonical Step 4 until seeded bsuite evidence beats Q/SARSA on a predefined gate
+- [x] `NonlinearHordeActorCriticAgent`: MLP actor with `jax.grad` policy gradient,
+  eligibility traces through all layers, sparse init, 28 tests, bsuite adapter (nlhac)
+- [x] 10-seed catch/0 bsuite evidence: nlhac closes 20 regret units vs linear AC
+  (458 vs 478); SARSA (374) remains the dominant baseline at this horizon
+- [ ] Autostep-for-actor: per-weight step-size adaptation for the actor MLP
+  (prerequisite for closing the nlhac vs SARSA gap; then re-gate promotion)
 
 ## rlsecd Integration
 

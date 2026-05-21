@@ -177,14 +177,23 @@ The Alberta Plan's Step 4 ("Control I: Continual actor-critic control" — Sutto
 
 **Delivered**:
 - Linear/discrete and continuous actor-critic cores
-- Horde-backed actor-critic adapter using a Step 3 Horde critic
-- Pipeline `control_mode="horde_ac"` with one synchronized critic state
-- bsuite comparison reports showing current actor-critic evidence is not yet
-  strong enough to replace SARSA as the canonical Step 4 learner
+- Horde-backed actor-critic (`HordeActorCriticAgent`) with Step 3 critic
+- `NonlinearHordeActorCriticAgent`: MLP actor with `jax.grad` policy gradient;
+  eligibility traces through all actor layers; sparse initialization ensures
+  gradient flows from the first step; 28 unit/integration tests; exported from
+  `alberta_framework`
+- bsuite adapter `benchmarks/bsuite/agents/nlhac.py`; 10-seed catch/0 evidence
+  shows nlhac (MLP) closes 20 regret units vs linear actor (458 vs 478) while
+  confirming SARSA (374) still leads at this horizon
+- bsuite comparison reports; Step 4 evidence documented in
+  `docs/research/step4_results.md`
 
 **Remaining research boundary**:
-- Promote actor-critic only after predefined evidence beats Q/SARSA on seeded
-  continuing-control benchmarks.
+- Apply Autostep per-weight adaptation to the actor step-size (currently a fixed
+  scalar `actor_step_size`); this would close the actor vs. SARSA gap by
+  adapting to task dimensionality automatically.
+- Promote nlhac to canonical Step 4 after Autostep-actor evidence matches SARSA
+  on seeded continuing-control benchmarks.
 
 ## Steps 5–6: Continuing Control — Primitive Implemented
 
@@ -214,6 +223,8 @@ preserving foreground, continuing real-time control.
 - Fixed-size transition memory for memory-backed planning anchors
 - Search-control strategies for random, reward-prioritized,
   transition-surprise-prioritized, and predecessor-prioritized planning
+- Target-policy/search-control behavior probability accounting and clipped
+  importance-ratio diagnostics for imagined updates
 - Warmup-gated planning so the world model must receive real transitions before
   generated backups are accepted
 - Real action context restoration after planning, so background backups do not
@@ -223,14 +234,18 @@ preserving foreground, continuing real-time control.
   Step 7 reward-prioritized Dyna improves final-window reward from `0.92` to
   `1.00` and Q-gap by `+4.79` over Step 6 real-only differential SARSA across
   5 seeds (`outputs/step7_dyna/results.json`)
+- Seeded six-state chain benchmark:
+  tabular Dyna improves cumulative reward by `+85.9975` (`+41.7%`), wins
+  cumulative reward on 8/10 seeds, and reaches the `0.85` reward threshold
+  `+132.5` real steps sooner on average
 
 **Remaining research boundary**:
 - Full prioritized-sweeping queues with recursive priority propagation and
   learned search-control
-- Off-policy accounting for imagined behavior
+- Off-policy correction for imagined behavior
 - Short-rollout and option/subtask discovery variants
-- Seeded benchmark evidence that planning improves continuing control without
-  model-bias regressions
+- Seeded nonlinear benchmark evidence that planning improves continuing
+  control without model-bias regressions
 
 ## Step 8: One-Step World Model — Primitive Implemented
 
