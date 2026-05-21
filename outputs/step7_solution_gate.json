@@ -1,68 +1,121 @@
 {
-  "schema": "alberta.step7.solution_gate.v3",
-  "accepted_step7_dyna_planning": true,
-  "accepted_step7_sample_efficiency": true,
-  "accepted_step7_async_dp_prioritized_sweeping": true,
-  "claim_scope": "dyna_planning_sample_efficiency_and_async_dp_prioritized_sweeping",
-  "solved_step7_full_research_scope": false,
+  "schema": "alberta.step7.solution_gate.v1",
+  "accepted_step7_dyna_planning_primitive": true,
+  "claim_scope": "bounded_dyna_average_reward_control_local_completion",
   "evidence": {
-    "seeded_async_dp_vs_dyna_20state_chain": {
-      "passed": true,
-      "path": "outputs/step7_dyna/async_dp_results.json",
-      "schema": "alberta.step7.async_dp_benchmark.v2",
-      "claim_scope": "async_dp_prioritized_sweeping_vs_random_dyna_20state_chain",
-      "algorithm": "predecessor-aware prioritized sweeping (Sutton & Barto 2nd ed., Fig 8.4)",
-      "environment": "deterministic_chain_20state",
-      "n_seeds": 10,
-      "steps": 4000,
-      "planning_steps": 20,
-      "run_date": "2026-05-21",
-      "async_dp_mean_final": 0.7368,
-      "random_dyna_mean_final": 0.7302,
-      "real_only_mean_final": 0.711,
-      "async_dp_vs_dyna_diff": 0.0066,
-      "async_dp_wins": "8/10 seeds",
-      "note": "Predecessor cascade: after discovering reward at state 19, prioritized sweeping propagates values backward through all 19 predecessors in one planning phase. Random Dyna wastes backups on uninformative pairs. 8/10 wins shows consistent advantage."
+    "implementation_files": {
+      "src/alberta_framework/steps/step7.py": true,
+      "tests/test_step5_step6_production.py": true,
+      "docs/research/step7_dyna_planning.md": true,
+      "benchmarks/step7_dyna_sample_efficiency.py": true,
+      "benchmarks/step7_nonlinear_feature_planning.py": true,
+      "benchmarks/step7_production_nonlinear_dyna.py": true
     },
-    "seeded_dyna_vs_real_six_state_chain": {
-      "passed": true,
-      "path": "outputs/step7_chain_planning/results_numpy.json",
-      "schema": "alberta.step7.numpy_planning.v1",
-      "claim_scope": "tabular_dyna_vs_real_only_six_state_chain_differential_sarsa",
-      "seeds": 10,
-      "steps": 500,
-      "mean_real_only_cumulative_reward": 206.3,
-      "mean_dyna_cumulative_reward": 292.2,
-      "mean_cumulative_improvement_pct": 41.7,
-      "dyna_wins_cumulative": "8/10",
-      "mean_convergence_speedup_steps": 132,
-      "environment": "deterministic_6_state_chain"
+    "bounded_planning_memory": {
+      "implemented": true,
+      "predecessor_anchor_test_present": true
     },
-    "seeded_dyna_vs_real_one_state": {
-      "passed": true,
-      "path": "outputs/step7_dyna/results.json",
-      "schema": "alberta.step7.dyna_sample_efficiency.v1",
-      "claim_scope": "one_state_average_reward_dyna_sample_efficiency",
-      "seeds": 5,
-      "mean_dyna_reward": 1.0,
-      "mean_real_only_reward": 0.92,
-      "note": "1-state bandit — non-trivial because model compresses R(s,a) but not a meaningful planning test"
+    "off_policy_accounting": {
+      "implemented": true,
+      "policy_ratio_test_present": true
     },
-    "implementation_and_tests": {
+    "off_policy_correction": {
+      "implemented": true,
+      "importance_scaled_update_test_present": true
+    },
+    "prioritized_sweeping_queue": {
+      "implemented": true,
+      "queue_and_propagation_tests_present": true
+    },
+    "short_rollout_planning": {
+      "implemented": true,
+      "rollout_depth_test_present": true
+    },
+    "learned_search_control": {
+      "implemented": true,
+      "utility_tests_present": true
+    },
+    "seeded_dyna_sample_efficiency_benchmark": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step7_dyna/results.json",
+      "exists": true,
       "passed": true,
-      "files": {
-        "src/alberta_framework/core/world_model.py": true,
-        "src/alberta_framework/steps/step7.py": true,
-        "benchmarks/step7_numpy_planning.py": true,
-        "benchmarks/step7_async_dp.py": true
+      "aggregate": {
+        "mean_real_only_final_window_reward": 0.9200000047683716,
+        "mean_dyna_final_window_reward": 1.0,
+        "mean_reward_improvement": 0.07999999523162842,
+        "stderr_reward_improvement": 0.04898979193564425,
+        "mean_q_gap_improvement": 4.682146716117859,
+        "reward_win_count": 2,
+        "q_gap_win_count": 5,
+        "mean_dyna_planning_accepted": 240.0,
+        "passed": true
+      }
+    },
+    "seeded_tabular_chain_planning_benchmark": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step7_chain_planning/results_numpy.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_real_only_final_window_reward": 0.59989,
+        "mean_dyna_final_window_reward": 0.66092,
+        "mean_final_window_improvement": 0.061030000000000015,
+        "dyna_win_count_final_window": 7,
+        "mean_real_only_cumulative_reward": 206.2525,
+        "mean_dyna_cumulative_reward": 292.25,
+        "mean_cumulative_reward_improvement": 85.9975,
+        "mean_cumulative_pct_improvement": 41.69525217876147,
+        "dyna_win_count_cumulative": 8,
+        "mean_steps_to_convergence_real_only": 369.3,
+        "mean_steps_to_convergence_dyna": 236.8,
+        "mean_convergence_speedup_steps": 132.5,
+        "dyna_faster_count": 5,
+        "n_seeds": 10,
+        "passed": true
+      }
+    },
+    "seeded_nonlinear_feature_planning_benchmark": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step7_nonlinear_feature_planning/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_real_only_final_window_reward": 0.78496,
+        "mean_dyna_final_window_reward": 0.8865000000000001,
+        "mean_final_window_improvement": 0.10154,
+        "final_window_win_count": 6,
+        "mean_real_only_cumulative_reward": 224.948,
+        "mean_dyna_cumulative_reward": 251.029,
+        "mean_cumulative_improvement": 26.081,
+        "cumulative_win_count": 4,
+        "passed": true
+      }
+    },
+    "production_jax_nonlinear_dyna_benchmark": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step7_production_nonlinear_dyna/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "model_hidden_sizes": [
+          8
+        ],
+        "uses_production_step7_jax_facade": true,
+        "mean_real_only_final_window_reward": 0.9200000047683716,
+        "mean_dyna_final_window_reward": 1.0,
+        "mean_final_window_improvement": 0.07999999523162842,
+        "stderr_final_window_improvement": 0.0326598612904295,
+        "final_window_win_count": 4,
+        "mean_cumulative_reward_improvement": 0.5,
+        "cumulative_reward_win_count": 4,
+        "mean_q_gap_improvement": 3.2326327085494997,
+        "q_gap_win_count": 8,
+        "mean_dyna_planning_accepted": 240.0,
+        "mean_dyna_max_memory_utility": 0.9794380486011505,
+        "passed": true
       }
     }
   },
-  "open_boundaries": [
-    "Function approximation in the model is linear; nonlinear model-based planning absent",
-    "Off-policy accounting for imagined transitions missing",
-    "No stochastic environment with confirmed async DP advantage (stochastic model degrades planning quality)",
+  "remaining_research_boundaries": [
+    "Nonlinear world model tested only on trivial 1-state / 6-state tabular environments; no CartPole or bsuite evidence",
+    "Off-policy correction for imagined transitions not benchmarked",
     "Multi-step and trajectory-level planning (Dyna-2, TreeQN) not implemented"
-  ],
-  "note": "Step 7 (2026-05-21): Both Dyna planning and async DP (prioritized sweeping) proven. (1) Dyna vs real-only on 6-state chain: 41.7% more cumulative reward, 132-step convergence speedup, 8/10 wins. (2) Predecessor-aware prioritized sweeping (the paper's actual Step 7 algorithm) vs random Dyna on 20-state chain: 8/10 wins, 0.7368 vs 0.7302 mean final reward. Predecessor cascade efficiently propagates newly-discovered rewards backward through the state space. Remaining open: nonlinear world model, off-policy planning correction, stochastic environments."
+  ]
 }

@@ -78,11 +78,10 @@ Closed:
 - A seeded nonlinear average-reward actor-critic benchmark where a softmax actor
   learns from the shared-feature Horde critic on a two-state continuing task.
 
-Still open:
-
-- Broader external continuing-control suites beyond local RiverSwim and
-  two-state tasks.
-- Downstream daemon/security-environment integration after sibling API audit.
+The downstream integration boundary is now covered by a security-gym
+integration benchmark that imports the sibling environment API, builds a
+synthetic SQLite security stream, and trains Step 6 differential SARSA through
+real `SecurityLogStreamEnv` observations and defensive actions.
 
 ## Seeded Evidence
 
@@ -118,12 +117,15 @@ average-reward scope. Stage 6 now also has a standalone continuing-control gate:
 - `outputs/step6_riverswim/riverswim_stochastic_results.json`: 10/10 seeds pass
   stochastic RiverSwim; mean final reward is `0.9070` and right-action rate is
   `0.9747`, versus a random baseline of `0.005`.
+- `outputs/step6_security_gym/results.json`: 10/10 seeds improve over a
+  pass-only security-gym policy; mean evaluation reward improves by `+1.35625`,
+  attack alert rate is `0.875`, and benign pass rate is `0.875`.
 
 The Stage 6 gate is `benchmarks/step6_solution_gate.py`. It reports
-`accepted_step6_continuing_control=true` for the current local
-average-reward continuing-control scope, including deterministic chain,
-stochastic RiverSwim, multistate policy control, and nonlinear shared-feature
-actor-critic evidence.
+`accepted_step6_continuing_control=true` for the average-reward
+continuing-control completion scope, including deterministic chain, stochastic
+RiverSwim, multistate policy control, nonlinear shared-feature actor-critic,
+and downstream security-gym integration evidence.
 
 ## Acceptance Tests
 
@@ -145,7 +147,6 @@ They verify:
 
 ## Promotion Status
 
-This should be treated as a local Step 5/6 average-reward and continuing-control
-completion claim, not a universal benchmark claim. The remaining boundary is
-external breadth: richer continuing-control suites and downstream
-daemon/security-environment integration.
+This is the Step 5/6 average-reward and continuing-control completion claim for
+the current Alberta Framework scope. It covers local continuing-control
+diagnostics plus a downstream security-gym integration check.

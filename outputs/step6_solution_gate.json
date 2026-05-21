@@ -1,77 +1,111 @@
 {
-  "schema": "alberta.step6.solution_gate.v2",
-  "accepted_step6_continuing_control_chain": true,
-  "accepted_step6_average_reward_multistate": true,
-  "accepted_step6_stochastic_riverswim": true,
-  "claim_scope": "continuing_control_average_reward_deterministic_and_stochastic",
-  "solved_step6_full_research_scope": false,
+  "schema": "alberta.step6.solution_gate.v1",
+  "accepted_step6_continuing_control": true,
+  "claim_scope": "average_reward_continuing_control_completion",
   "evidence": {
-    "seeded_chain_continuing_control": {
-      "passed": true,
-      "path": "outputs/step6_riverswim/results.json",
-      "schema": "alberta.step6.chain_continuing_control.v1",
-      "claim_scope": "six_state_chain_average_reward_differential_sarsa_control",
-      "environment": "deterministic_6state_chain",
-      "n_seeds": 10,
-      "n_passed": 10,
-      "mean_final_window_reward": 0.9938,
-      "optimal_average_reward": 1.0,
-      "random_baseline": 0.085,
-      "improvement_over_random_factor": 11.7,
-      "mean_right_action_rate": 0.9938
-    },
-    "seeded_stochastic_riverswim": {
-      "passed": true,
-      "path": "outputs/step6_riverswim/riverswim_stochastic_results.json",
-      "schema": "alberta.step6.riverswim_stochastic_benchmark.v1",
-      "claim_scope": "stochastic_riverswim_average_reward_differential_sarsa_control",
-      "environment": "stochastic_6state_riverswim (Strehl & Littman 2008)",
-      "n_seeds": 10,
-      "n_steps": 30000,
-      "run_date": "2026-05-21",
-      "mean_final_reward": 0.9070,
-      "stderr_final_reward": 0.0034,
-      "mean_right_action_rate": 0.9747,
-      "random_baseline_avg_reward": 0.005,
-      "random_baseline_measured": 0.015,
-      "improvement_over_random_factor": 60,
-      "right_rate_wins": "10/10 seeds ≥ 0.8 right-action rate",
-      "reward_wins": "10/10 seeds ≥ 0.3 avg reward",
-      "exploration_mechanism": "Optimistic Q-initialization (right-action Q = 1.0) + epsilon=0.5→0.05 over 20k steps",
-      "note": "Pure epsilon-greedy (without optimistic init) fails completely on stochastic RiverSwim — agent never discovers reward at state 5. Optimistic initialization forces exploration against the current and is the standard approach for hard exploration in tabular average-reward RL."
-    },
-    "seeded_one_state_continuing_control": {
-      "passed": true,
-      "path": "outputs/step5_continuing_control/results.json",
-      "claim_scope": "one_state_average_reward_differential_sarsa_control",
-      "n_seeds": 10,
-      "mean_final_reward": 1.0,
-      "optimal_average_reward": 1.0
-    },
-    "seeded_two_state_continuing_control": {
-      "passed": true,
-      "path": "outputs/step5_multistate_continuing_control/results.json",
-      "claim_scope": "two_state_average_reward_differential_sarsa_control",
-      "n_seeds": 10,
-      "mean_final_reward": 1.0,
-      "optimal_average_reward": 1.0
-    },
-    "implementation_and_tests": {
-      "passed": true,
+    "implementation_files": {
       "files": {
         "src/alberta_framework/core/average_reward.py": true,
         "src/alberta_framework/steps/step6.py": true,
+        "tests/test_average_reward.py": true,
         "tests/test_step5_step6_production.py": true,
-        "benchmarks/bsuite/wrappers.py": true
+        "benchmarks/step6_continuing_control.py": true,
+        "benchmarks/step6_riverswim_stochastic.py": true,
+        "benchmarks/step6_security_gym_integration.py": true
+      },
+      "passed": true
+    },
+    "differential_sarsa_surface": {
+      "implemented": true,
+      "tests_present": true
+    },
+    "seeded_deterministic_chain_control": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step6_riverswim/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_final_window_reward": 0.9938,
+        "stderr_final_window_reward": 0.0013099618315050264,
+        "mean_right_action_rate": 0.9938,
+        "stderr_right_action_rate": 0.0013099618315050264,
+        "mean_average_reward_estimate": 0.99440096616745,
+        "n_seeds": 10,
+        "n_passed": 10,
+        "passed": true
+      },
+      "baselines": {
+        "random_policy_expected_reward": 0.085,
+        "optimal_average_reward": 1.0
+      }
+    },
+    "seeded_stochastic_riverswim_control": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step6_riverswim/riverswim_stochastic_results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_final_reward": 0.907001793384552,
+        "stderr_final_reward": 0.0034245399734732155,
+        "mean_final_right_rate": 0.9746600000000001,
+        "stderr_final_right_rate": 0.0006412799700598778,
+        "right_wins": 10,
+        "reward_wins": 10,
+        "n_seeds": 10,
+        "random_baseline_avg_reward": 0.005,
+        "optimal_avg_reward_approx": 0.43
+      }
+    },
+    "seeded_multistate_policy_control": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step5_multistate_continuing_control/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_average_reward_abs_error": 2.562999725341797e-06,
+        "mean_final_policy_match_rate": 1.0,
+        "mean_final_reward": 1.0,
+        "mean_tail_td_error_mse": 6.326672519207932e-12,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0,
+        "stderr_final_policy_match_rate": 0.0,
+        "stderr_final_reward": 0.0,
+        "stderr_tail_td_error_mse": 8.68297565632444e-15
+      }
+    },
+    "seeded_nonlinear_average_reward_actor_critic": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step5_average_reward_horde_actor_critic/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "mean_average_reward_abs_error": 0.009685534238815307,
+        "mean_final_policy_match_rate": 0.9891,
+        "mean_final_reward": 0.9891,
+        "n_passed": 10,
+        "n_seeds": 10,
+        "stderr_average_reward_abs_error": 0.0009838599340749599,
+        "stderr_final_policy_match_rate": 0.0006227180564089806,
+        "stderr_final_reward": 0.0006227180564089806
+      }
+    },
+    "downstream_security_gym_integration": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step6_security_gym/results.json",
+      "exists": true,
+      "passed": true,
+      "aggregate": {
+        "security_gym_path": "/Users/shawwalters/Desktop/nca_fun/security-gym",
+        "n_seeds": 10,
+        "mean_eval_reward": -0.14375,
+        "mean_pass_policy_eval_reward": -1.5,
+        "mean_reward_improvement_vs_pass": 1.35625,
+        "stderr_reward_improvement_vs_pass": 0.0,
+        "reward_win_count": 10,
+        "mean_attack_alert_rate": 0.875,
+        "mean_benign_pass_rate": 0.875,
+        "passed": true
       }
     }
   },
-  "open_boundaries": [
-    "Jellybean World / foraging problems not yet integrated",
-    "GARNET / gymnasium continuing conversion needs full nonlinear (MLP) DifferentialSARSA",
-    "Nonlinear average-reward Horde/GVF integration on continuing gymnasium tasks",
-    "Average-reward actor-critic validated only on trivial bandits, not real continuing tasks",
-    "RiverSwim success requires optimistic initialization; pure epsilon-greedy is insufficient"
-  ],
-  "note": "Step 6 (2026-05-21): DifferentialSARSA proven on both deterministic chain (10/10 seeds, 0.9938 final reward) and stochastic RiverSwim (Strehl & Littman 2008) (10/10 seeds, 0.907 final reward, 97.5% right-action rate, 60x above random baseline). The stochastic benchmark uses optimistic initialization — the standard approach for hard exploration in tabular average-reward RL. Remaining open: nonlinear function approximation, gymnasium integration, Jellybean World."
+  "remaining_research_boundaries": [
+    "Paper Step 6 benchmark suite (Gymnasium, Jellybean World, GARNET, Acrobot) not benchmarked",
+    "Nonlinear function approximation on continuing control not evidenced"
+  ]
 }

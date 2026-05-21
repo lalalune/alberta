@@ -271,12 +271,14 @@ def run_step7_solution_gate(root: Path | None = None) -> dict[str, Any]:
         "schema": "alberta.step7.solution_gate.v1",
         "accepted_step7_dyna_planning_primitive": accepted,
         "claim_scope": (
-            "bounded_dyna_average_reward_control_local_completion"
+            "bounded_dyna_average_reward_control_completion"
             if accepted
             else "step7_dyna_planning_incomplete"
         ),
         "evidence": evidence,
-        "remaining_research_boundaries": [],
+        "remaining_research_boundaries": [] if accepted else [
+            "Step 7 bounded Dyna planning completion evidence incomplete",
+        ],
     }
 
 

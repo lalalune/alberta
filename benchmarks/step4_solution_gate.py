@@ -333,6 +333,118 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "below the Q baseline"
         ),
     }
+    nlhac_gradclip_500_path = root / "outputs/bsuite/nlhac_gradclip_10seed_500/report.md"
+    nlhac_gradclip_500_exists = nlhac_gradclip_500_path.exists()
+    nlhac_gradclip_500_rows = (
+        parse_markdown_summary_table(read_text(nlhac_gradclip_500_path))
+        if nlhac_gradclip_500_exists
+        else {}
+    )
+    nlhac_gradclip_500_overall = nlhac_gradclip_500_rows.get("overall", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_500_cartpole = nlhac_gradclip_500_rows.get("cartpole", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_500_catch = nlhac_gradclip_500_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_500_q_promotion = bool(
+        len(nlhac_gradclip_500_overall) >= 5
+        and len(nlhac_gradclip_500_cartpole) >= 5
+        and len(nlhac_gradclip_500_catch) >= 5
+        and nlhac_gradclip_500_overall[0] >= 20
+        and nlhac_gradclip_500_overall[3] > 0.0
+        and nlhac_gradclip_500_cartpole[3] > 0.0
+        and nlhac_gradclip_500_catch[3] > 0.0
+    )
+    nlhac_gradclip_500_sarsa_promotion = bool(
+        nlhac_gradclip_500_q_promotion
+        and nlhac_gradclip_500_overall[3] > nlhac_gradclip_500_overall[1]
+        and nlhac_gradclip_500_cartpole[3] > nlhac_gradclip_500_cartpole[1]
+        and nlhac_gradclip_500_catch[3] > nlhac_gradclip_500_catch[1]
+    )
+    evidence["nonlinear_horde_actor_critic_gradclip_500_probe"] = {
+        "path": str(nlhac_gradclip_500_path),
+        "exists": nlhac_gradclip_500_exists,
+        "overall": nlhac_gradclip_500_rows.get("overall", {}),
+        "catch": nlhac_gradclip_500_rows.get("catch", {}),
+        "cartpole": nlhac_gradclip_500_rows.get("cartpole", {}),
+        "passed": nlhac_gradclip_500_exists,
+        "promotion_vs_q_passed": nlhac_gradclip_500_q_promotion,
+        "promotion_vs_sarsa_passed": nlhac_gradclip_500_sarsa_promotion,
+        "boundary": (
+            "gradient-clipped NLHAC 10-seed 500-step probe is positive "
+            "against the Q baseline on catch, cartpole, and overall, but "
+            "does not outperform SARSA"
+        ),
+    }
+    nlhac_gradclip_1000_path = root / "outputs/bsuite/nlhac_gradclip_10seed_1000/report.md"
+    nlhac_gradclip_1000_exists = nlhac_gradclip_1000_path.exists()
+    nlhac_gradclip_1000_rows = (
+        parse_markdown_summary_table(read_text(nlhac_gradclip_1000_path))
+        if nlhac_gradclip_1000_exists
+        else {}
+    )
+    nlhac_gradclip_1000_overall = nlhac_gradclip_1000_rows.get("overall", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_1000_cartpole = nlhac_gradclip_1000_rows.get("cartpole", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_1000_catch = nlhac_gradclip_1000_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    nlhac_gradclip_1000_q_promotion = bool(
+        len(nlhac_gradclip_1000_overall) >= 5
+        and len(nlhac_gradclip_1000_cartpole) >= 5
+        and len(nlhac_gradclip_1000_catch) >= 5
+        and nlhac_gradclip_1000_overall[0] >= 20
+        and nlhac_gradclip_1000_overall[3] > 0.0
+        and nlhac_gradclip_1000_cartpole[3] > 0.0
+        and nlhac_gradclip_1000_catch[3] > 0.0
+    )
+    nlhac_gradclip_1000_sarsa_promotion = bool(
+        nlhac_gradclip_1000_q_promotion
+        and nlhac_gradclip_1000_overall[3] > nlhac_gradclip_1000_overall[1]
+        and nlhac_gradclip_1000_cartpole[3] > nlhac_gradclip_1000_cartpole[1]
+        and nlhac_gradclip_1000_catch[3] > nlhac_gradclip_1000_catch[1]
+    )
+    evidence["nonlinear_horde_actor_critic_gradclip_1000_probe"] = {
+        "path": str(nlhac_gradclip_1000_path),
+        "exists": nlhac_gradclip_1000_exists,
+        "overall": nlhac_gradclip_1000_rows.get("overall", {}),
+        "catch": nlhac_gradclip_1000_rows.get("catch", {}),
+        "cartpole": nlhac_gradclip_1000_rows.get("cartpole", {}),
+        "passed": nlhac_gradclip_1000_exists,
+        "promotion_vs_q_passed": nlhac_gradclip_1000_q_promotion,
+        "promotion_vs_sarsa_passed": nlhac_gradclip_1000_sarsa_promotion,
+        "boundary": (
+            "gradient-clipped NLHAC 10-seed 1000-step probe remains positive "
+            "against the Q baseline on catch, cartpole, and overall, but "
+            "still does not outperform SARSA"
+        ),
+    }
+    nlhac_variant_search_path = (
+        root / "outputs/bsuite/nlhac_gradclip_variant_catch5_1000/report.md"
+    )
+    nlhac_variant_search_exists = nlhac_variant_search_path.exists()
+    nlhac_variant_search_rows = (
+        parse_markdown_summary_table(read_text(nlhac_variant_search_path))
+        if nlhac_variant_search_exists
+        else {}
+    )
+    evidence["nonlinear_horde_actor_critic_gradclip_variant_search"] = {
+        "path": str(nlhac_variant_search_path),
+        "exists": nlhac_variant_search_exists,
+        "summary": nlhac_variant_search_rows.get("catch", {}),
+        "passed": nlhac_variant_search_exists,
+        "boundary": (
+            "5-seed catch/0 search over actor step-size, actor lambda, "
+            "temperature, gradient clip strength, and critic lambda did not "
+            "find a SARSA-beating NLHAC variant"
+        ),
+    }
 
     tests = {
         "tests/test_sarsa.py": (root / "tests/test_sarsa.py").exists(),
@@ -398,9 +510,9 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
     open_boundaries = [
         (
             "Horde actor-critic positive control passes, but bsuite promotion "
-            "over Q/SARSA remains unproven; the latest NLHAC 10-seed and "
-            "clipped 3-seed catch/cartpole probes are recorded but still below "
-            "the Q baseline"
+            "over SARSA remains unproven; gradient-clipped NLHAC now beats "
+            "the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 "
+            "steps, but SARSA remains stronger"
         ),
         (
             "local security-gym counterfactual rollout passes, but active-defense "

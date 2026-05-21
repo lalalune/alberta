@@ -27,6 +27,7 @@ References:
 from __future__ import annotations
 
 import dataclasses
+import functools
 from typing import Any, cast
 
 import chex

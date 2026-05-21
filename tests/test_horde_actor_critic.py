@@ -520,6 +520,8 @@ from alberta_framework.core.horde_actor_critic import (  # noqa: E402
     NonlinearHordeActorCriticAgent,
     NonlinearHordeActorCriticConfig,
     NonlinearHordeActorCriticState,
+    NonlinearQHordeActorCriticAgent,
+    NonlinearQHordeActorCriticConfig,
     run_nonlinear_horde_actor_critic_from_arrays,
 )
 
@@ -848,3 +850,80 @@ class TestNonlinearHordeActorCriticExport:
         restored = NonlinearHordeActorCriticAgent.from_config(cfg)
         assert restored.config.n_actions == agent.config.n_actions
         assert restored.config.hidden_sizes == agent.config.hidden_sizes
+
+
+class TestNonlinearQHordeActorCritic:
+    def _agent(self) -> NonlinearQHordeActorCriticAgent:
+        demons = [
+            GVFSpec(  # type: ignore[call-arg]
+                name=f"q_{action}",
+                demon_type=DemonType.CONTROL,
+                gamma=0.0,
+                lamda=0.0,
+                cumulant_index=-1,
+            )
+            for action in range(N_ACTIONS)
+        ]
+        critic = HordeLearner(
+            create_horde_spec(demons),
+            hidden_sizes=(16,),
+            step_size=0.03,
+        )
+        cfg = NonlinearQHordeActorCriticConfig(
+            n_actions=N_ACTIONS,
+            hidden_sizes=(16,),
+            actor_td_error_clip=1.0,
+            actor_gradient_clip_norm=1.0,
+        )
+        return NonlinearQHordeActorCriticAgent(
+            cfg,
+            critic,
+            actor_optimizer=Autostep(initial_step_size=0.01),
+        )
+
+    def test_update_returns_finite_q_values(self) -> None:
+        agent = self._agent()
+        state = agent.init(OBS_DIM, jr.key(11))
+        obs = jr.normal(jr.key(12), (OBS_DIM,))
+        state, _, _ = agent.start(state, obs)
+        result = agent.update(
+            state,
+            jnp.array(1.0),
+            jr.normal(jr.key(13), (OBS_DIM,)),
+            jnp.array(0.0),
+        )
+        chex.assert_shape(result.q_values, (N_ACTIONS,))
+        chex.assert_tree_all_finite(result.q_values)
+        assert int(result.state.step_count) == 1
+
+    def test_requires_control_heads(self) -> None:
+        critic = HordeLearner(
+            create_horde_spec(
+                [GVFSpec(  # type: ignore[call-arg]
+                    name="v",
+                    demon_type=DemonType.PREDICTION,
+                    gamma=0.9,
+                    lamda=0.0,
+                    cumulant_index=0,
+                )]
+            ),
+            hidden_sizes=(16,),
+        )
+        with pytest.raises(ValueError, match="control demon"):
+            NonlinearQHordeActorCriticAgent(
+                NonlinearQHordeActorCriticConfig(n_actions=1),
+                critic,
+            )
+
+    def test_config_roundtrip(self) -> None:
+        cfg = NonlinearQHordeActorCriticConfig(
+            n_actions=4,
+            hidden_sizes=(32, 16),
+            actor_gradient_clip_norm=0.25,
+            critic_target="sampled_sarsa",
+        )
+        restored = NonlinearQHordeActorCriticConfig.from_config(cfg.to_config())
+        assert restored.n_actions == 4
+        assert restored.hidden_sizes == (32, 16)
+        assert restored.actor_gradient_clip_norm == pytest.approx(0.25)
+        assert restored.critic_target == "sampled_sarsa"

@@ -43,6 +43,7 @@ from benchmarks.bsuite.agents import (  # noqa: E402
     horde_actor_critic,
     lms_dqn,
     nlhac,
+    nlqhorde_ac,
     qhorde_ac,
     sarsa,
 )
@@ -70,6 +71,7 @@ AGENT_FACTORIES = {
     "actor_critic": actor_critic.default_agent,
     "horde_ac": horde_actor_critic.default_agent,
     "nlhac": nlhac.default_agent,
+    "nlqhorde_ac": nlqhorde_ac.default_agent,
     "qhorde_ac": qhorde_ac.default_agent,
 }
 
@@ -130,6 +132,7 @@ def make_agent(
         "sarsa",
         "horde_ac",
         "nlhac",
+        "nlqhorde_ac",
         "qhorde_ac",
     }:
         kwargs["log_representation"] = log_representation

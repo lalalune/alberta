@@ -125,6 +125,7 @@ outputs/bsuite/**
 !outputs/step10_stomp/
 !outputs/step11_oak/
 !outputs/step12_ia/
+!outputs/prototype_end_to_end/
 results/
 logs/
 *.png
@@ -135,3 +136,5 @@ logs/
 !outputs/step1_canonical/*.pdf
 !outputs/step2_canonical/*.png
 !outputs/step2_canonical/*.pdf
+!outputs/step7_cartpole_dyna/
+!outputs/step10_feature_autodiscovery/

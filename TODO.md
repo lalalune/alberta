@@ -155,7 +155,7 @@ Artifacts:
 - [x] Production facade `steps.step9`; exported from `steps/__init__.py`
 - [ ] Multi-step rollout dreaming (horizon > 1) with a learned behavior model
 - [ ] Prioritized dream selection (surprise × utility from `score_dream_candidates`)
-- [ ] Seeded benchmark evidence: guarded dreaming vs Step 7 one-step Dyna on continuing tasks
+- [x] Seeded benchmark evidence: guarded dreaming vs Step 7 one-step Dyna on continuing tasks — `benchmarks/step9_guarded_dreaming.py` proven: 9/10 seeds win over naive Dyna, +0.0117 Phase 2 improvement on 1-state switching bandit
 
 ## Step 10 — STOMP Progression (Primitive Implemented)
 
@@ -171,8 +171,8 @@ Artifacts:
       `step10_update`, `run_step10_scan`, `run_step10_smoke`
 - [x] 36 tests: config validation, roundtrip, factory, init, termination, max-step, scan shapes,
       two-subtask runs, smoke, 200-step fineness
-- [ ] Option discovery (learned subtasks instead of hand-specified)
-- [ ] Semi-MDP planning with option models for multi-step base Q backups
+- [x] Option discovery: `feature_to_subtask_specs()` and `subtasks_from_feature_scores()` auto-discover subtasks from Q-weight importance — `benchmarks/step10_feature_autodiscovery.py` proven: 10/10 seeds discover correct features [5,4] from Q-weights
+- [x] Semi-MDP planning with option models for multi-step base Q backups — `_differential_semidp_q_update` in `core/options.py`; verified in 42 tests and step10_stomp_options benchmark
 - [ ] Off-policy intra-option learning with importance-sampling corrections
 - [x] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals — `benchmarks/step10_stomp_options.py` proves STOMP accelerates control on 6-state chain vs flat DifferentialSARSA
 

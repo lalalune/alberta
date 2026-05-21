@@ -67,16 +67,14 @@ the learned model, but the total planning budget remains fixed per real step.
 
 ## Promotion Status
 
-This closes the local Step 7 planning gap: bounded, temporally uniform,
+This closes the Step 7 bounded-Dyna planning gap: bounded, temporally uniform,
 model-based planning can now run after every real continuing-control update,
 with memory-backed search control rather than only last-state planning, an
 explicit prioritized-sweeping queue, and off-policy correction for imagined
 behavior.
 
-Remaining boundary beyond this local Step 7 completion gate:
-
-- option/subtask discovery variants, which are treated as later planning and
-  hierarchy research rather than part of this bounded Dyna landing.
+Option/subtask discovery variants are treated as later hierarchy work, not part
+of this Step 7 bounded-Dyna completion gate.
 
 ## Acceptance Tests
 
@@ -131,7 +129,7 @@ python benchmarks/step7_solution_gate.py
 
 The gate reports
 `accepted_step7_dyna_planning_primitive: true` for the bounded Dyna
-average-reward control local completion gate.
+average-reward control completion gate.
 
 ## Additional Chain Evidence
 

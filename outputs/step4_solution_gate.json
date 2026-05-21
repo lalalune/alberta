@@ -25,6 +25,30 @@
       "passed": true,
       "path": "outputs/bsuite/step4_ac_paths_seed0/report.md"
     },
+    "nlhac_gradclip_probe_3seed": {
+      "boundary": "3-seed pilot — nlhac_gradclip beats autostep on CartPole (2/3) but not catch (1/3)",
+      "nlhac_gradclip_overall_improvement": 12.5,
+      "nlhac_gradclip_overall_wins": 3,
+      "n_seeds": 3,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_3seed_500/report.md"
+    },
+    "nlhac_gradclip_probe_10seed": {
+      "boundary": "nlhac_gradclip beats autostep Q-learning on 12/20 pairs (60%) but SARSA wins 16/20 (80%); CartPole d≈0.10, catch d≈0.26 — below d>0.5 promotion threshold",
+      "nlhac_gradclip_overall_wins": 12,
+      "nlhac_gradclip_overall_improvement": 4.3,
+      "nlhac_gradclip_cartpole_wins": 7,
+      "nlhac_gradclip_cartpole_improvement": 6.4,
+      "nlhac_gradclip_catch_wins": 5,
+      "nlhac_gradclip_catch_improvement": 2.2,
+      "sarsa_overall_wins": 16,
+      "sarsa_overall_improvement": 14.45,
+      "n_seeds": 10,
+      "actor_gradient_clip_norm": 1.0,
+      "actor_td_error_clip": 1.0,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_10seed_500/report.md"
+    },
     "q_sarsa_actor_critic_report": {
       "boundary": "actor-critic is implemented and evidenced but underperforms the canonical Q/SARSA baselines in this report",
       "overall": {

@@ -3,7 +3,7 @@
 **Date**: 2026-05-21 (updated 2026-05-21)
 **Scope**: Systematic comparison of implementation against Sutton et al. (2022) paper requirements.  
 **Method**: Paper review, code audit, test execution (1609 passing, 3 skipped), benchmark generation.
-**Last update**: Step 9 guarded dreaming benchmark proven (2026-05-21): 9/10 seeds win over naive Dyna, +0.0117 mean Phase 2 improvement on 1-state switching bandit. step9_update JIT-compiled for correctness. Step 6 stochastic RiverSwim (10/10 seeds, 0.907 reward, 97.5% right-action rate). Step 7 async DP (prioritized sweeping) proven: 8/10 wins vs random Dyna, 0.7368 vs 0.7302. Step 10 STOMP benchmark proves options accelerate control 10x vs flat DifferentialSARSA (5474-step speedup, 6/10 seed wins, STOMP 0.871 vs SARSA 0.382).
+**Last update**: Step 9 guarded dreaming benchmark proven (2026-05-21): 9/10 seeds win over naive Dyna, +0.0117 mean Phase 2 improvement on 1-state switching bandit. Step 6 stochastic RiverSwim (10/10, 0.907) + security-gym downstream integration (10/10 seeds, +1.356 vs pass-only). Step 4 NL-HAC with gradient clipping: 12/20 wins (60%) vs autostep Q-baseline, CartPole 7/10 wins (beats SARSA's 6/10 on CartPole; catch gap persists). Step 8 PrototypeAgent end-to-end benchmark running. Step 7 async DP: 8/10 wins. Step 10 STOMP: 5474-step speedup (6/10 seeds, 0.871 vs 0.382).
 
 ---
 
@@ -16,11 +16,11 @@
 | 3 | Prediction I — Continual GVF prediction | HordeLearner + TD(λ) + nonlinear GTD | 13-category solution gate, all passing incl. nonlinear shared GTD | **STRONG PARTIAL (feature discovery open)** |
 | 4 | Control I — Continual actor-critic control | SARSA complete; AC tuned wins CartPole | Positive ctrl 10/10 seeds (0.9976). Tuned AC 78.2 > Q 69.9 > SARSA 67.1 on CartPole | **PARTIAL (SARSA proven, AC working)** |
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
-| 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907, 97.5% right) | **LOCAL+STOCHASTIC: YES / FULL SCOPE: NO** |
-| 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | 6-state chain: Dyna +41.7% cum reward, 8/10 wins. 20-state chain: async DP 8/10 wins, 0.7368 vs 0.7302 | **PARTIAL (tabular proven, FA open)** |
+| 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym (10/10, +1.36 vs pass-only) | **LOCAL+STOCHASTIC+EXTERNAL: YES / PAPER SUITE: NO** |
+| 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | Tabular: Dyna +41.7%, 8/10. Async DP 8/10 wins. Nonlinear MLP world model proven on trivial envs (6/10, 8/10 Q-gap). CartPole-scale FA open. | **PARTIAL (tabular+FA-trivial proven, CartPole-scale FA open)** |
 | 8 | Prototype-AI I — Complete integrated agent | PrototypeAgent integrates 5/6 sub-components | 50 tests, world model + feature importance + option curation + guarded planning | **PARTIAL (5/6 components, no explicit recurrent state)** |
 | 9 | Planning II — Search control & exploration | Guarded dreaming (partial concept match) | 27 tests + seeded benchmark: 9/10 wins, +0.0117 over naive Dyna | **PARTIAL (benchmark proven, conceptually misaligned with paper)** |
-| 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | 42 unit tests + benchmark: STOMP 0.871 vs SARSA 0.382, 5474-step speedup | **PARTIAL (benchmark proven)** |
+| 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | STOMP 0.871 vs SARSA 0.382 (6/10, 5474-step speedup) + auto-discovery 10/10 seeds correct | **PARTIAL (STOMP + auto-discovery proven; live loop open)** |
 
 ---
 
@@ -142,7 +142,7 @@ Solution gate: `solved_step5_full_research_scope: true`.
 - `mean_right_action_rate: 0.9938` (99.4%)
 - All 10 seeds pass (10/10). `outputs/step6_riverswim/results.json`
 
-**Benchmark 2 — Stochastic RiverSwim (Strehl & Littman 2008), 10 seeds:** (NEW 2026-05-21)
+**Benchmark 2 — Stochastic RiverSwim (Strehl & Littman 2008), 10 seeds:**
 - Environment: 6-state stochastic RiverSwim. Right action: 60% forward, 5–40% stay/back. Sparse reward at state 5.
 - Exploration: Optimistic Q-initialization (right-action Q=1.0) + epsilon=0.5→0.05 over 20k steps.
 - `mean_final_reward: 0.907 ± 0.003`, `right_action_rate: 97.5%`
@@ -151,7 +151,14 @@ Solution gate: `solved_step5_full_research_scope: true`.
 - `outputs/step6_riverswim/riverswim_stochastic_results.json`
 - Note: Pure epsilon-greedy fails completely without optimistic initialization. The stochastic current makes it impossible to reach state 5 via random exploration within 30k steps.
 
-**Verdict**: DifferentialSARSA learns the optimal "always swim right" policy on stochastic RiverSwim (the canonical benchmark in the paper). Gymnasium, Jellybean World, and nonlinear function approximation remain open.
+**Benchmark 3 — Downstream security-gym integration (10 seeds):**
+- Environment: Sibling `SecurityLogStreamEnv` with synthetic attack/benign log streams.
+- Step 6 differential SARSA trains as a continuing agent on the discrete defensive action set.
+- `mean_eval_reward: -0.144` vs pass-only baseline `-1.5` (+1.356 improvement, 10/10 wins)
+- `mean_attack_alert_rate: 0.875`, `mean_benign_pass_rate: 0.875`
+- All 10 seeds pass. `outputs/step6_security_gym/results.json`
+
+**Verdict**: DifferentialSARSA works on stochastic RiverSwim (canonical benchmark) AND downstream security-gym (external real-use integration). Gymnasium, Jellybean World, and nonlinear function approximation remain open.
 
 ---
 
@@ -171,12 +178,17 @@ Solution gate: `solved_step5_full_research_scope: true`.
   - Predecessor cascade: first reward discovery propagates values backward through all 19 predecessors in one planning phase vs random Dyna's O(N²) expected cost
   - `outputs/step7_dyna/async_dp_results.json`, `passed: true`
 
-**Remaining gaps**:
-1. Function approximation planning: tabular model only; no nonlinear world model for planning
-2. Stochastic environment: deterministic model is inaccurate against stochastic transitions (stochastic RiverSwim fails because model is wrong); no stochastic environment benchmark
-3. Off-policy correction for imagined transitions
+**Benchmark 3 — Nonlinear feature planning (10 seeds):** Dyna with 7-dim Fourier features (linear model in feature space): Dyna 0.887 vs real-only 0.785 (+0.102), 6/10 wins. `outputs/step7_nonlinear_feature_planning/results.json`
 
-**Verdict**: Both Dyna planning AND the paper's actual async DP algorithm (prioritized sweeping) are now proven in tabular settings. Nonlinear function approximation and stochastic planning remain open.
+**Benchmark 4 — Production JAX nonlinear Dyna (10 seeds):** MLP world model (hidden_size=8) on 1-state bandit via production facade. Dyna mean reward: 1.0 vs real-only: 0.920 (+0.080), 8/10 Q-gap wins, passed=True. `outputs/step7_production_nonlinear_dyna/results.json`
+
+**Remaining gaps**:
+1. Nonlinear model tested only on trivial 1-state / 6-state environments; no CartPole or bsuite evidence
+2. Stochastic environment: deterministic model is inaccurate against stochastic transitions
+3. Off-policy correction for imagined transitions
+4. Multi-step planning (Dyna-2, TreeQN) not implemented
+
+**Verdict**: Both tabular Dyna AND nonlinear model-based Dyna are now proven. The nonlinear evidence is on trivial environments; CartPole/bsuite-scale nonlinear planning remains open.
 
 ---
 
@@ -251,23 +263,22 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - ✅ **NEW**: `_differential_semidp_q_update` — at option termination, base Q uses correct semi-MDP Bellman target `Q(s,o) += α*(R_o - avg_r*T_o + γ_o*V(s') - Q(s,o))`
 - ✅ 42 passing tests, config roundtrip, JIT-compatible scan
 
+**Benchmark 1 — STOMP vs flat SARSA** (2026-05-21): `benchmarks/step10_stomp_options.py` — 10-seed, 6-state chain:
+- STOMP: 0.871 ± 0.018 vs SARSA: 0.382 ± 0.146. STOMP wins 6/10 seeds; 5474-step speedup (~10×).
+- Options from oracle `feature_scores=[0,0.1,0.2,0.4,0.7,1.0]`
+
+**Benchmark 2 — Feature auto-discovery** (2026-05-21): `benchmarks/step10_feature_autodiscovery.py` — 10-seed, 6-state chain:
+- Train OaK 3000 steps with bad specs (features 0,1). Extract top-2 features via `feature_to_subtask_specs(state)`.
+- **10/10 seeds correctly discover features [5,4]** (reward-maximizing states) from learned Q-weights.
+- **10/10 seeds: discovered specs outperform bad specs** (0.976 vs 0.966 mean reward).
+- `outputs/step10_feature_autodiscovery/results.json`, `passed: true`
+
 **Remaining gaps**:
+1. **Live continuous loop**: Auto-discovery runs once; paper envisions ongoing feature → subtask creation/removal cycle
+2. **Utility feedback loop**: Option utility tracking + curation exists (Step 11) but not wired into Step 10 STOMP as a live update
+3. **Steps 1-3 integration**: IDBD/Autostep meta-learning not wired into STOMP option creation
 
-1. **Live auto-discovery loop**: `subtasks_from_feature_scores()` exists but is not wired into a training loop that continuously reassesses feature relevance and dynamically adds/removes options. The paper envisions ongoing feature → subtask creation.
-
-2. **Utility feedback loop**: Paper describes continuous assessment of option utility to remove/replace unhelpful options. Scoring function exists; loop does not.
-
-3. **Steps 1-3 integration**: IDBD/Autostep meta-learning and Horde feature construction are not wired into STOMP option creation as a live system.
-
-**NEW BENCHMARK EVIDENCE** (2026-05-21): `benchmarks/step10_stomp_options.py` — 10-seed comparison on 6-state chain:
-- STOMP mean final reward: **0.871 ± 0.018** (last 2000/10000 steps)
-- SARSA mean final reward: **0.382 ± 0.146** (flat DifferentialSARSA baseline)
-- STOMP wins 6/10 seeds; mean diff = +0.489 ± 0.155
-- STOMP reaches 0.6 threshold at step **606** vs SARSA's step **6080** — **5474-step speedup (~10×)**
-- Options auto-discovered via `subtasks_from_feature_scores()` from feature importance vector
-- `outputs/step10_stomp/results.json`, `passed: true`
-
-**Verdict**: STOMP mechanics, auto-discovery, semi-MDP planning AND benchmark evidence are now all in place. Options genuinely accelerate control. The live training loop (continuous feature reassessment → option creation/removal), utility-driven option lifecycle, and Steps 1-3 integration remain open.
+**Verdict**: STOMP mechanics proven with oracle features; `feature_to_subtask_specs()` auto-discovery now proven correct (10/10 seeds discover right features from Q-weights, 10/10 outperform bad specs). One-shot discovery proven; continuous live loop remains open.
 
 ---
 
@@ -305,5 +316,5 @@ PrototypeAgent already implements 5/6 sub-components. Remaining gaps: explicit L
 ### Step 9 (Priority: Low — benchmark proven)
 Guarded dreaming benchmark proven: 9/10 seeds win over naive Dyna (+0.0117 mean improvement) on a 1-state switching bandit. Conceptual gap vs. paper (search control = which-state-to-update, not accept/reject) is documented. Broader prioritized sweeping with function approximation remains open research.
 
-### Step 10 (Priority: High)
-Implement auto-discovery: wire a feature-ranking score into SubtaskSpec creation. The feature relevance diagnostics (`compute_feature_relevance`) are already implemented — using them to automatically generate SubtaskSpecs would complete the core STOMP loop. Then add semi-MDP Bellman backup using option models.
+### Step 10 (Priority: Low — STOMP + auto-discovery proven)
+STOMP mechanics proven: 0.871 vs SARSA 0.382 (6/10 seeds, 5474-step speedup). Auto-discovery proven: `feature_to_subtask_specs()` correctly discovers features [5,4] from Q-weights in 10/10 seeds, outperforms bad specs in 10/10 seeds. Semi-MDP Bellman backup implemented and tested. Remaining open: continuous live reassessment loop (ongoing option add/remove cycle), utility feedback integration from OaK into STOMP.

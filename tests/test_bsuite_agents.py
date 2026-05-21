@@ -448,6 +448,39 @@ class TestAgentFactories:
 
         assert agent._agent.actor_optimizer.to_config()["initial_step_size"] == 0.07
 
+    def test_nlhac_actor_gradient_clip_norm_passes_to_core_config(self) -> None:
+        """NLHAC adapter exposes the core actor gradient clipping hook."""
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_gradient_clip_norm=0.5,
+        )
+
+        assert agent._agent.config.actor_gradient_clip_norm == 0.5
+
+    def test_nlqhorde_ac_creates_agent(self) -> None:
+        """Nonlinear Q-Horde AC factory creates an action-value critic agent."""
+        from benchmarks.bsuite.agents import nlqhorde_ac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlqhorde_ac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_gradient_clip_norm=0.5,
+        )
+
+        assert agent._agent.config.n_actions == 3
+        assert agent._agent.config.actor_gradient_clip_norm == 0.5
+
 
 # ---------------------------------------------------------------------------
 # Integration: smoke test with ContinuingWrapper

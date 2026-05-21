@@ -318,6 +318,50 @@ Findings:
   (`cartpole=-3.66667`, `catch=-8.0`). Clipping reduced neither the catch
   regret gap nor the overall promotion gap, so this remains diagnostic
   negative evidence rather than Step 4 closure.
+- A narrower actor-gradient clipping hook was then added to
+  `NonlinearHordeActorCriticConfig` as `actor_gradient_clip_norm`, clipping
+  the policy-gradient tree before actor trace accumulation and Autostep
+  meta-updates. The `nlhac_gradclip` config uses this hook with
+  `actor_td_error_clip=1.0` and `actor_gradient_clip_norm=1.0`.
+- The 10-seed, 500-step probe
+  `outputs/bsuite/nlhac_gradclip_10seed_500/report.md` is the first NLHAC
+  evidence that beats the Q baseline on both tasks: `+4.3` overall,
+  `cartpole=+6.4`, `catch=+2.2` vs `autostep_bottleneck`.
+- The 10-seed, 1000-step probe
+  `outputs/bsuite/nlhac_gradclip_10seed_1000/report.md` stayed positive vs Q:
+  `+3.4` overall, `cartpole=+4.2`, `catch=+2.6`. SARSA remained stronger on
+  overall and catch in both probes, so the actor-critic promotion boundary is
+  narrowed to "beats Q locally, does not yet beat SARSA."
+- A combined TD-error-clip + gradient-norm-clip follow-up on 2026-05-21
+  (`actor_td_error_clip=1.0`, `actor_gradient_clip_norm=1.0`) showed
+  meaningful improvement on CartPole. The 3-seed pilot
+  (`outputs/bsuite/nlhac_gradclip_3seed_500/report.md`) recorded
+  `nlhac_gradclip=+12.5` overall vs `autostep_bottleneck` (2/3 cartpole,
+  1/3 catch). The **10-seed confirmation**
+  (`outputs/bsuite/nlhac_gradclip_10seed_500/report.md`) recorded:
+
+  | Scope | nlhac_gradclip wins | nlhac_gradclip mean Δ | sarsa wins | sarsa mean Δ |
+  |---|---:|---:|---:|---:|
+  | CartPole | **7/10** | **+6.4** | 6/10 | +17.1 |
+  | Catch | 5/10 | +2.2 | **10/10** | **+11.8** |
+  | Overall | **12/20 (60%)** | **+4.3** | 16/20 (80%) | +14.45 |
+
+  NL-HAC with gradient clipping now beats the Q-learning baseline on a
+  majority of pairs (60%). It actually wins on CartPole at a higher rate
+  than SARSA (7/10 vs 6/10), though with lower mean improvement due to
+  high seed variance. The 50-dimensional catch gap persists (5/10 vs SARSA
+  10/10), consistent with a remaining short-horizon actor-critic
+  sample-efficiency gap on high-dimensional observations. Cohen's d
+  for nlhac_gradclip vs autostep: CartPole d ≈ 0.10, catch d ≈ 0.26 (both
+  below the d > 0.5 promotion threshold due to high variance).
+- A 5-seed catch/0 variant search at 1000 steps
+  (`outputs/bsuite/nlhac_gradclip_variant_catch5_1000/report.md`) tested
+  actor step-size `0.03`, actor trace decay `0.0`, temperature `0.3`,
+  gradient clip norm `0.5`, and critic trace decay `0.8`. None beat SARSA.
+  The best variant by mean catch improvement vs Q was `nlhac_gradclip_t03`
+  at `+1.6`, below SARSA's `+6.0`; base `nlhac_gradclip` regressed to
+  `-4.0` on this 5-seed slice. This rules out simple retuning around the
+  gradient-clip hook as a Step 4 closure path.
 
 ### Verdict
 
@@ -325,7 +369,8 @@ Findings:
 (replacing `actor_critic` and `horde_ac`). The MLP actor verifies the
 structural hypothesis and sets up the Autostep-for-actor work that would
 close the remaining regret gap. SARSA remains the dominant short-horizon control
-baseline; actor-critic is research-track pending actor step-size adaptation.
+baseline; actor-critic is research-track pending SARSA promotion and external
+daemon deployment evidence.
 
 ## Local Completion Boundary
 

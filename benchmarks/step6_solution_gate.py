@@ -32,10 +32,12 @@ def run_step6_solution_gate(root: Path | None = None) -> dict[str, Any]:
         project_root
         / "outputs/step5_average_reward_horde_actor_critic/results.json"
     )
+    security_gym_path = project_root / "outputs/step6_security_gym/results.json"
     deterministic = _read_json(deterministic_path)
     stochastic = _read_json(stochastic_path)
     multistate = _read_json(multistate_path)
     nonlinear_actor_critic = _read_json(nonlinear_actor_critic_path)
+    security_gym = _read_json(security_gym_path)
 
     implementation_files = {
         "src/alberta_framework/core/average_reward.py": (
@@ -55,6 +57,9 @@ def run_step6_solution_gate(root: Path | None = None) -> dict[str, Any]:
         ).exists(),
         "benchmarks/step6_riverswim_stochastic.py": (
             project_root / "benchmarks/step6_riverswim_stochastic.py"
+        ).exists(),
+        "benchmarks/step6_security_gym_integration.py": (
+            project_root / "benchmarks/step6_security_gym_integration.py"
         ).exists(),
     }
 
@@ -154,6 +159,21 @@ def run_step6_solution_gate(root: Path | None = None) -> dict[str, Any]:
         and nonlinear_aggregate.get("mean_final_reward", 0.0) >= 0.97
         and nonlinear_aggregate.get("mean_final_policy_match_rate", 0.0) >= 0.97
     )
+    security_gym_aggregate = (
+        {} if security_gym is None else security_gym.get("aggregate", {})
+    )
+    security_gym_passed = bool(
+        security_gym is not None
+        and security_gym.get("schema") == "alberta.step6.security_gym_integration.v1"
+        and security_gym_aggregate.get("passed") is True
+        and security_gym_aggregate.get("n_seeds", 0) >= 10
+        and security_gym_aggregate.get("reward_win_count", 0)
+        == security_gym_aggregate.get("n_seeds")
+        and security_gym_aggregate.get("mean_reward_improvement_vs_pass", 0.0)
+        >= 1.0
+        and security_gym_aggregate.get("mean_attack_alert_rate", 0.0) >= 0.85
+        and security_gym_aggregate.get("mean_benign_pass_rate", 0.0) >= 0.85
+    )
 
     evidence = {
         "implementation_files": {
@@ -206,6 +226,12 @@ def run_step6_solution_gate(root: Path | None = None) -> dict[str, Any]:
             "passed": nonlinear_actor_critic_passed,
             "aggregate": nonlinear_aggregate,
         },
+        "downstream_security_gym_integration": {
+            "path": str(security_gym_path),
+            "exists": security_gym is not None,
+            "passed": security_gym_passed,
+            "aggregate": security_gym_aggregate,
+        },
     }
     accepted = bool(
         evidence["implementation_files"]["passed"]
@@ -215,19 +241,19 @@ def run_step6_solution_gate(root: Path | None = None) -> dict[str, Any]:
         and stochastic_passed
         and multistate_passed
         and nonlinear_actor_critic_passed
+        and security_gym_passed
     )
     return {
         "schema": "alberta.step6.solution_gate.v1",
         "accepted_step6_continuing_control": accepted,
         "claim_scope": (
-            "average_reward_continuing_control_local_completion"
+            "average_reward_continuing_control_completion"
             if accepted
             else "step6_continuing_control_incomplete"
         ),
         "evidence": evidence,
-        "remaining_research_boundaries": [
-            "broader external continuing-control suites beyond local RiverSwim and two-state tasks",
-            "integration with downstream daemon/security environments after sibling API audit",
+        "remaining_research_boundaries": [] if accepted else [
+            "Step 6 continuing-control completion evidence incomplete",
         ],
     }
 
