@@ -15,7 +15,7 @@ from alberta_framework.core.horde_actor_critic import (
     HordeActorCriticConfig,
     run_horde_actor_critic_from_arrays,
 )
-from alberta_framework.core.optimizers import ObGDBounding
+from alberta_framework.core.optimizers import Autostep, ObGDBounding
 from alberta_framework.core.types import (
     DemonType,
     GVFSpec,
@@ -118,7 +118,12 @@ def test_horde_actor_critic_auxiliary_prediction_demon_updates() -> None:
 def test_horde_actor_critic_config_roundtrip_and_exports() -> None:
     base_agent = _make_agent(n_demons=2)
     agent = HordeActorCriticAgent(
-        base_agent.config,
+        HordeActorCriticConfig.from_config(
+            {
+                **base_agent.config.to_config(),
+                "actor_td_error_clip": 0.75,
+            }
+        ),
         base_agent.critic,
         actor_bounder=ObGDBounding(kappa=1.5),
     )
@@ -126,6 +131,7 @@ def test_horde_actor_critic_config_roundtrip_and_exports() -> None:
     reconstructed = HordeActorCriticAgent.from_config(agent.to_config())
 
     assert reconstructed.config == agent.config
+    assert reconstructed.config.actor_td_error_clip == 0.75
     assert reconstructed.critic.n_demons == 2
     assert isinstance(reconstructed.actor_bounder, ObGDBounding)
     assert TopLevelHordeActorCriticAgent is HordeActorCriticAgent
@@ -324,7 +330,6 @@ def _make_nlhac_agent(
         n_actions=N_ACTIONS,
         hidden_sizes=hidden_sizes,
         temperature=0.5,
-        actor_step_size=0.01,
         actor_lamda=0.9,
     )
     return NonlinearHordeActorCriticAgent(cfg, critic)
@@ -380,7 +385,6 @@ class TestNonlinearHordeActorCriticConfig:
             n_actions=4,
             hidden_sizes=(64, 32),
             temperature=0.3,
-            actor_step_size=0.005,
         )
         restored = NonlinearHordeActorCriticConfig.from_config(cfg.to_config())
         assert restored.n_actions == 4
@@ -444,7 +448,6 @@ class TestNonlinearHordeActorCriticUpdate:
         )
 
     def test_actor_weights_update(self) -> None:
-        # Use larger step size to make the change detectable with non-zero obs
         critic = HordeLearner(
             create_horde_spec(
                 [GVFSpec(  # type: ignore[call-arg]
@@ -455,10 +458,10 @@ class TestNonlinearHordeActorCriticUpdate:
             hidden_sizes=(32,),
             step_size=0.03,
         )
-        cfg = NonlinearHordeActorCriticConfig(
-            n_actions=N_ACTIONS, hidden_sizes=(32,), actor_step_size=1.0
+        cfg = NonlinearHordeActorCriticConfig(n_actions=N_ACTIONS, hidden_sizes=(32,))
+        agent = NonlinearHordeActorCriticAgent(
+            cfg, critic, actor_optimizer=Autostep(initial_step_size=1.0)
         )
-        agent = NonlinearHordeActorCriticAgent(cfg, critic)
         state = agent.init(OBS_DIM, jr.key(0))
         obs = jr.normal(jr.key(42), (OBS_DIM,))
         state, _, _ = agent.start(state, obs)
@@ -468,7 +471,6 @@ class TestNonlinearHordeActorCriticUpdate:
         assert not jnp.allclose(before, after, atol=1e-6)
 
     def test_trunk_weights_update(self) -> None:
-        # Use large step size and random obs to guarantee detectable trunk change
         critic = HordeLearner(
             create_horde_spec(
                 [GVFSpec(  # type: ignore[call-arg]
@@ -479,10 +481,10 @@ class TestNonlinearHordeActorCriticUpdate:
             hidden_sizes=(32,),
             step_size=0.03,
         )
-        cfg = NonlinearHordeActorCriticConfig(
-            n_actions=N_ACTIONS, hidden_sizes=(32,), actor_step_size=1.0
+        cfg = NonlinearHordeActorCriticConfig(n_actions=N_ACTIONS, hidden_sizes=(32,))
+        agent = NonlinearHordeActorCriticAgent(
+            cfg, critic, actor_optimizer=Autostep(initial_step_size=1.0)
         )
-        agent = NonlinearHordeActorCriticAgent(cfg, critic)
         state = agent.init(OBS_DIM, jr.key(7))
         obs = jr.normal(jr.key(7), (OBS_DIM,))
         state, _, _ = agent.start(state, obs)

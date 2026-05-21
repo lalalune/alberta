@@ -49,15 +49,17 @@ def _make_nlhac_agent(
     hidden_sizes: tuple[int, ...],
     actor_hidden_sizes: tuple[int, ...],
     optimizer: Any,
+    actor_optimizer: Any,
     bounder: Any,
     normalizer: Any,
     discount: float,
     temperature: float,
-    actor_step_size: float,
     actor_lamda: float,
     critic_lamda: float,
     aux_gammas: tuple[float, ...],
     sparsity: float,
+    actor_bounder: Any,
+    actor_td_error_clip: float | None,
 ) -> NonlinearHordeActorCriticAgent:
     demons = [
         GVFSpec(
@@ -89,14 +91,16 @@ def _make_nlhac_agent(
     return NonlinearHordeActorCriticAgent(
         config=NonlinearHordeActorCriticConfig(
             n_actions=n_actions,
-            actor_step_size=actor_step_size,
             actor_lamda=actor_lamda,
             temperature=temperature,
             value_head_index=0,
             hidden_sizes=actor_hidden_sizes,
             actor_sparsity=sparsity,
+            actor_td_error_clip=actor_td_error_clip,
         ),
         critic=critic,
+        actor_optimizer=actor_optimizer,
+        actor_bounder=actor_bounder,
     )
 
 
@@ -204,14 +208,18 @@ def default_agent(
     meta_step_size: float = 0.01,
     tau: float = 10000.0,
     kappa: float = 2.0,
+    actor_kappa: float | None = None,
+    actor_initial_step_size: float = 0.01,
+    actor_meta_step_size: float = 0.01,
+    actor_tau: float = 10000.0,
     normalizer_decay: float = 0.99,
     discount: float = 0.99,
     temperature: float = 0.5,
-    actor_step_size: float = 0.01,
     actor_lamda: float = 0.9,
     critic_lamda: float = 0.0,
     aux_gammas: tuple[float, ...] = DEFAULT_AUX_GAMMAS,
     sparsity: float = 0.0,
+    actor_td_error_clip: float | None = None,
     seed: int = 0,
     **_: Any,
 ) -> BSuiteNLHACAgent:
@@ -228,21 +236,29 @@ def default_agent(
     else:
         raise ValueError("optimizer_name must be 'autostep' or 'lms'")
 
+    actor_optimizer = Autostep(
+        initial_step_size=actor_initial_step_size,
+        meta_step_size=actor_meta_step_size,
+        tau=actor_tau,
+    )
     bounder = ObGDBounding(kappa=kappa)
+    actor_bounder = bounder if actor_kappa is None else ObGDBounding(kappa=actor_kappa)
     normalizer = EMANormalizer(decay=normalizer_decay)
     agent = _make_nlhac_agent(
         n_actions=action_spec.num_values,
         hidden_sizes=hidden_sizes,
         actor_hidden_sizes=actor_hidden_sizes,
         optimizer=optimizer,
+        actor_optimizer=actor_optimizer,
         bounder=bounder,
         normalizer=normalizer,
         discount=discount,
         temperature=temperature,
-        actor_step_size=actor_step_size,
         actor_lamda=actor_lamda,
         critic_lamda=critic_lamda,
         aux_gammas=aux_gammas,
         sparsity=sparsity,
+        actor_bounder=actor_bounder,
+        actor_td_error_clip=actor_td_error_clip,
     )
     return BSuiteNLHACAgent(obs_spec, action_spec, agent, seed=seed)

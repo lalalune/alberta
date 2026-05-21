@@ -22,8 +22,13 @@ from jaxtyping import Float, Int
 from alberta_framework.core.horde import HordeLearner, HordeUpdateResult
 from alberta_framework.core.initializers import sparse_init
 from alberta_framework.core.multi_head_learner import MultiHeadMLPLearner, MultiHeadMLPState
-from alberta_framework.core.optimizers import Bounder, bounder_from_config
-from alberta_framework.core.types import DemonType, MLPParams
+from alberta_framework.core.optimizers import (
+    Autostep,
+    Bounder,
+    bounder_from_config,
+    optimizer_from_config,
+)
+from alberta_framework.core.types import AutostepParamState, DemonType, MLPParams
 
 
 @dataclasses.dataclass(frozen=True)
@@ -36,6 +41,9 @@ class HordeActorCriticConfig:
         actor_lamda: Eligibility trace decay for the actor.
         temperature: Softmax temperature.
         value_head_index: Horde head used as the scalar critic.
+        actor_td_error_clip: Optional absolute clip applied only to the actor's
+            policy-gradient TD error. The critic still receives the unclipped
+            TD target/error.
     """
 
     n_actions: int
@@ -43,6 +51,7 @@ class HordeActorCriticConfig:
     actor_lamda: float = 0.9
     temperature: float = 1.0
     value_head_index: int = 0
+    actor_td_error_clip: float | None = None
 
     def to_config(self) -> dict[str, Any]:
         """Serialize this configuration to a dictionary."""
@@ -136,6 +145,8 @@ class HordeActorCriticAgent:
             raise ValueError("n_actions must be positive")
         if config.temperature <= 0:
             raise ValueError("temperature must be positive")
+        if config.actor_td_error_clip is not None and config.actor_td_error_clip <= 0:
+            raise ValueError("actor_td_error_clip must be positive when provided")
         if not 0 <= config.value_head_index < critic.n_demons:
             raise ValueError("value_head_index must reference an existing demon")
         value_demon = critic.horde_spec.demons[config.value_head_index]
@@ -334,6 +345,11 @@ class HordeActorCriticAgent:
                 discounts,
             )
         td_error = critic_result.td_errors[cfg.value_head_index]
+        actor_td_error = (
+            td_error
+            if cfg.actor_td_error_clip is None
+            else jnp.clip(td_error, -cfg.actor_td_error_clip, cfg.actor_td_error_clip)
+        )
 
         one_hot = jax.nn.one_hot(state.last_action, cfg.n_actions, dtype=jnp.float32)
         actor_grad_bias = (one_hot - old_policy) / cfg.temperature
@@ -342,14 +358,14 @@ class HordeActorCriticAgent:
         actor_trace_weights = actor_decay * state.actor_trace_weights + actor_grad_weights
         actor_trace_bias = actor_decay * state.actor_trace_bias + actor_grad_bias
         actor_steps: tuple[Array, ...] = (
-            cfg.actor_step_size * td_error * actor_trace_weights,
-            cfg.actor_step_size * td_error * actor_trace_bias,
+            cfg.actor_step_size * actor_td_error * actor_trace_weights,
+            cfg.actor_step_size * actor_td_error * actor_trace_bias,
         )
         bound_metric = jnp.array(1.0, dtype=jnp.float32)
         if self._actor_bounder is not None:
             actor_steps, bound_metric = self._actor_bounder.bound(
                 actor_steps,
-                td_error,
+                actor_td_error,
                 (state.actor_weights, state.actor_bias),
             )
         carry_traces = value_discount != 0.0
@@ -508,7 +524,6 @@ class NonlinearHordeActorCriticConfig:
 
     Attributes:
         n_actions: Number of discrete actions.
-        actor_step_size: Policy-gradient step-size.
         actor_lamda: Eligibility-trace decay for the actor.
         temperature: Softmax temperature (lower = more greedy).
         value_head_index: Horde head used as the scalar critic.
@@ -516,10 +531,11 @@ class NonlinearHordeActorCriticConfig:
         actor_sparsity: Sparse-init fraction for actor weights.
         leaky_relu_slope: LeakyReLU negative slope.
         use_layer_norm: Whether to apply parameterless layer norm.
+        actor_td_error_clip: Optional absolute clip applied only to the actor's
+            policy-gradient TD error.
     """
 
     n_actions: int
-    actor_step_size: float = 0.01
     actor_lamda: float = 0.9
     temperature: float = 0.5
     value_head_index: int = 0
@@ -527,6 +543,7 @@ class NonlinearHordeActorCriticConfig:
     actor_sparsity: float = 0.9
     leaky_relu_slope: float = 0.01
     use_layer_norm: bool = True
+    actor_td_error_clip: float | None = None
 
     def to_config(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
@@ -553,6 +570,9 @@ class NonlinearHordeActorCriticState:
         actor_trunk_traces: Interleaved trace arrays ``(w0_tr, b0_tr, …)``.
         actor_head_trace_w: Trace for ``actor_head_w``.
         actor_head_trace_b: Trace for ``actor_head_b``.
+        actor_trunk_opt_states: Interleaved Autostep states ``(w0_opt, b0_opt, …)``.
+        actor_head_opt_w: Optimizer state for ``actor_head_w``.
+        actor_head_opt_b: Optimizer state for ``actor_head_b``.
         critic_state: Underlying Horde learner state.
         last_observation: Previous observation for the next update call.
         last_action: Previous action index.
@@ -566,6 +586,9 @@ class NonlinearHordeActorCriticState:
     actor_trunk_traces: tuple[Array, ...]
     actor_head_trace_w: Float[Array, "n_actions h_last"]
     actor_head_trace_b: Float[Array, " n_actions"]
+    actor_trunk_opt_states: tuple[AutostepParamState, ...]
+    actor_head_opt_w: AutostepParamState
+    actor_head_opt_b: AutostepParamState
     critic_state: MultiHeadMLPState
     last_observation: Float[Array, " feature_dim"]
     last_action: Int[Array, ""]
@@ -583,6 +606,7 @@ class NonlinearHordeActorCriticUpdateResult:
     value: Float[Array, ""]
     next_value: Float[Array, ""]
     td_error: Float[Array, ""]
+    bound_metric: Float[Array, ""]
     critic_result: HordeUpdateResult
 
 
@@ -622,11 +646,15 @@ class NonlinearHordeActorCriticAgent:
         self,
         config: NonlinearHordeActorCriticConfig,
         critic: HordeLearner,
+        actor_optimizer: Autostep | None = None,
+        actor_bounder: Bounder | None = None,
     ) -> None:
         if config.n_actions <= 0:
             raise ValueError("n_actions must be positive")
         if config.temperature <= 0:
             raise ValueError("temperature must be positive")
+        if config.actor_td_error_clip is not None and config.actor_td_error_clip <= 0:
+            raise ValueError("actor_td_error_clip must be positive when provided")
         if not 0 <= config.value_head_index < critic.n_demons:
             raise ValueError(
                 f"value_head_index {config.value_head_index} out of range "
@@ -637,6 +665,10 @@ class NonlinearHordeActorCriticAgent:
             raise ValueError("value critic head must be a prediction GVF")
         self._config = config
         self._critic = critic
+        self._actor_optimizer = (
+            actor_optimizer if actor_optimizer is not None else Autostep(initial_step_size=0.01)
+        )
+        self._actor_bounder = actor_bounder
 
     @property
     def config(self) -> NonlinearHordeActorCriticConfig:
@@ -648,12 +680,28 @@ class NonlinearHordeActorCriticAgent:
         """Underlying Horde critic."""
         return self._critic
 
+    @property
+    def actor_optimizer(self) -> Autostep:
+        """Per-weight actor optimizer."""
+        return self._actor_optimizer
+
+    @property
+    def actor_bounder(self) -> Bounder | None:
+        """Optional actor update bounder."""
+        return self._actor_bounder
+
     def to_config(self) -> dict[str, Any]:
         """Serialize this agent."""
         return {
             "type": "NonlinearHordeActorCriticAgent",
             "config": self._config.to_config(),
             "critic": self._critic.to_config(),
+            "actor_optimizer": self._actor_optimizer.to_config(),
+            "actor_bounder": (
+                self._actor_bounder.to_config()
+                if self._actor_bounder is not None
+                else None
+            ),
         }
 
     @classmethod
@@ -661,9 +709,16 @@ class NonlinearHordeActorCriticAgent:
         """Reconstruct from :meth:`to_config` output."""
         cfg = dict(cfg)
         cfg.pop("type", None)
+        actor_opt: Autostep | None = None
+        if cfg.get("actor_optimizer"):
+            actor_opt = cast(Autostep, optimizer_from_config(cfg["actor_optimizer"]))
         return cls(
             config=NonlinearHordeActorCriticConfig.from_config(cfg["config"]),
             critic=HordeLearner.from_config(cfg["critic"]),
+            actor_optimizer=actor_opt,
+            actor_bounder=bounder_from_config(cfg["actor_bounder"])
+            if cfg.get("actor_bounder")
+            else None,
         )
 
     def init(self, feature_dim: int, key: Array) -> NonlinearHordeActorCriticState:
@@ -681,6 +736,7 @@ class NonlinearHordeActorCriticAgent:
         trunk_weights: list[Array] = []
         trunk_biases: list[Array] = []
         trunk_traces: list[Array] = []
+        trunk_opt_states: list[AutostepParamState] = []
 
         in_dim = feature_dim
         for h in cfg.hidden_sizes:
@@ -690,6 +746,8 @@ class NonlinearHordeActorCriticAgent:
             trunk_weights.append(w)
             trunk_biases.append(b)
             trunk_traces.extend([jnp.zeros_like(w), jnp.zeros_like(b)])
+            trunk_opt_states.append(self._actor_optimizer.init_for_shape(w.shape))
+            trunk_opt_states.append(self._actor_optimizer.init_for_shape(b.shape))
             in_dim = h
 
         subkey, actor_key = jr.split(actor_key)
@@ -705,6 +763,9 @@ class NonlinearHordeActorCriticAgent:
             actor_trunk_traces=tuple(trunk_traces),
             actor_head_trace_w=jnp.zeros_like(actor_head_w),
             actor_head_trace_b=jnp.zeros_like(actor_head_b),
+            actor_trunk_opt_states=tuple(trunk_opt_states),
+            actor_head_opt_w=self._actor_optimizer.init_for_shape(actor_head_w.shape),
+            actor_head_opt_b=self._actor_optimizer.init_for_shape(actor_head_b.shape),
             critic_state=self._critic.init(feature_dim, critic_key),
             last_observation=jnp.zeros((feature_dim,), dtype=jnp.float32),
             last_action=jnp.array(-1, dtype=jnp.int32),
@@ -826,6 +887,11 @@ class NonlinearHordeActorCriticAgent:
                 state.critic_state, prev_obs, cumulants, observation, discounts
             )
         td_error = critic_result.td_errors[idx]
+        actor_td_error = (
+            td_error
+            if cfg.actor_td_error_clip is None
+            else jnp.clip(td_error, -cfg.actor_td_error_clip, cfg.actor_td_error_clip)
+        )
 
         # Policy gradient via jax.grad through the full MLP forward pass
         actor_params = (
@@ -857,16 +923,64 @@ class NonlinearHordeActorCriticAgent:
         new_head_trace_w = actor_decay * state.actor_head_trace_w + grad_head_w
         new_head_trace_b = actor_decay * state.actor_head_trace_b + grad_head_b
 
+        # Per-weight Autostep updates: step = alpha_i * z_i; caller applies error * step
+        new_trunk_opt_states: list[AutostepParamState] = []
+        trunk_w_steps: list[Array] = []
+        trunk_b_steps: list[Array] = []
+        for i in range(n_hidden):
+            raw_w, new_opt_w = self._actor_optimizer.update_from_gradient(
+                state.actor_trunk_opt_states[2 * i], new_trunk_traces[2 * i], error=actor_td_error
+            )
+            raw_b, new_opt_b = self._actor_optimizer.update_from_gradient(
+                state.actor_trunk_opt_states[2 * i + 1],
+                new_trunk_traces[2 * i + 1],
+                error=actor_td_error,
+            )
+            new_trunk_opt_states.extend([new_opt_w, new_opt_b])
+            trunk_w_steps.append(actor_td_error * raw_w)
+            trunk_b_steps.append(actor_td_error * raw_b)
+
+        raw_head_w, new_head_opt_w = self._actor_optimizer.update_from_gradient(
+            state.actor_head_opt_w, new_head_trace_w, error=actor_td_error
+        )
+        raw_head_b, new_head_opt_b = self._actor_optimizer.update_from_gradient(
+            state.actor_head_opt_b, new_head_trace_b, error=actor_td_error
+        )
+        head_w_step = actor_td_error * raw_head_w
+        head_b_step = actor_td_error * raw_head_b
+
+        bound_metric = jnp.array(1.0, dtype=jnp.float32)
+        if self._actor_bounder is not None:
+            flat_steps = (
+                *trunk_w_steps,
+                *trunk_b_steps,
+                head_w_step,
+                head_b_step,
+            )
+            flat_params = (
+                *state.actor_trunk.weights,
+                *state.actor_trunk.biases,
+                state.actor_head_w,
+                state.actor_head_b,
+            )
+            bounded_steps, bound_metric = self._actor_bounder.bound(
+                flat_steps,
+                actor_td_error,
+                flat_params,
+            )
+            trunk_w_steps = list(bounded_steps[:n_hidden])
+            trunk_b_steps = list(bounded_steps[n_hidden : 2 * n_hidden])
+            head_w_step = bounded_steps[2 * n_hidden]
+            head_b_step = bounded_steps[2 * n_hidden + 1]
+
         new_trunk_weights = tuple(
-            w + cfg.actor_step_size * td_error * new_trunk_traces[2 * i]
-            for i, w in enumerate(state.actor_trunk.weights)
+            w + step for w, step in zip(state.actor_trunk.weights, trunk_w_steps)
         )
         new_trunk_biases = tuple(
-            b + cfg.actor_step_size * td_error * new_trunk_traces[2 * i + 1]
-            for i, b in enumerate(state.actor_trunk.biases)
+            b + step for b, step in zip(state.actor_trunk.biases, trunk_b_steps)
         )
-        new_head_w = state.actor_head_w + cfg.actor_step_size * td_error * new_head_trace_w
-        new_head_b = state.actor_head_b + cfg.actor_step_size * td_error * new_head_trace_b
+        new_head_w = state.actor_head_w + head_w_step
+        new_head_b = state.actor_head_b + head_b_step
 
         carry_traces = value_discount != 0.0
         zeroed_trunk_traces = tuple(
@@ -886,6 +1000,9 @@ class NonlinearHordeActorCriticAgent:
             actor_head_trace_b=jnp.where(
                 carry_traces, new_head_trace_b, jnp.zeros_like(new_head_trace_b)
             ),
+            actor_trunk_opt_states=tuple(new_trunk_opt_states),
+            actor_head_opt_w=new_head_opt_w,
+            actor_head_opt_b=new_head_opt_b,
             critic_state=critic_result.state,
             step_count=state.step_count + 1,
         )
@@ -902,6 +1019,7 @@ class NonlinearHordeActorCriticAgent:
             value=value,
             next_value=next_value,
             td_error=td_error,
+            bound_metric=bound_metric,
             critic_result=critic_result,
         )
 
