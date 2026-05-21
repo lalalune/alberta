@@ -204,6 +204,7 @@ def default_agent(
     actor_hidden_sizes: tuple[int, ...] = (64,),
     optimizer_name: str = "autostep",
     step_size: float = 0.03,
+    actor_step_size: float | None = None,
     initial_step_size: float = 0.01,
     meta_step_size: float = 0.01,
     tau: float = 10000.0,
@@ -224,6 +225,9 @@ def default_agent(
     **_: Any,
 ) -> BSuiteNLHACAgent:
     """Create a bsuite-compatible nonlinear Horde actor-critic agent."""
+    if actor_step_size is not None:
+        actor_initial_step_size = actor_step_size
+
     optimizer: Any
     if optimizer_name == "autostep":
         optimizer = Autostep(

@@ -8,7 +8,7 @@
     "final_window": 500,
     "environment": "deterministic_6state_chain"
   },
-  "elapsed_s": 58.229300022125244,
+  "elapsed_s": 118.57266592979431,
   "aggregate": {
     "mean_final_window_reward": 0.9938,
     "stderr_final_window_reward": 0.0013099618315050264,

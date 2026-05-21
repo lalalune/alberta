@@ -20,6 +20,7 @@ preserving the continuing / average-reward formulation.
 
 from __future__ import annotations
 
+import functools
 from dataclasses import asdict, dataclass, field
 from typing import Any, cast
 
@@ -76,6 +77,9 @@ class Step9DreamingConfig:
         dreaming_max_model_error: Maximum allowed model prediction-error EMA
             for dream acceptance.  Set high (e.g. 1e30) to disable the error
             gate.
+        model_error_decay: EMA decay for the model prediction-error tracker.
+            Smaller values (e.g. 0.9) react faster to distribution shifts at
+            the cost of higher variance.  Default 0.99 (slow, smooth).
         planning_budget: Number of dream steps per real transition.
         buffer_capacity: Number of recent real observations to retain for
             anchor sampling.
@@ -93,6 +97,7 @@ class Step9DreamingConfig:
     model_gamma: float = 0.99
     dreaming_warmup_steps: int = 100
     dreaming_max_model_error: float = 1.0
+    model_error_decay: float = 0.99
     planning_budget: int = 1
     buffer_capacity: int = 64
 
@@ -141,6 +146,7 @@ class Step9DreamingConfig:
             sparsity=self.model_sparsity,
             use_layer_norm=self.model_use_layer_norm,
             gamma=self.model_gamma,
+            error_decay=self.model_error_decay,
         )
 
 
@@ -237,6 +243,7 @@ def init_step9_state(
     )
 
 
+@functools.partial(jax.jit, static_argnums=(0, 1, 2, 3))
 def step9_update(
     config: Step9DreamingConfig,
     agent: DifferentialSARSAAgent,

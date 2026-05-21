@@ -432,6 +432,22 @@ class TestAgentFactories:
         assert agent._history_extractor is not None
         assert agent._history_extractor.feature_dim() == 40
 
+    def test_nlhac_actor_step_size_alias_controls_actor_optimizer(self) -> None:
+        """NLHAC configs use actor_step_size as the actor Autostep initializer."""
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_step_size=0.07,
+        )
+
+        assert agent._agent.actor_optimizer.to_config()["initial_step_size"] == 0.07
+
 
 # ---------------------------------------------------------------------------
 # Integration: smoke test with ContinuingWrapper
