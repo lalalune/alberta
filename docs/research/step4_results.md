@@ -287,10 +287,10 @@ Results summary (`total_regret` for catch, last-half `episode_return` for cartpo
 
 | Agent | catch/0 regret ↓ (n) | cartpole/0 return ↑ (n) |
 |---|---:|---:|
-| autostep Q | 315 ± 40 (7) | — |
+| autostep Q | 319 ± 39 (8) | — |
 | SARSA | 374 ± 77 (10) | 65 ± 41 (7) |
 | **nlhac** (MLP actor, step=0.01) | **458 ± 35 (10)** | 55 ± 34 (3) |
-| actor_critic (linear, tuned) | 478 ± 15 (10) | 72 ± 5 (5) |
+| actor_critic (linear, tuned) | 479 ± 14 (10) | 70 ± 4 (5) |
 
 Findings:
 - The MLP actor closes ~20 regret units vs the linear actor on catch/0 (458 vs
