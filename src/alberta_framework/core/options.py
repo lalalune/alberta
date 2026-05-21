@@ -23,6 +23,7 @@ References:
 from __future__ import annotations
 
 import dataclasses
+import functools
 from typing import Any, cast
 
 import chex
@@ -654,6 +655,7 @@ class STOMPAgent:
             step_count=jnp.array(0, dtype=jnp.int32),
         )
 
+    @functools.partial(jax.jit, static_argnums=(0,))
     def start(self, state: STOMPState, initial_observation: Array) -> STOMPState:
         """Prime the agent with an initial observation before the first update."""
         obs = jnp.asarray(initial_observation, dtype=jnp.float32).reshape(
@@ -676,6 +678,7 @@ class STOMPAgent:
             ),
         )
 
+    @functools.partial(jax.jit, static_argnums=(0,))
     def update(
         self,
         state: STOMPState,

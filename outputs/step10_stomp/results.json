@@ -1,0 +1,22 @@
+{
+  "schema": "alberta.step10.stomp_benchmark.v1",
+  "config": {
+    "n_seeds": 10,
+    "steps": 10000,
+    "final_window": 2000,
+    "convergence_threshold": 0.6
+  },
+  "sarsa_mean_final": 0.38225024938583374,
+  "sarsa_stderr_final": 0.14630224851740367,
+  "stomp_mean_final": 0.8709500432014465,
+  "stomp_stderr_final": 0.017923929203513374,
+  "mean_diff_stomp_minus_sarsa": 0.488699734210968,
+  "diff_stderr": 0.15499763675185507,
+  "stomp_wins": 6,
+  "n_seeds": 10,
+  "sarsa_steps_to_convergence": 6080.0,
+  "stomp_steps_to_convergence": 605.6,
+  "convergence_speedup_steps": 5474.4,
+  "wall_clock_s": 260.7555100917816,
+  "passed": true
+}

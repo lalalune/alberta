@@ -112,6 +112,7 @@ outputs/bsuite/**
 !outputs/step6_riverswim/
 !outputs/step7_chain_planning/
 !outputs/step7_dyna/
+!outputs/step10_stomp/
 results/
 logs/
 *.png
