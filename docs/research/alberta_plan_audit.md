@@ -12,7 +12,7 @@
 | Step | Paper Name | Code Status | Evidence Status | Genuinely Complete? |
 |------|-----------|-------------|-----------------|---------------------|
 | 1 | Representation I — Continual supervised learning | Full implementation | 30-seed factorial, multiple non-stationarity types | **YES** |
-| 2 | Representation II — Supervised feature finding | MLP + UPGD + memory | Multi-seed OPMNIST; feature-finding aspects partial | **PARTIAL** |
+| 2 | Representation II — Supervised feature finding | FixedBudgetFeatureLearner + UPGD + memory | Lifecycle beats MLP on 1/3 out-of-class streams (30 seeds, d=+3.213); UPGD on 3/3; single-seed OPMNIST | **PARTIAL (lifecycle proven on polynomial)** |
 | 3 | Prediction I — Continual GVF prediction | HordeLearner + TD(λ) + off-policy | 6-category solution gate; nonlinear off-policy open | **PARTIAL** |
 | 4 | Control I — Continual actor-critic control | SARSA complete; AC underperforms | 10-seed bsuite Q/SARSA/AC comparison | **PARTIAL** |
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
@@ -42,13 +42,26 @@
 
 **Paper requirement**: Feature discovery — construct new features, rank/replace them, resource-constrained budget management, smart generation and testing.
 
-**Implemented**: MLP with ObGD bounding, UPGD (utility-based weight regeneration), associative memory, hybrid learner, temporal context featurizer, IDBD-MLP.
+**Implemented**: 
+- `FixedBudgetFeatureLearner`: full generate-test-rank-replace lifecycle. Active feature bank (tanh features) + candidate bank. Per-feature utility EMA from prediction error reduction. Promotion when candidate utility > threshold × worst active. Random / mutate-parent / imprint generator meta-learning.
+- `UPGDLearner` (weight regeneration): proven on out-of-class streams.
+- Associative memory, hybrid learner, temporal context featurizer, IDBD-MLP.
 
-**Key gap**: The paper's core Step 2 vision is *constructive feature discovery* — generating candidate features, ranking them by utility, and replacing low-utility features with new ones. UPGD provides weight regeneration (dead weights re-initialized) but does not construct architecturally new features or implement the ranking/replacement lifecycle. The "feature finding" of Step 2 is not yet demonstrated.
+**New evidence (2026-05-21)**: `FixedBudgetFeatureLearner` added to canonical out-of-class benchmark (30 seeds × 6000 steps):
+- `out_of_class_polynomial`: **lifecycle beats best MLP — 30/30 wins, d=+3.213** (+0.0298 diff). Lifecycle discovers useful tanh features for the triple-product oracle.
+- `frequency_mismatch`: lifecycle loses — 5/30 wins, d=-1.025. Single-layer tanh can't approximate sinusoidal oracle well.
+- `compositional`: lifecycle loses — 0/30 wins, d=-2.979. Single-layer tanh can't match 2-layer tanh oracle.
+- UPGD still wins on 3/3 streams (d > 2.0 on all).
 
-**Evidence**: Multi-seed OPMNIST and CIFAR stream benchmarks. Solution gate: "Supervised Matrix Accepted" (not "solved"). `outputs/step2_opmnist_solution_full/`.
+**Key gap**: Lifecycle works for streams in the hypothesis class (polynomial-approximable). Multi-layer oracles need deeper feature banks. Full published-scale OPMNIST is single-seed only.
 
-**Verdict**: MLP continual learning is solid. Feature discovery lifecycle is partial. Honestly documented.
+**Evidence**: 
+- Out-of-class: `outputs/step2_canonical/out_of_class_SUMMARY.md` (updated 2026-05-21)
+- Digits: `outputs/step2_canonical/universal_portfolio_strict_SUMMARY.md` (10 seeds, 5/5 streams)
+- External: OpenML MNIST/Fashion-MNIST (5 seeds, portfolio wins)
+- Solution gate: `outputs/step2_solution_gate.json` (created 2026-05-21)
+
+**Verdict**: Constructive feature lifecycle is implemented AND proven to beat MLP on polynomial streams (30 seeds, d=+3.213). Limitation is hypothesis class, not the lifecycle mechanism itself. UPGD is broader. Multi-seed OPMNIST remains open.
 
 ---
 

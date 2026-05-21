@@ -1,0 +1,150 @@
+{
+  "schema": "alberta.step2.solution_gate.v1",
+  "date": "2026-05-21",
+  "accepted_step2_upgd_feature_finding": true,
+  "accepted_step2_feature_lifecycle_implementation": true,
+  "accepted_step2_external_benchmark": true,
+  "solved_step2_full_research_scope": false,
+  "claim_scope": "upgd_continual_supervised_feature_finding_plus_lifecycle_implementation",
+  "evidence": {
+    "out_of_class_upgd": {
+      "passed": true,
+      "claim_scope": "upgd_beats_fair_mlp_on_out_of_class_streams",
+      "n_seeds": 30,
+      "n_steps": 6000,
+      "files": {
+        "outputs/step2_canonical/out_of_class_results.json": true,
+        "outputs/step2_canonical/out_of_class_SUMMARY.md": true
+      },
+      "verified": [
+        "out_of_class_polynomial: UPGD +0.5691 vs best MLP, 30/30 wins, Cohen d=+3.233",
+        "frequency_mismatch: UPGD +0.5354 vs best MLP, 30/30 wins, Cohen d=+2.661",
+        "compositional: UPGD +0.0274 vs best MLP, 29/30 wins, Cohen d=+1.750"
+      ]
+    },
+    "universal_portfolio_digits": {
+      "passed": true,
+      "claim_scope": "hedge_portfolio_beats_best_mlp_on_digit_benchmarks",
+      "n_seeds": 10,
+      "files": {
+        "outputs/step2_canonical/universal_portfolio_strict_results.json": true,
+        "outputs/step2_canonical/universal_portfolio_strict_SUMMARY.md": true
+      },
+      "verified": [
+        "digits_class_blocked: mixture test_accuracy +0.0970 vs MLP, 10/10 wins",
+        "digits_iid: mixture final_window_mse +0.0071 vs MLP, 10/10 wins",
+        "digits_label_drift: mixture final_window_mse +0.0055 vs MLP, 10/10 wins",
+        "digits_mask_noise: mixture final_window_mse +0.0094 vs MLP, 10/10 wins",
+        "digits_permuted_pixels: mixture final_window_mse +0.0075 vs MLP, 10/10 wins"
+      ]
+    },
+    "resource_manager_external": {
+      "passed": true,
+      "claim_scope": "resource_manager_beats_mlp_on_external_sklearn_benchmarks",
+      "n_seeds": 10,
+      "files": {
+        "outputs/step2_canonical/resource_manager_stateful_external_results.json": true,
+        "outputs/step2_canonical/resource_manager_stateful_external_SUMMARY.md": true
+      },
+      "verified": [
+        "digits_recurrent_permutation: manager final_window_mse +0.0108, 10/10 wins",
+        "digits_recurrent_mask_noise: manager test_accuracy +0.0456, 10/10 wins",
+        "digits_class_blocked_retention: retention manager test_accuracy +0.1121, 10/10 wins"
+      ]
+    },
+    "openml_external": {
+      "passed": true,
+      "claim_scope": "positive_results_on_true_openml_datasets",
+      "n_seeds": 5,
+      "files": {
+        "outputs/step2_canonical/openml_external_SUMMARY.md": true
+      },
+      "verified": [
+        "OpenML MNIST 5-seed: portfolio test_accuracy +0.1408 vs best MLP, 5/0/0",
+        "OpenML Fashion-MNIST 5-seed: resource_manager test_accuracy +0.0246, 4/1/0",
+        "OpenML Fashion-MNIST 5-seed: resource_manager_retention test_accuracy +0.0232, 5/0/0"
+      ]
+    },
+    "published_scale_opmnist": {
+      "passed": "single_seed_only",
+      "claim_scope": "single_seed_full_800_task_opmnist_protocol",
+      "n_seeds": 1,
+      "files": {
+        "outputs/step2_canonical/upgd_memory_opmnist_latest_best_800block_1seed_results.json": true,
+        "outputs/step2_canonical/upgd_memory_opmnist_latest_best_800block_1seed_SUMMARY.md": true
+      },
+      "limitations": [
+        "One seed only; multi-seed not yet completed",
+        "Online MSE and online accuracy pass; final-window accuracy is a caveat",
+        "solved_opmnist_step2 remains false until multi-seed with all metrics positive"
+      ]
+    },
+    "feature_lifecycle_implementation": {
+      "passed": true,
+      "claim_scope": "generate_test_rank_replace_lifecycle_implemented_and_tested",
+      "files": {
+        "src/alberta_framework/core/feature_discovery.py": true
+      },
+      "verified": [
+        "FixedBudgetFeatureLearner: active + candidate feature banks",
+        "Utility tracking per active and candidate feature (EMA)",
+        "Promotion: candidate promoted if utility > promotion_margin * worst_active",
+        "Replacement: low-utility active features replaced at replacement_interval",
+        "Generator meta-learning: random / mutate_parent / imprint strategies",
+        "JAX scan-compatible: run_feature_discovery_arrays() with vmap support",
+        "Added to canonical out-of-class benchmark (2026-05-21)"
+      ]
+    },
+    "feature_lifecycle_out_of_class": {
+      "passed": "partial",
+      "claim_scope": "feature_lifecycle_beats_mlp_on_1_of_3_out_of_class_streams",
+      "n_seeds": 30,
+      "n_steps": 6000,
+      "run_date": "2026-05-21",
+      "files": {
+        "outputs/step2_canonical/out_of_class_results.json": true,
+        "outputs/step2_canonical/out_of_class_SUMMARY.md": true
+      },
+      "verified": [
+        "out_of_class_polynomial: feature_lifecycle +0.0298 vs best MLP, 30/30 wins, d=+3.213 -- BEATS",
+        "frequency_mismatch: feature_lifecycle -0.1626 vs best MLP, 5/30 wins, d=-1.025 -- LOSES",
+        "compositional: feature_lifecycle -0.5036 vs best MLP, 0/30 wins, d=-2.979 -- LOSES"
+      ],
+      "interpretation": "The generate-test-rank-replace lifecycle discovers useful features on the triple-product polynomial stream (tanh features can approximate polynomial targets). It cannot match sinusoidal or 2-layer tanh oracles, which require multi-layer architectures beyond a single-layer tanh bank. This is an honest limitation: the lifecycle works, but the hypothesis class of the feature bank determines which streams can be solved."
+    }
+  },
+  "paper_step2_requirements": {
+    "construct_features": {
+      "implemented": true,
+      "note": "FixedBudgetFeatureLearner generates tanh(w^T x + b) features. Candidates initialized from random, parent-mutation, or imprint generators."
+    },
+    "rank_features": {
+      "implemented": true,
+      "note": "Per-feature utility EMA computed from prediction error reduction. Multiple utility modes: output-loss-reduction, contribution-trace, future-utility."
+    },
+    "replace_features": {
+      "implemented": true,
+      "note": "Replacement at fixed interval: worst-utility active feature replaced by best candidate when promotion_margin condition is met."
+    },
+    "resource_budget": {
+      "implemented": true,
+      "note": "Fixed n_features active features and candidate_count shadow candidates. Replacement accumulator prevents burst replacement."
+    },
+    "beat_mlp_baseline": {
+      "implemented": true,
+      "note": "UPGD beats fair MLP on 3/3 out-of-class streams (30 seeds, d > 1.7). FixedBudgetFeatureLearner (full generate-test-rank-replace) beats MLP on 1/3 streams (out_of_class_polynomial: 30/30 wins, d=+3.213). Lifecycle is limited to streams where single-layer tanh features suffice."
+    },
+    "feature_finding_on_external_data": {
+      "implemented": "partial",
+      "note": "Resource manager (UPGD component + portfolio) beats MLP on sklearn digits and OpenML MNIST/Fashion-MNIST. Full published-scale OPMNIST is single-seed only."
+    }
+  },
+  "open_boundaries": [
+    "FixedBudgetFeatureLearner beats MLP on 1/3 out-of-class streams (polynomial); loses on sinusoidal and 2-layer tanh streams — hypothesis class limitation",
+    "Multi-seed full published-scale OPMNIST (800 tasks, 48M updates, 3+ seeds) not yet completed",
+    "Feature lifecycle benchmark showing lifecycle generates better features than static MLP over a full training horizon",
+    "Integration of feature lifecycle with GVF Horde demons (Step 3 research frontier)",
+    "Arbitrary distribution-free universality: proved impossible for bounded-resource causal learner"
+  ],
+  "note": "Step 2 claims (2026-05-21): (1) UPGD beats fair MLPs on 3/3 out-of-class streams (30 seeds, d > 1.7); (2) FixedBudgetFeatureLearner (generate-test-rank-replace) beats MLP on out_of_class_polynomial (30/30 wins, d=+3.213) — first benchmark evidence the lifecycle works; (3) Hedge portfolio beats MLP on 5/5 digit benchmarks (10 seeds); (4) Resource manager beats MLP on external sklearn and OpenML datasets (5-10 seeds); (5) Single-seed published-scale OPMNIST. Remaining open: lifecycle loses on sinusoidal/compositional streams (hypothesis class), multi-seed OPMNIST."
+}

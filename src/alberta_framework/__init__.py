@@ -9,11 +9,11 @@ Roadmap
 -------
 | Step | Focus | Status |
 |------|-------|--------|
-| 1 | Meta-learned step-sizes (IDBD, Autostep) | **Complete** |
-| 2 | Nonlinear function approximation (MLP, ObGD) | **In Progress** |
-| 3 | GVF predictions, Horde architecture | Planned |
-| 4 | Actor-critic with eligibility traces | Planned |
-| 5-6 | Off-policy learning, average reward | Planned |
+| 1 | Fixed-feature continual supervised learning | **Complete** |
+| 2 | Supervised nonlinear feature finding | Supervised matrix accepted |
+| 3 | GVF predictions, Horde-style architecture | Given-feature path accepted |
+| 4 | Continual control | SARSA accepted; actor-critic provisional |
+| 5-6 | Off-policy nonlinear Horde, average reward | Planned |
 | 7-12 | Hierarchical, multi-agent, world models | Future |
 
 Examples
@@ -55,6 +55,47 @@ from alberta_framework.core.actor_critic import (
     run_actor_critic_from_arrays,
     run_continuous_actor_critic_from_arrays,
 )
+from alberta_framework.core.associative_memory import (
+    AssociativeFeatureFamily,
+    AssociativeMemoryConfig,
+    AssociativeMemoryLearner,
+    AssociativeMemoryLearningResult,
+    AssociativeMemoryPrediction,
+    AssociativeMemoryState,
+    AssociativeMemoryUpdateResult,
+    run_associative_memory_arrays,
+)
+from alberta_framework.core.average_reward import (
+    AverageRewardHordeActorCriticAgent,
+    AverageRewardHordeActorCriticArrayResult,
+    AverageRewardHordeActorCriticConfig,
+    AverageRewardHordeActorCriticState,
+    AverageRewardHordeActorCriticUpdateResult,
+    AverageRewardHordeLearner,
+    AverageRewardHordeLearningResult,
+    AverageRewardHordeState,
+    AverageRewardHordeUpdateResult,
+    DifferentialGTDArrayResult,
+    DifferentialGTDConfig,
+    DifferentialGTDLearner,
+    DifferentialGTDState,
+    DifferentialGTDUpdateResult,
+    DifferentialSARSAAgent,
+    DifferentialSARSAArrayResult,
+    DifferentialSARSAConfig,
+    DifferentialSARSAState,
+    DifferentialSARSAUpdateResult,
+    DifferentialTDArrayResult,
+    DifferentialTDConfig,
+    DifferentialTDLearner,
+    DifferentialTDState,
+    DifferentialTDUpdateResult,
+    run_average_reward_horde_actor_critic_from_arrays,
+    run_average_reward_horde_from_arrays,
+    run_differential_gtd_from_arrays,
+    run_differential_sarsa_from_arrays,
+    run_differential_td_from_arrays,
+)
 from alberta_framework.core.baseline_optimizers import (
     NADALINE,
     AdaGain,
@@ -67,6 +108,20 @@ from alberta_framework.core.baseline_optimizers import (
     RMSpropParamState,
     RMSpropState,
 )
+from alberta_framework.core.behavior_model import (
+    BehaviorModel,
+    BehaviorModelArrayResult,
+    BehaviorModelConfig,
+    BehaviorModelSampleResult,
+    BehaviorModelState,
+    BehaviorModelUpdateResult,
+    action_log_likelihoods,
+    clipped_importance_ratios,
+    epsilon_greedy_probabilities,
+    floor_and_renormalize_probabilities,
+    run_behavior_model_from_arrays,
+    selected_action_probabilities,
+)
 
 # Checkpoint utilities
 from alberta_framework.core.checkpoints import (
@@ -75,9 +130,14 @@ from alberta_framework.core.checkpoints import (
     load_checkpoint_metadata,
     save_checkpoint,
 )
+from alberta_framework.core.compositional_features import (
+    CompositionalFeatureLearner,
+    run_compositional_arrays,
+)
 from alberta_framework.core.continual_backprop import (
     CBPMultiHeadMLPLearner,
     ContinualBackpropConfig,
+    run_cbp_learning_loop,
 )
 from alberta_framework.core.cumulant_discovery import CumulantDiscovery
 
@@ -103,6 +163,39 @@ from alberta_framework.core.diffeml import (
     run_diffeml_learning_loop,
     run_eml_tree_learning_loop,
     stable_eml_operator,
+)
+from alberta_framework.core.dreaming import (
+    ActionConditionedDreamWorld,
+    BehaviorModelDreamPolicy,
+    DreamBehaviorModel,
+    DreamBehaviorModelPrediction,
+    DreamGVFTrainingItem,
+    DreamingConfig,
+    DreamProposal,
+    DreamRolloutConfig,
+    DreamRolloutResult,
+    DreamRolloutState,
+    DreamSARSATrainingItem,
+    DreamSelectionConfig,
+    DreamSelectionResult,
+    DreamSupervisedTrainingItem,
+    DreamTransition,
+    DreamWorldModel,
+    DreamWorldModelPrediction,
+    GuardedDreamer,
+    ImaginedTransition,
+    RecentObservationBuffer,
+    RecentObservationBufferState,
+    action_features,
+    dream_one_step,
+    dream_rollout,
+    imagined_rollout_to_gvf_items,
+    imagined_rollout_to_sarsa_items,
+    imagined_transition_to_gvf_item,
+    imagined_transition_to_supervised_item,
+    init_dream_rollout_state,
+    score_dream_candidates,
+    slice_imagined_transition,
 )
 from alberta_framework.core.feature_discovery import (
     FixedBudgetFeatureLearner,
@@ -133,7 +226,13 @@ from alberta_framework.core.horde_actor_critic import (
     HordeActorCriticConfig,
     HordeActorCriticState,
     HordeActorCriticUpdateResult,
+    NonlinearHordeActorCriticAgent,
+    NonlinearHordeActorCriticArrayResult,
+    NonlinearHordeActorCriticConfig,
+    NonlinearHordeActorCriticState,
+    NonlinearHordeActorCriticUpdateResult,
     run_horde_actor_critic_from_arrays,
+    run_nonlinear_horde_actor_critic_from_arrays,
 )
 
 # Core types
@@ -143,6 +242,15 @@ from alberta_framework.core.initializers import sparse_init
 from alberta_framework.core.interaction_features import (
     FixedBudgetInteractionLearner,
     run_interaction_feature_arrays,
+)
+from alberta_framework.core.latent_world_model import (
+    LatentWorldModel,
+    LatentWorldModelConfig,
+    LatentWorldModelLearningResult,
+    LatentWorldModelPrediction,
+    LatentWorldModelState,
+    LatentWorldModelUpdateResult,
+    run_latent_world_model_learning_loop,
 )
 from alberta_framework.core.learners import (
     LinearLearner,
@@ -187,7 +295,25 @@ from alberta_framework.core.normalizers import (
     WelfordNormalizerState,
     normalizer_from_config,
 )
-from alberta_framework.core.off_policy_td import OffPolicyTDLinearLearner
+from alberta_framework.core.off_policy_horde import (
+    NonlinearSharedGTDHordeLearner,
+    NonlinearSharedGTDHordeLearningResult,
+    NonlinearSharedGTDHordeState,
+    NonlinearSharedGTDHordeUpdateResult,
+    OffPolicyHordeLearner,
+    OffPolicyHordeLearningResult,
+    OffPolicyHordeUpdateResult,
+    run_off_policy_horde_learning_loop,
+    run_off_policy_horde_learning_loop_batched,
+)
+from alberta_framework.core.off_policy_td import (
+    GradientTDArrayResult,
+    GradientTDLinearLearner,
+    GradientTDState,
+    GradientTDUpdateResult,
+    OffPolicyTDLinearLearner,
+    run_gradient_td_learning_loop,
+)
 
 # Optimizers
 from alberta_framework.core.optimizers import (
@@ -210,6 +336,14 @@ from alberta_framework.core.optimizers import (
 from alberta_framework.core.resource_manager import (
     GeneratorMetaResourceManager,
     LearnedResourceManager,
+    finite_candidate_hedge_regret_bound,
+    optimal_hedge_learning_rate,
+)
+from alberta_framework.core.reward_model import (
+    RLSRewardModel,
+    RLSRewardModelConfig,
+    RLSRewardModelState,
+    RLSRewardModelUpdateResult,
 )
 
 # SARSA (Step 4a)
@@ -226,6 +360,20 @@ from alberta_framework.core.sarsa import (
     run_sarsa_from_arrays,
     run_sarsa_from_arrays_final_state,
 )
+from alberta_framework.core.sigreg import (
+    SIGRegConfig,
+    SIGRegDiagnostics,
+    epps_pulley_gaussian_statistic,
+    sample_sigreg_directions,
+    sigreg_diagnostics,
+    sliced_sigreg_loss,
+)
+from alberta_framework.core.temporal_context import (
+    TemporalContextConfig,
+    TemporalContextFeaturizer,
+    TemporalContextState,
+    transform_temporal_context_arrays,
+)
 
 # UPGD (Step 2)
 from alberta_framework.core.upgd import (
@@ -235,6 +383,35 @@ from alberta_framework.core.upgd import (
     UPGDUpdateResult,
     run_upgd_arrays,
     run_upgd_loop,
+)
+from alberta_framework.core.upgd_memory import (
+    UPGDMemoryConfig,
+    UPGDMemoryLearner,
+    UPGDMemoryLearningResult,
+    UPGDMemoryState,
+    UPGDMemoryUpdateResult,
+    run_upgd_memory_arrays,
+)
+from alberta_framework.core.working_memory import (
+    WorkingMemoryConfig,
+    WorkingMemoryDiagnostics,
+    WorkingMemoryFeaturizer,
+    WorkingMemoryState,
+    transform_working_memory_arrays,
+)
+from alberta_framework.core.world_model import (
+    ActionConditionedWorldModel,
+    ActionConditionedWorldModelConfig,
+    ActionConditionedWorldModelLearningResult,
+    ActionConditionedWorldModelState,
+    OneStepWorldModel,
+    WorldModelConfig,
+    WorldModelLearningResult,
+    WorldModelPrediction,
+    WorldModelState,
+    WorldModelUpdateResult,
+    run_action_conditioned_world_model_learning_loop,
+    run_world_model_learning_loop,
 )
 from alberta_framework.security import (
     N_SECURITY_ACTIONS,
@@ -252,9 +429,57 @@ from alberta_framework.security import (
     to_security_gym_action,
     validate_security_rollout,
 )
+from alberta_framework.steps.step1 import (
+    Step1KernelConfig,
+    Step1SmokeResult,
+    make_step1_learner,
+    make_step1_stream,
+    run_step1_smoke,
+)
 from alberta_framework.steps.step2 import (
+    Step2AssociativeConfig,
+    Step2AssociativeSmokeResult,
     Step2HybridConfig,
+    Step2KernelConfig,
+    Step2MemoryConfig,
+    Step2SmokeResult,
+    Step2StrictDigitReadoutConfig,
+    Step2TemporalContextConfig,
+    make_step2_associative_learner,
     make_step2_hybrid_learner,
+    make_step2_learner,
+    make_step2_memory_learner,
+    make_step2_stream,
+    make_step2_strict_digit_readout_learner,
+    make_step2_temporal_context,
+    make_step2_temporal_learner,
+    run_step2_associative_smoke,
+    run_step2_smoke,
+)
+from alberta_framework.steps.step5 import (
+    Step5AverageRewardTDConfig,
+    Step5SmokeResult,
+    make_step5_td_learner,
+    run_step5_scan,
+    run_step5_smoke,
+)
+from alberta_framework.steps.step6 import (
+    Step6DifferentialSARSAConfig,
+    Step6SmokeResult,
+    init_step6_state,
+    make_step6_differential_sarsa_agent,
+    run_step6_scan,
+    run_step6_smoke,
+    step6_update,
+)
+from alberta_framework.steps.step8 import (
+    Step8SmokeResult,
+    Step8WorldModelConfig,
+    init_step8_state,
+    make_step8_world_model,
+    run_step8_scan,
+    run_step8_smoke,
+    step8_update,
 )
 
 # Production Step 1-4 pipeline. Keep this optional at package-import time so
@@ -271,9 +496,12 @@ try:
         ControlMode,
         CumulantFn,
         HordeActorCriticPipelineConfig,
+        Step2AssociativePipelineConfig,
         Step2FeatureConfig,
         Step2Mode,
         Step2UPGDConfig,
+        Step2UPGDPreset,
+        Step2UPGDReadoutMode,
         make_alberta_pipeline,
         run_pipeline_smoke,
     )
@@ -476,6 +704,38 @@ __all__ = [
     "StreamingBatchNormalizer",
     "WelfordNormalizer",
     "normalizer_from_config",
+    # Dreaming / self-simulation
+    "ActionConditionedDreamWorld",
+    "BehaviorModelDreamPolicy",
+    "DreamBehaviorModel",
+    "DreamBehaviorModelPrediction",
+    "DreamGVFTrainingItem",
+    "DreamingConfig",
+    "DreamProposal",
+    "DreamRolloutConfig",
+    "DreamRolloutResult",
+    "DreamRolloutState",
+    "DreamSARSATrainingItem",
+    "DreamSelectionConfig",
+    "DreamSelectionResult",
+    "DreamSupervisedTrainingItem",
+    "DreamTransition",
+    "DreamWorldModel",
+    "DreamWorldModelPrediction",
+    "GuardedDreamer",
+    "ImaginedTransition",
+    "RecentObservationBuffer",
+    "RecentObservationBufferState",
+    "action_features",
+    "dream_one_step",
+    "dream_rollout",
+    "imagined_rollout_to_gvf_items",
+    "imagined_rollout_to_sarsa_items",
+    "imagined_transition_to_gvf_item",
+    "imagined_transition_to_supervised_item",
+    "init_dream_rollout_state",
+    "score_dream_candidates",
+    "slice_imagined_transition",
     # Learners - Supervised Learning
     "LinearLearner",
     "run_learning_loop",
@@ -495,26 +755,133 @@ __all__ = [
     "run_multi_head_learning_loop",
     "run_multi_head_learning_loop_batched",
     # Learners - UPGD (Step 2)
+    "AssociativeFeatureFamily",
+    "AssociativeMemoryConfig",
+    "AssociativeMemoryLearner",
+    "AssociativeMemoryLearningResult",
+    "AssociativeMemoryPrediction",
+    "AssociativeMemoryState",
+    "AssociativeMemoryUpdateResult",
+    "CompositionalFeatureLearner",
     "CumulantDiscovery",
     "FixedBudgetFeatureLearner",
     "FixedBudgetInteractionLearner",
     "GeneratorMetaResourceManager",
     "HistoryFeatureExtractor",
+    "WorkingMemoryConfig",
+    "WorkingMemoryDiagnostics",
+    "WorkingMemoryFeaturizer",
+    "WorkingMemoryState",
+    "transform_working_memory_arrays",
     "LearnedResourceManager",
+    "finite_candidate_hedge_regret_bound",
+    "optimal_hedge_learning_rate",
+    "RLSRewardModel",
+    "RLSRewardModelConfig",
+    "RLSRewardModelState",
+    "RLSRewardModelUpdateResult",
+    "SIGRegConfig",
+    "SIGRegDiagnostics",
+    "epps_pulley_gaussian_statistic",
+    "sample_sigreg_directions",
+    "sigreg_diagnostics",
+    "sliced_sigreg_loss",
+    "OffPolicyHordeLearner",
+    "OffPolicyHordeLearningResult",
+    "OffPolicyHordeUpdateResult",
+    "NonlinearSharedGTDHordeLearner",
+    "NonlinearSharedGTDHordeLearningResult",
+    "NonlinearSharedGTDHordeState",
+    "NonlinearSharedGTDHordeUpdateResult",
     "OffPolicyTDLinearLearner",
+    "GradientTDArrayResult",
+    "GradientTDLinearLearner",
+    "GradientTDState",
+    "GradientTDUpdateResult",
+    "run_gradient_td_learning_loop",
+    "ActionConditionedWorldModel",
+    "ActionConditionedWorldModelConfig",
+    "ActionConditionedWorldModelLearningResult",
+    "ActionConditionedWorldModelState",
+    "LatentWorldModel",
+    "LatentWorldModelConfig",
+    "LatentWorldModelLearningResult",
+    "LatentWorldModelPrediction",
+    "LatentWorldModelState",
+    "LatentWorldModelUpdateResult",
+    "run_action_conditioned_world_model_learning_loop",
+    "run_latent_world_model_learning_loop",
+    "Step1KernelConfig",
+    "Step1SmokeResult",
+    "Step2AssociativeConfig",
+    "Step2AssociativeSmokeResult",
     "Step2HybridConfig",
+    "Step2KernelConfig",
+    "Step2MemoryConfig",
+    "Step2SmokeResult",
+    "Step2StrictDigitReadoutConfig",
+    "Step2TemporalContextConfig",
+    "TemporalContextConfig",
+    "TemporalContextFeaturizer",
+    "TemporalContextState",
     "CBPMultiHeadMLPLearner",
     "ContinualBackpropConfig",
+    "run_cbp_learning_loop",
     "UPGDLearner",
     "UPGDLearningResult",
+    "UPGDMemoryConfig",
+    "UPGDMemoryLearner",
+    "UPGDMemoryLearningResult",
+    "UPGDMemoryState",
+    "UPGDMemoryUpdateResult",
     "UPGDState",
     "UPGDUpdateResult",
+    "make_step1_learner",
+    "make_step1_stream",
+    "make_step2_associative_learner",
     "make_step2_hybrid_learner",
+    "make_step2_learner",
+    "make_step2_memory_learner",
+    "make_step2_strict_digit_readout_learner",
+    "make_step2_stream",
+    "make_step2_temporal_context",
+    "make_step2_temporal_learner",
+    "run_associative_memory_arrays",
+    "run_step1_smoke",
+    "run_step2_associative_smoke",
+    "run_step2_smoke",
+    "run_compositional_arrays",
     "run_feature_discovery_arrays",
     "run_feature_discovery_loop",
     "run_interaction_feature_arrays",
+    "transform_temporal_context_arrays",
     "run_upgd_arrays",
     "run_upgd_loop",
+    "run_upgd_memory_arrays",
+    "run_off_policy_horde_learning_loop",
+    "run_off_policy_horde_learning_loop_batched",
+    "run_action_conditioned_world_model_learning_loop",
+    # World model (Steps 7/8)
+    "OneStepWorldModel",
+    "WorldModelConfig",
+    "WorldModelLearningResult",
+    "WorldModelPrediction",
+    "WorldModelState",
+    "WorldModelUpdateResult",
+    "run_world_model_learning_loop",
+    # Behavior prediction
+    "BehaviorModel",
+    "BehaviorModelArrayResult",
+    "BehaviorModelConfig",
+    "BehaviorModelSampleResult",
+    "BehaviorModelState",
+    "BehaviorModelUpdateResult",
+    "action_log_likelihoods",
+    "clipped_importance_ratios",
+    "epsilon_greedy_probabilities",
+    "floor_and_renormalize_probabilities",
+    "run_behavior_model_from_arrays",
+    "selected_action_probabilities",
     # Differentiable EML
     "BOOLEAN_INPUTS",
     "DiffEMLGateSelector",
@@ -553,6 +920,13 @@ __all__ = [
     "HordeActorCriticState",
     "HordeActorCriticUpdateResult",
     "run_horde_actor_critic_from_arrays",
+    # Nonlinear Horde Actor-Critic (Step 4 canonical)
+    "NonlinearHordeActorCriticAgent",
+    "NonlinearHordeActorCriticArrayResult",
+    "NonlinearHordeActorCriticConfig",
+    "NonlinearHordeActorCriticState",
+    "NonlinearHordeActorCriticUpdateResult",
+    "run_nonlinear_horde_actor_critic_from_arrays",
     # Actor-Critic (Step 4)
     "ActorCriticAgent",
     "ActorCriticConfig",
@@ -576,6 +950,55 @@ __all__ = [
     "run_sarsa_episode",
     "run_sarsa_from_arrays",
     "run_sarsa_from_arrays_final_state",
+    # Average reward (Steps 5/6)
+    "AverageRewardHordeLearner",
+    "AverageRewardHordeActorCriticAgent",
+    "AverageRewardHordeActorCriticArrayResult",
+    "AverageRewardHordeActorCriticConfig",
+    "AverageRewardHordeActorCriticState",
+    "AverageRewardHordeActorCriticUpdateResult",
+    "AverageRewardHordeLearningResult",
+    "AverageRewardHordeState",
+    "AverageRewardHordeUpdateResult",
+    "DifferentialGTDArrayResult",
+    "DifferentialGTDConfig",
+    "DifferentialGTDLearner",
+    "DifferentialGTDState",
+    "DifferentialGTDUpdateResult",
+    "DifferentialSARSAAgent",
+    "DifferentialSARSAArrayResult",
+    "DifferentialSARSAConfig",
+    "DifferentialSARSAState",
+    "DifferentialSARSAUpdateResult",
+    "DifferentialTDArrayResult",
+    "DifferentialTDConfig",
+    "DifferentialTDLearner",
+    "DifferentialTDState",
+    "DifferentialTDUpdateResult",
+    "Step5AverageRewardTDConfig",
+    "Step5SmokeResult",
+    "Step6DifferentialSARSAConfig",
+    "Step6SmokeResult",
+    "init_step6_state",
+    "make_step5_td_learner",
+    "make_step6_differential_sarsa_agent",
+    "run_average_reward_horde_from_arrays",
+    "run_average_reward_horde_actor_critic_from_arrays",
+    "run_differential_gtd_from_arrays",
+    "run_differential_sarsa_from_arrays",
+    "run_differential_td_from_arrays",
+    "run_step5_scan",
+    "run_step5_smoke",
+    "run_step6_scan",
+    "run_step6_smoke",
+    "step6_update",
+    "Step8SmokeResult",
+    "Step8WorldModelConfig",
+    "init_step8_state",
+    "make_step8_world_model",
+    "run_step8_scan",
+    "run_step8_smoke",
+    "step8_update",
     # Learners - TD Learning
     "TDLinearLearner",
     "TrueOnlineTDLearner",
@@ -685,9 +1108,12 @@ if _pipeline_available:
         "ControlMode",
         "CumulantFn",
         "HordeActorCriticPipelineConfig",
+        "Step2AssociativePipelineConfig",
         "Step2FeatureConfig",
         "Step2Mode",
         "Step2UPGDConfig",
+        "Step2UPGDPreset",
+        "Step2UPGDReadoutMode",
         "make_alberta_pipeline",
         "run_pipeline_smoke",
     ]
