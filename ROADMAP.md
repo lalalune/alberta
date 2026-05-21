@@ -211,20 +211,22 @@ preserving foreground, continuing real-time control.
   world-model configs
 - Real transition update first, then a fixed `planning_steps` budget of
   model-generated one-step backups
-- Search-control strategies for random, reward-prioritized, and
-  transition-surprise-prioritized planning actions
+- Fixed-size transition memory for memory-backed planning anchors
+- Search-control strategies for random, reward-prioritized,
+  transition-surprise-prioritized, and predecessor-prioritized planning
 - Warmup-gated planning so the world model must receive real transitions before
   generated backups are accepted
 - Real action context restoration after planning, so background backups do not
   corrupt the live environment interaction state
 - Production facade `steps.step7` with scan-compatible smoke tests
 - Seeded one-state continuing-control sample-efficiency benchmark:
-  Step 7 reward-prioritized Dyna improves final-window reward from `0.94` to
-  `1.00` and Q-gap by `+3.75` over Step 6 real-only differential SARSA across
+  Step 7 reward-prioritized Dyna improves final-window reward from `0.92` to
+  `1.00` and Q-gap by `+4.79` over Step 6 real-only differential SARSA across
   5 seeds (`outputs/step7_dyna/results.json`)
 
 **Remaining research boundary**:
-- Predecessor-based prioritized sweeping and learned search-control
+- Full prioritized-sweeping queues with recursive priority propagation and
+  learned search-control
 - Off-policy accounting for imagined behavior
 - Short-rollout and option/subtask discovery variants
 - Seeded benchmark evidence that planning improves continuing control without
@@ -328,13 +330,73 @@ The STOMP components:
 - Seeded benchmark evidence that options improve continuing control over flat Step 6 on
   continuing gymnasium tasks with reachable sub-goals
 
-## Steps 11–12: Intelligence — Future
+## Step 11: OaK (FC-STOMP) — Primitive Implemented
 
-**Goal**: Integrate all components into a cohesive architecture.
+**Goal**: Add Feature Construction to STOMP, producing the OaK (Options and Knowledge)
+architecture.  OaK extends Step 10 with three mechanisms that keep the option set useful over
+the lifetime of a continual agent.
 
-- Hierarchical architectures with discovered options
-- Multi-agent coordination
-- OaK: the integrated proto-AI agent
+This corresponds to Alberta Plan Step 11 ("Intelligence II: Feature construction and options" —
+Sutton et al. 2022).  The three OaK additions over STOMP are:
+
+1. **Utility tracking** — An exponential moving average (EMA) of pseudo-reward accumulates a
+   per-option utility score at every time step.
+2. **Curation** — `curate()` compares the lowest-utility option against a configurable
+   threshold.  Below-threshold options are replaced: Q-weights, eligibility traces, option
+   models, and utility statistics are reset and a new `SubtaskSpec` is drawn.
+3. **Option keyboard** — A real-valued chord vector blends option Q-functions into a composite
+   Q-vector: `Q_w(s,a) = Σ_i w_i Q_i(s,a)` (Barreto et al. 2019), enabling exponentially
+   many composite behaviors from a finite option set.
+
+**Delivered primitive surface**:
+- `OaKConfig`, `OaKState`, `OaKAgent` with utility EMA, curation, and keyboard
+- Scan-compatible utility update via `jnp.where`; curation is Python-level (outside JIT)
+- `keyboard_q_values` / `keyboard_action`: L1-normalised blended Q-values and epsilon-greedy
+- `Step11OaKConfig` / `Step11SmokeResult` production facade
+- `core/oak.py` building on `core/options.py`
+- 32 tests covering config roundtrip, factory, init, utility EMA, scan shapes, curation,
+  keyboard, smoke, and 200-step fineness
+
+**Remaining research boundary**:
+- Learned feature construction (auto-generated subtask features)
+- Gradient-based or information-theoretic curation selection signals
+- Keyboard chord vector learning (meta-gradient or bandit-style)
+- Seeded benchmark evidence that curation maintains option quality over long horizons
+
+## Step 12: Prototype-IA — Primitive Implemented
+
+**Goal**: Demonstrate Intelligence Amplification (IA) — an IA agent that increases the
+decision-making capacity of a *partner* agent.  The IA agent is not standalone; it amplifies
+another agent's intelligence via two augmentation streams.
+
+This corresponds to Alberta Plan Step 12 ("Intelligence III: Prototype-IA" — Sutton et al. 2022).
+Reference: Mathewson et al. (2023, "Communicative Capital").
+
+1. **Exo-cerebellum** — Multi-output linear predictor anticipating future observation features.
+   Prediction vector becomes an augmented feature channel:
+   `augmented_obs = concat(partner_obs, predictions)`.
+2. **Exo-cortex** — OaK-based (Step 11) agent learning from partner experience and broadcasting
+   greedy action recommendations.  The partner can accept or ignore the recommendation.
+
+**Delivered primitive surface**:
+- `ExoCerebellumConfig` / `ExoCerebellumState` / `ExoCerebellumAgent`: vectorised multi-output
+  online predictor with cyclic cumulant targets
+- `ExoCortexAgent`: `OaKAgent` wrapper adding `recommend(state, obs)`
+- `IAConfig` / `IAState` / `IAAgent`: paired cerebellum + cortex with `update()` and `scan()`
+- `IAUpdateResult` / `IAArrayResult`: per-step `predictions`, `cerebellum_errors`,
+  `recommendation`, `augmented_obs`, `cortex_td_error`
+- `Step12IAConfig` / `Step12SmokeResult` production facade
+- `core/intelligence_amplification.py` building on `core/oak.py`
+- 30+ tests covering config validation, obs-dim mismatch guard, config roundtrip, factory,
+  init shapes, update shapes/dtypes, augmented-obs concat verification, scan shapes,
+  cerebellum weight update, smoke, and 200-step fineness
+
+**Remaining research boundary**:
+- Communication protocol for recommendation acceptance / rejection
+- Multi-partner IA coordination
+- Learned augmentation channel selection
+- Exo-cortex with nonlinear function approximation
+- Seeded benchmark evidence that IA augmentation improves partner decision-making
 
 ## References
 
@@ -343,7 +405,10 @@ The STOMP components:
 - Mahmood, A.R., Sutton, R.S., Degris, T., & Pilarski, P.M. (2012). "Tuning-free Step-size Adaptation"
 - Kearney, A., Veeriah, V., Travnik, J., Pilarski, P.M., & Sutton, R.S. (2019). "Learning Feature Relevance Through Step Size Adaptation in Temporal-Difference Learning"
 - Sutton, R.S., et al. (2022). "The Alberta Plan for AI Research"
+- Sutton, R.S. (2025). "The OaK Architecture: A Vision of SuperIntelligence." *RLC 2025*.
 - Elsayed, M., Lan, Q., Lyle, C., & Mahmood, A.R. (2024). "Streaming Deep Reinforcement Learning Finally Works"
 - Brock, A., De, S., Smith, S.L., & Simonyan, K. (2021). "High-Performance Large-Scale Image Recognition Without Normalization"
 - Maei, H.R. & Sutton, R.S. (2010). "GQ(λ): A general gradient algorithm for temporal-difference prediction learning with eligibility traces." *Proc. 3rd Conf. on AGI*.
+- Barreto, A., Borsa, D., Hou, S., Cabi, S., Aytar, Y., Sherfield, Z., Hessel, M., Silver, D., & Munos, R. (2019). "The Option Keyboard: Combining Skills in Reinforcement Learning." *NeurIPS*.
+- Mathewson, K., Pilarski, P.M., & Sutton, R.S. (2023). "Communicative Capital." *Neural Computing and Applications*.
 - Meyer, E. (2025). "IDBD for MLPs" — https://github.com/ejmejm/phd_research/blob/main/phd/jax_core/optimizers/idbd.py

@@ -170,6 +170,33 @@ Artifacts:
 - [ ] Off-policy intra-option learning with importance-sampling corrections
 - [ ] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals
 
+## Step 11 — OaK (FC-STOMP) (Primitive Implemented)
+
+- [x] `OaKConfig`: wraps `STOMPConfig`, adds `utility_ema_decay` and `curation_threshold`
+- [x] `OaKState`: extends `STOMPState` with `utility_ema`, `execution_counts`, `cumulative_pseudo_rewards`
+- [x] `OaKAgent`: `init()`, `start()`, `update()`, `scan()`, `curate()`, `to_config()`
+- [x] Scan-compatible utility EMA via `jnp.where` (no Python branching on JAX values)
+- [x] `keyboard_q_values` / `keyboard_action`: L1-normalised blended Q-values
+- [x] `Step11OaKConfig` / `Step11SmokeResult` production facade
+- [x] `core/oak.py` building on `core/options.py`
+- [x] 32 tests: config roundtrip, factory, init, utility EMA, scan shapes, curation, keyboard, smoke, 200-step fineness
+- [ ] Learned feature construction (auto-generated subtask features)
+- [ ] Keyboard chord vector learning (meta-gradient or bandit-style)
+- [ ] Seeded benchmark evidence that curation maintains option quality over long horizons
+
+## Step 12 — Prototype-IA (Primitive Implemented)
+
+- [x] `ExoCerebellumConfig` / `ExoCerebellumState` / `ExoCerebellumAgent`: vectorised multi-output predictor
+- [x] `ExoCortexAgent`: OaK wrapper adding `recommend(state, obs)` (argmax base Q)
+- [x] `IAConfig` / `IAState` / `IAAgent`: paired cerebellum + cortex with `update()` and `scan()`
+- [x] `IAUpdateResult` / `IAArrayResult`: per-step predictions, cerebellum_errors, recommendation, augmented_obs, cortex_td_error
+- [x] `Step12IAConfig` / `Step12SmokeResult` production facade
+- [x] `core/intelligence_amplification.py` building on `core/oak.py`
+- [x] 30+ tests: config validation, obs-dim mismatch guard, config roundtrip, factory, init shapes, update shapes/dtypes, augmented-obs concat, scan shapes, weight update, smoke, 200-step fineness
+- [ ] Communication protocol for recommendation acceptance / rejection
+- [ ] Exo-cortex with nonlinear function approximation
+- [ ] Seeded benchmark evidence that IA augmentation improves partner decision-making
+
 ## Infrastructure
 
 - [ ] Update CHANGELOG.md with each release (moved from CLAUDE.md)

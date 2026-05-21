@@ -1,12 +1,13 @@
-"""Production-facing kernels for Alberta Plan Steps 1-10.
+"""Production-facing kernels for Alberta Plan Steps 1-12.
 
 The modules in this package intentionally expose a small, stable surface over
 the larger research codebase.  They are the recommended imports for downstream
 systems that want the current Step 1, Step 2, given-feature Step 3, and Step 4
 control learners, plus the primitive Step 5-9 average-reward, planning,
 world-model, and guarded-dreaming surfaces, and the Step 10 STOMP temporal-
-abstraction progression, without depending on experiment scripts or exploratory
-research modules.
+abstraction progression, the Step 11 OaK (options + utility + curation +
+keyboard) architecture, and the Step 12 Intelligence Amplification (IA)
+facade, without depending on experiment scripts or exploratory research modules.
 """
 
 from alberta_framework.steps.step1 import (
@@ -127,6 +128,26 @@ from alberta_framework.steps.step10 import (
     run_step10_smoke,
     step10_update,
 )
+from alberta_framework.steps.step11 import (
+    Step11OaKConfig,
+    Step11SmokeResult,
+    init_step11_state,
+    keyboard_action,
+    keyboard_q_values,
+    make_step11_oak_agent,
+    run_step11_scan,
+    run_step11_smoke,
+    step11_update,
+)
+from alberta_framework.steps.step12 import (
+    Step12IAConfig,
+    Step12SmokeResult,
+    init_step12_state,
+    make_step12_ia_agent,
+    run_step12_scan,
+    run_step12_smoke,
+    step12_update,
+)
 
 __all__ = [
     "Step1KernelConfig",
@@ -227,4 +248,20 @@ __all__ = [
     "run_step10_scan",
     "run_step10_smoke",
     "step10_update",
+    "Step11OaKConfig",
+    "Step11SmokeResult",
+    "init_step11_state",
+    "keyboard_action",
+    "keyboard_q_values",
+    "make_step11_oak_agent",
+    "run_step11_scan",
+    "run_step11_smoke",
+    "step11_update",
+    "Step12IAConfig",
+    "Step12SmokeResult",
+    "init_step12_state",
+    "make_step12_ia_agent",
+    "run_step12_scan",
+    "run_step12_smoke",
+    "step12_update",
 ]

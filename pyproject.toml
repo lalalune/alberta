@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "alberta-framework"
-version = "0.19.0"
+version = "0.20.0"
 description = "Implementation of the Alberta Plan for AI Research - continual learning with meta-learned step-sizes"
 readme = "README.md"
 license = "Apache-2.0"
@@ -288,6 +288,14 @@ disable_error_code = ["call-arg"]
 [[tool.mypy.overrides]]
 module = "alberta_framework.core.diagnostics"
 disable_error_code = ["call-arg"]
+
+[[tool.mypy.overrides]]
+module = "alberta_framework.core.oak"
+disable_error_code = ["call-arg", "no-any-return"]
+
+[[tool.mypy.overrides]]
+module = "alberta_framework.core.intelligence_amplification"
+disable_error_code = ["call-arg", "no-any-return"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
