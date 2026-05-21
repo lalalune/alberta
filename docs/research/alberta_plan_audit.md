@@ -3,7 +3,7 @@
 **Date**: 2026-05-21 (updated 2026-05-21)
 **Scope**: Systematic comparison of implementation against Sutton et al. (2022) paper requirements.  
 **Method**: Paper review, code audit, test execution (1609 passing, 3 skipped), benchmark generation.
-**Last update**: Step 6 stochastic RiverSwim (10/10 seeds, 0.907 reward, 97.5% right-action rate). Step 7 async DP (prioritized sweeping) proven: 8/10 wins vs random Dyna, 0.7368 vs 0.7302. Step 10 STOMP benchmark proves options accelerate control 10x vs flat DifferentialSARSA (5474-step speedup, 6/10 seed wins, STOMP 0.871 vs SARSA 0.382).
+**Last update**: Step 9 guarded dreaming benchmark proven (2026-05-21): 9/10 seeds win over naive Dyna, +0.0117 mean Phase 2 improvement on 1-state switching bandit. step9_update JIT-compiled for correctness. Step 6 stochastic RiverSwim (10/10 seeds, 0.907 reward, 97.5% right-action rate). Step 7 async DP (prioritized sweeping) proven: 8/10 wins vs random Dyna, 0.7368 vs 0.7302. Step 10 STOMP benchmark proves options accelerate control 10x vs flat DifferentialSARSA (5474-step speedup, 6/10 seed wins, STOMP 0.871 vs SARSA 0.382).
 
 ---
 
@@ -19,7 +19,7 @@
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907, 97.5% right) | **LOCAL+STOCHASTIC: YES / FULL SCOPE: NO** |
 | 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | 6-state chain: Dyna +41.7% cum reward, 8/10 wins. 20-state chain: async DP 8/10 wins, 0.7368 vs 0.7302 | **PARTIAL (tabular proven, FA open)** |
 | 8 | Prototype-AI I — Complete integrated agent | PrototypeAgent integrates 5/6 sub-components | 50 tests, world model + feature importance + option curation + guarded planning | **PARTIAL (5/6 components, no explicit recurrent state)** |
-| 9 | Planning II — Search control & exploration | Guarded dreaming (wrong concept) | Smoke tests only | **NO (MISALIGNED)** |
+| 9 | Planning II — Search control & exploration | Guarded dreaming (partial concept match) | 27 tests + seeded benchmark: 9/10 wins, +0.0117 over naive Dyna | **PARTIAL (benchmark proven, conceptually misaligned with paper)** |
 | 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | 42 unit tests + benchmark: STOMP 0.871 vs SARSA 0.382, 5474-step speedup | **PARTIAL (benchmark proven)** |
 
 ---
@@ -208,7 +208,7 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 ---
 
-### Step 9: Planning II — MISALIGNED WITH PAPER ❌
+### Step 9: Planning II — PARTIAL ⚠️ (benchmark proven, conceptually misaligned)
 
 **Paper requirement**: Search control and exploration — flexible state update ordering, prioritized sweeping generalized to function approximation, MCTS-style approaches, uncertainty quantification for planning decisions.
 
@@ -221,9 +221,19 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 **What the code IS**: A form of "cautious dreaming" that guards against model-bias. This is closer to a Step 7/8 extension (better world model usage) than the flexible asynchronous sweeping the paper describes.
 
+**Seeded benchmark** (2026-05-21, `benchmarks/step9_guarded_dreaming.py`):
+
+| Algorithm | Phase 1 | Phase 2 | Phase 2 stderr |
+|-----------|---------|---------|----------------|
+| Real-only | 0.8546 | 0.8412 | ±0.0032 |
+| Naive Dyna (gate off) | 0.8513 | 0.8355 | ±0.0037 |
+| Guarded Dyna (gate on) | 0.8519 | **0.8472** | ±0.0035 |
+
+Environment: 1-state switching bandit (action-reward flip at step 1000). After the flip, `model_error_ema` spikes from ~0 to 0.1 within 1 step (model predicts wrong reward for every action). Guard fires and suspends dreaming. Naive Dyna keeps imagining old `action_1→reward 1.0`, reinforcing the stale policy. Guarded Dyna uses real transitions only, switches policy faster. **9/10 seeds win, +0.0117 mean improvement.**
+
 **Missing**: Prioritized sweeping with function approximation, flexible state selection for backups, uncertainty-based search control, MCTS integration.
 
-**Verdict**: The guarded dreaming implementation is real and useful, but it addresses a different planning sub-problem than the paper's Step 9. This is a labeling/scoping misalignment.
+**Verdict**: Guarded dreaming is behaviorally proven to protect against model-bias during distribution shift. The conceptual mismatch with the paper (accept/reject vs. which-state-to-update) remains an honest open boundary.
 
 ---
 
@@ -277,7 +287,7 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 ### What IS NOT fully proven:
 - **Step 8**: PrototypeAgent implements 5/6 sub-components. Missing: explicit recursive hidden state (LSTM/GRU) and model-driven feature ranking. No benchmark evidence.
-- **Step 9**: Guarded dreaming is a narrow form of search control (accept/reject model transitions) vs paper's broader vision (which states to back up). Honest solution gate; benchmark pending.
+- **Step 9**: Guarded dreaming proven (9/10 seeds, +0.0117 vs naive Dyna on switching bandit). Conceptual mismatch with paper (accept/reject vs which-state-to-update) remains an honest open boundary.
 
 ### The key architectural claim to verify:
 The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing. But "primitive" should not be confused with "complete." The paper's Steps 8-9 describe an integrated Prototype-AI system that requires all prior steps to converge. The current code has building blocks but not the integrated system.
@@ -292,8 +302,8 @@ Tabular Dyna and async DP both benchmarked. Remaining gap: run on CartPole/bsuit
 ### Step 8 (Priority: Low — mostly done via PrototypeAgent)
 PrototypeAgent already implements 5/6 sub-components. Remaining gaps: explicit LSTM/RNN state, model-driven feature ranking feedback loop. A benchmark showing the integrated agent's advantage would strengthen the evidence.
 
-### Step 9 (Priority: Medium)
-Guarded dreaming is a narrow form of search control. Benchmark pending (`benchmarks/step9_guarded_dreaming.py`). Broader prioritized sweeping with function approximation remains open research.
+### Step 9 (Priority: Low — benchmark proven)
+Guarded dreaming benchmark proven: 9/10 seeds win over naive Dyna (+0.0117 mean improvement) on a 1-state switching bandit. Conceptual gap vs. paper (search control = which-state-to-update, not accept/reject) is documented. Broader prioritized sweeping with function approximation remains open research.
 
 ### Step 10 (Priority: High)
 Implement auto-discovery: wire a feature-ranking score into SubtaskSpec creation. The feature relevance diagnostics (`compute_feature_relevance`) are already implemented — using them to automatically generate SubtaskSpecs would complete the core STOMP loop. Then add semi-MDP Bellman backup using option models.
