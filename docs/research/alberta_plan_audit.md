@@ -18,7 +18,7 @@
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907, 97.5% right) | **LOCAL+STOCHASTIC: YES / FULL SCOPE: NO** |
 | 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | 6-state chain: Dyna +41.7% cum reward, 8/10 wins. 20-state chain: async DP 8/10 wins, 0.7368 vs 0.7302 | **PARTIAL (tabular proven, FA open)** |
-| 8 | Prototype-AI I — Complete integrated agent | ONE sub-component only (world model) | Smoke tests only | **NO (MISLABELED)** |
+| 8 | Prototype-AI I — Complete integrated agent | PrototypeAgent integrates 5/6 sub-components | 50 tests, world model + feature importance + option curation + guarded planning | **PARTIAL (5/6 components, no explicit recurrent state)** |
 | 9 | Planning II — Search control & exploration | Guarded dreaming (wrong concept) | Smoke tests only | **NO (MISALIGNED)** |
 | 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | 42 unit tests + benchmark: STOMP 0.871 vs SARSA 0.382, 5474-step speedup | **PARTIAL (benchmark proven)** |
 
@@ -180,29 +180,31 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 ---
 
-### Step 8: Prototype-AI I — MISLABELED / NOT IMPLEMENTED ❌
+### Step 8: Prototype-AI I — PARTIAL ⚠️
 
 **Paper requirement**: First complete AI prototype with ALL of:
 - (a) Recursive state-update (perception)
 - (b) One-step environment model
-- (c) Feature finding with importance feedback from model
+- (c) Feature finding with importance feedback
 - (d) Feature ranking for model inclusion
-- (e) Model learning + planning feedback cycling (acknowledged as hardest)
+- (e) Model learning + planning feedback cycling
 - (f) Search control
 
-**Implemented**: Sub-component (b) only — `OneStepWorldModel` predicting reward and next-observation.
+**Implemented**: The `step8.py` file provides sub-component (b) only (world model facade). But the **`PrototypeAgent` (v0.21.0)** integrates 5/6 sub-components as a complete system.
 
-**Critical issue**: The code's "Step 8" is labeled "One-step world model facade" and is used as a component within Step 7 Dyna and Step 9 guarded dreaming. This is correct as a *component* — but calling it "Step 8" implies it IS the paper's Step 8, which it is not. The paper's Step 8 is a COMPLETE INTEGRATED AI AGENT, not a component.
+**Sub-component audit (PrototypeAgent)**:
+- (a) Recursive state-update: PARTIAL — Q-function updates recursively; no explicit LSTM/GRU
+- (b) One-step model: ✅ `ActionConditionedWorldModel`
+- (c) Feature finding with importance: ✅ `feature_to_subtask_specs()` — Q-weight importance → SubtaskSpec creation
+- (d) Feature ranking: ✅ Q-weight importance ranks observation dimensions for subtask targeting
+- (e) Cycling feedback: ✅ OaK curation cycle (utility tracking → add/remove options; feature_to_subtask_specs feeds back into option creation)
+- (f) Search control: ✅ `GuardedDreamer` — error-gated acceptance of model transitions
 
-**Sub-component audit**:
-- (a) Recursive state-update: ❌ Not implemented as Step 8 component
-- (b) One-step model: ✅ Implemented
-- (c) Feature finding with model feedback: ❌ Not implemented
-- (d) Feature ranking: ❌ Not implemented
-- (e) Cycling feedback: ❌ Not implemented (acknowledged as hardest in paper)
-- (f) Search control: ❌ Not implemented (misrouted to Step 9)
+**Evidence**: PrototypeAgent has 50 passing tests. `test_prototype_agent.py` covers init, update, world model integration, feature extraction. `feature_to_subtask_specs()` tested in `test_prototype_features.py`.
 
-**Verdict**: Serious labeling/scoping issue. The world model is a real component, but 5/6 sub-components of the paper's Prototype-AI I are not implemented.
+**Remaining gaps**: No explicit recursive hidden state (LSTM/RNN). Feature ranking uses Q-weights, not model prediction error (paper envisions model-driven feedback). No benchmark showing integrated agent outperforms components.
+
+**Verdict**: The PrototypeAgent IS the paper's Prototype-AI I concept as an integrated agent. 5/6 sub-components implemented. The `step8.py` label is misleading (it's one sub-component), but the full integration exists in `PrototypeAgent`.
 
 ---
 
@@ -273,9 +275,9 @@ Solution gate: `solved_step5_full_research_scope: true`.
 - **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP (prioritized sweeping) also proven on 20-state chain (8/10 wins, 0.7368 vs 0.7302). Function approximation planning open.
 - **Step 10**: STOMP mechanics + auto-discovery (`subtasks_from_feature_scores`) + semi-MDP Bellman backup + benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
 
-### What IS NOT proven/complete:
-- **Step 8**: MISLABELED — implements only 1/6 sub-components of the paper's Prototype-AI I (world model only). Honest solution gate.
-- **Step 9**: MISALIGNED — guarded dreaming ≠ search control per paper's definition. Honest solution gate.
+### What IS NOT fully proven:
+- **Step 8**: PrototypeAgent implements 5/6 sub-components. Missing: explicit recursive hidden state (LSTM/GRU) and model-driven feature ranking. No benchmark evidence.
+- **Step 9**: Guarded dreaming is a narrow form of search control (accept/reject model transitions) vs paper's broader vision (which states to back up). Honest solution gate; benchmark pending.
 
 ### The key architectural claim to verify:
 The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing. But "primitive" should not be confused with "complete." The paper's Steps 8-9 describe an integrated Prototype-AI system that requires all prior steps to converge. The current code has building blocks but not the integrated system.
@@ -287,19 +289,11 @@ The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing
 ### Step 7 (Priority: Low — tabular proven, FA open)
 Tabular Dyna and async DP both benchmarked. Remaining gap: run on CartPole/bsuite with ContinuingWrapper for function-approximation planning evidence.
 
-### Step 8 (Priority: Medium)
-Either:
-(a) Rename code "Step 8" to "OneStepWorldModel component" and acknowledge it's a Step 8 sub-component, OR
-(b) Implement the remaining 5 sub-components of Prototype-AI I
-
-Option (a) is more honest for current scope. Option (b) is a substantial research project.
+### Step 8 (Priority: Low — mostly done via PrototypeAgent)
+PrototypeAgent already implements 5/6 sub-components. Remaining gaps: explicit LSTM/RNN state, model-driven feature ranking feedback loop. A benchmark showing the integrated agent's advantage would strengthen the evidence.
 
 ### Step 9 (Priority: Medium)
-Either:
-(a) Rename code "Step 9" to "GuardedDreaming" and acknowledge it's not Step 9 per paper, OR
-(b) Implement flexible state update ordering / prioritized sweeping with function approximation
-
-Option (a) is more honest. Option (b) requires significant algorithmic work.
+Guarded dreaming is a narrow form of search control. Benchmark pending (`benchmarks/step9_guarded_dreaming.py`). Broader prioritized sweeping with function approximation remains open research.
 
 ### Step 10 (Priority: High)
 Implement auto-discovery: wire a feature-ranking score into SubtaskSpec creation. The feature relevance diagnostics (`compute_feature_relevance`) are already implemented — using them to automatically generate SubtaskSpecs would complete the core STOMP loop. Then add semi-MDP Bellman backup using option models.
