@@ -384,6 +384,12 @@ Findings:
   (`outputs/bsuite/nlhac_gradclip_adaptive_10seed_1000/report.md`) sharpened
   the same conclusion: adaptive NLHAC was `+8.1` overall and `+22.2` on
   CartPole vs Q, but `-6.0` on catch; SARSA was `+13.4` on catch.
+- A wider actor/critic pilot
+  (`outputs/bsuite/nlhac_gradclip_wide_catch3_500/report.md`) tested
+  `(64, 64)` hidden layers on catch/0 for 3 seeds. Wider NLHAC regressed
+  `-2.0` regret versus Q, while base `nlhac_gradclip` was `-0.67` and SARSA
+  was `+9.33`. Extra nonlinear capacity alone therefore does not explain or
+  close the catch boundary.
 
 ### Verdict
 
