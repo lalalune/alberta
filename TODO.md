@@ -151,6 +151,25 @@ Artifacts:
 - [ ] Prioritized dream selection (surprise × utility from `score_dream_candidates`)
 - [ ] Seeded benchmark evidence: guarded dreaming vs Step 7 one-step Dyna on continuing tasks
 
+## Step 10 — STOMP Progression (Primitive Implemented)
+
+- [x] `SubtaskSpec` / `STOMPSpecArrays`: feature-reaching subtask definitions and JAX arrays
+- [x] `IntraOptionPoliciesState`, `OptionModelsState`, `STOMPState`: batched state for N options
+- [x] `STOMPAgent`: `init()`, `start()`, `update()`, `scan()` with `jax.lax.cond` option branching
+- [x] Intra-option differential Q-learning with pseudo-rewards per subtask
+- [x] Option outcome models: EMA cumulative reward, EMA discount, linear next-state delta predictor
+- [x] Option termination: feature threshold OR max-step cap, both as JAX boolean ops
+- [x] Extended action space: base agent acts over {primitives} ∪ {options}
+- [x] `STOMPConfig` / `Step10STOMPConfig`: `to_config()` / `from_config()` roundtrip
+- [x] Production facade `steps.step10`: `make_step10_stomp_agent`, `init_step10_state`,
+      `step10_update`, `run_step10_scan`, `run_step10_smoke`
+- [x] 36 tests: config validation, roundtrip, factory, init, termination, max-step, scan shapes,
+      two-subtask runs, smoke, 200-step fineness
+- [ ] Option discovery (learned subtasks instead of hand-specified)
+- [ ] Semi-MDP planning with option models for multi-step base Q backups
+- [ ] Off-policy intra-option learning with importance-sampling corrections
+- [ ] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals
+
 ## Infrastructure
 
 - [ ] Update CHANGELOG.md with each release (moved from CLAUDE.md)

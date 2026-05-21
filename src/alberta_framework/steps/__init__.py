@@ -1,11 +1,12 @@
-"""Production-facing kernels for Alberta Plan Steps 1-9.
+"""Production-facing kernels for Alberta Plan Steps 1-10.
 
 The modules in this package intentionally expose a small, stable surface over
 the larger research codebase.  They are the recommended imports for downstream
 systems that want the current Step 1, Step 2, given-feature Step 3, and Step 4
 control learners, plus the primitive Step 5-9 average-reward, planning,
-world-model, and guarded-dreaming surfaces, without depending on experiment
-scripts or exploratory research modules.
+world-model, and guarded-dreaming surfaces, and the Step 10 STOMP temporal-
+abstraction progression, without depending on experiment scripts or exploratory
+research modules.
 """
 
 from alberta_framework.steps.step1 import (
@@ -117,6 +118,15 @@ from alberta_framework.steps.step9 import (
     run_step9_smoke,
     step9_update,
 )
+from alberta_framework.steps.step10 import (
+    Step10SmokeResult,
+    Step10STOMPConfig,
+    init_step10_state,
+    make_step10_stomp_agent,
+    run_step10_scan,
+    run_step10_smoke,
+    step10_update,
+)
 
 __all__ = [
     "Step1KernelConfig",
@@ -210,4 +220,11 @@ __all__ = [
     "run_step9_scan",
     "run_step9_smoke",
     "step9_update",
+    "Step10SmokeResult",
+    "Step10STOMPConfig",
+    "init_step10_state",
+    "make_step10_stomp_agent",
+    "run_step10_scan",
+    "run_step10_smoke",
+    "step10_update",
 ]

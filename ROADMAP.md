@@ -218,6 +218,10 @@ preserving foreground, continuing real-time control.
 - Real action context restoration after planning, so background backups do not
   corrupt the live environment interaction state
 - Production facade `steps.step7` with scan-compatible smoke tests
+- Seeded one-state continuing-control sample-efficiency benchmark:
+  Step 7 reward-prioritized Dyna improves final-window reward from `0.94` to
+  `1.00` and Q-gap by `+3.75` over Step 6 real-only differential SARSA across
+  5 seeds (`outputs/step7_dyna/results.json`)
 
 **Remaining research boundary**:
 - Predecessor-based prioritized sweeping and learned search-control
@@ -281,12 +285,54 @@ linear differential SARSA agent from Step 6 (`DifferentialSARSAAgent`).
 - Seeded benchmark evidence that guarded dreaming improves continuing control over
   Step 7 one-step Dyna on continuing gymnasium tasks
 
-## Steps 10–12: Intelligence — Future
+## Step 10: STOMP Progression — Primitive Implemented
+
+**Goal**: Introduce temporal abstraction via the STOMP progression (SubTasks, Options, Models,
+Planning).  The agent can now execute temporally extended actions (options) defined by
+feature-reaching subtasks, learn multi-step outcome models for each option, and act over an
+extended action space of both primitive and option actions.
+
+This corresponds to Alberta Plan Step 10 ("Intelligence I: Temporal abstraction and options" —
+Sutton et al. 2022).  The reference architecture is the options framework (Sutton, Precup &
+Singh 1999) applied to the continuing average-reward control setting from Step 6.
+
+The STOMP components:
+* **SubTasks** — Feature-reaching sub-problems.  Each subtask is a `SubtaskSpec` specifying a
+  feature index, threshold, pseudo-reward scale, and maximum option duration.
+* **Options** — Temporally extended actions.  Each option has an intra-option differential
+  Q-policy trained with subtask pseudo-rewards (same average-reward formulation as Step 6).
+* **Models** — Per-option outcome models.  At option termination the model observes cumulative
+  pseudo-reward, accumulated discount, and the start→end state delta, updating EMA statistics
+  and a linear next-state predictor.
+* **Planning** — The base agent acts over the extended action set {primitives} ∪ {options}.
+  When an option is selected its intra-option policy drives primitive environment actions until
+  termination.
+
+**Delivered primitive surface**:
+- `SubtaskSpec` / `STOMPSpecArrays`: subtask definitions and their JAX-array representations
+- `IntraOptionPoliciesState`, `OptionModelsState`, `STOMPState`: batched-over-options state
+- `STOMPAgent`: `init()`, `start()`, `update()`, `scan()` with `jax.lax.cond` option branching
+- `STOMPConfig` / `Step10STOMPConfig`: fully serializable configuration with `to_config()` /
+  `from_config()`
+- `make_step10_stomp_agent`, `init_step10_state`, `step10_update`, `run_step10_scan`,
+  `run_step10_smoke`: standard production facade
+- `core/options.py`: JAX-compatible STOMP core with functional, scan-friendly implementations
+- 36 tests covering config validation, config roundtrip, factory, init, option termination,
+  option max-step cap, base Q update, option model update, scan shapes, two-subtask runs,
+  smoke probe, and 200-step fineness check
+
+**Remaining research boundary**:
+- Option and subtask discovery (rather than hand-specified subtasks)
+- Semi-MDP planning: using option models for multi-step backups at the base level
+- Off-policy intra-option learning (importance-sampling corrections)
+- Seeded benchmark evidence that options improve continuing control over flat Step 6 on
+  continuing gymnasium tasks with reachable sub-goals
+
+## Steps 11–12: Intelligence — Future
 
 **Goal**: Integrate all components into a cohesive architecture.
 
-- Subtask and option discovery (STOMP progression)
-- Hierarchical architectures
+- Hierarchical architectures with discovered options
 - Multi-agent coordination
 - OaK: the integrated proto-AI agent
 
