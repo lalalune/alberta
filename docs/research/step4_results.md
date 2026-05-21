@@ -371,6 +371,16 @@ Findings:
   SARSA improved `+12.0` regret over Q; the best NLQHorde variant only tied
   Q at `0.0`, with the other variants negative. This rules out the simple
   action-value critic substitution as a Step 4 closure path.
+- An adaptive-ObGD bounder variant (`AdaptiveObGDBounding`) was added to test
+  the Elsayed Appendix-B style RMS update normalization as a critic/actor
+  bounder. A 3-seed catch/0 pilot improved over base gradient-clipped NLHAC
+  (`+5.33` vs Q, compared with `+0.67` for base), but the 10-seed catch/cartpole
+  confirmation at 500 steps
+  (`outputs/bsuite/nlhac_gradclip_adaptive_10seed_500/report.md`) did not close
+  Step 4: adaptive NLHAC was `+4.6` overall and `+10.6` on CartPole vs Q, but
+  `-1.4` on catch, while SARSA was `+6.6` on catch. Adaptive bounding improves
+  one part of the control profile but does not solve the high-dimensional
+  catch boundary.
 
 ### Verdict
 
