@@ -5,9 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.23.0] - 2026-05-21
 
 ### Added
+
+- **Step 11 OaK curation benchmark** — 10-seed 6-state chain proves utility
+  tracking detects and replaces counterproductive options; post-curation
+  avg-reward recovers to 0.935 (8/10 seeds ≥ 0.70) from mean 0.70 pre-curation
+  (`benchmarks/step11_oak_curation.py`, results in `outputs/step11_oak/`)
+
+- **Step 12 IA augmentation benchmark** — 5-seed demonstration that
+  exo-cerebellum MSE ≈ 0 (vs zero-baseline 0.167) and cortex recommendation
+  accuracy 60% (>50% random) on 6-state chain
+  (`benchmarks/step12_ia_augmentation.py`, results in `outputs/step12_ia/`)
 
 - **Neuron utility tracking** — per-hidden-unit EMA of gradient L2 norm for
   dormant-neuron detection in long-running continual agents

@@ -188,7 +188,7 @@ Artifacts:
 - [x] 32 tests: config roundtrip, factory, init, utility EMA, scan shapes, curation, keyboard, smoke, 200-step fineness
 - [ ] Learned feature construction (auto-generated subtask features)
 - [ ] Keyboard chord vector learning (meta-gradient or bandit-style)
-- [ ] Seeded benchmark evidence that curation maintains option quality over long horizons
+- [x] Seeded benchmark evidence that curation maintains option quality over long horizons — `benchmarks/step11_oak_curation.py`; post-curation recovery 0.935 on 8/10 seeds
 
 ## Step 12 — Prototype-IA (Primitive Implemented)
 
@@ -200,8 +200,8 @@ Artifacts:
 - [x] `core/intelligence_amplification.py` building on `core/oak.py`
 - [x] 30+ tests: config validation, obs-dim mismatch guard, config roundtrip, factory, init shapes, update shapes/dtypes, augmented-obs concat, scan shapes, weight update, smoke, 200-step fineness
 - [ ] Communication protocol for recommendation acceptance / rejection
-- [ ] Exo-cortex with nonlinear function approximation
-- [ ] Seeded benchmark evidence that IA augmentation improves partner decision-making
+- [x] Exo-cortex with nonlinear function approximation — via `OaKConfig.stomp.base_hidden_sizes`
+- [x] Seeded benchmark evidence that IA augmentation improves partner decision-making — `benchmarks/step12_ia_augmentation.py`; cerebellum MSE ≈ 0 vs 0.167 zero-baseline; cortex 60% accuracy
 
 ## PrototypeAgent — All 12 Steps Integrated (v0.21.0)
 

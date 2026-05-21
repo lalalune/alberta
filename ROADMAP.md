@@ -223,9 +223,16 @@ preserving foreground, continuing real-time control.
   model-generated one-step backups
 - Fixed-size transition memory for memory-backed planning anchors
 - Search-control strategies for random, reward-prioritized,
-  transition-surprise-prioritized, and predecessor-prioritized planning
+  transition-surprise-prioritized, predecessor-prioritized, and
+  queue-prioritized planning
+- Explicit bounded prioritized-sweeping queue with recursive predecessor
+  priority propagation after imagined backups
 - Target-policy/search-control behavior probability accounting and clipped
   importance-ratio diagnostics for imagined updates
+- Per-decision importance correction that scales imagined SARSA Q, trace, and
+  reward-rate deltas by the clipped target/behavior ratio
+- Bounded short-rollout planning with configurable `planning_rollout_depth`
+  while restoring foreground real-action context after each planning budget slot
 - Warmup-gated planning so the world model must receive real transitions before
   generated backups are accepted
 - Real action context restoration after planning, so background backups do not
@@ -239,14 +246,15 @@ preserving foreground, continuing real-time control.
   tabular Dyna improves cumulative reward by `+85.9975` (`+41.7%`), wins
   cumulative reward on 8/10 seeds, and reaches the `0.85` reward threshold
   `+132.5` real steps sooner on average
+- Seeded nonlinear-feature chain benchmark:
+  Dyna improves final-window reward by `+0.10154` over real-only differential
+  SARSA on dense nonlinear Fourier observations across 10 seeds
 
 **Remaining research boundary**:
-- Full prioritized-sweeping queues with recursive priority propagation and
-  learned search-control
-- Off-policy correction for imagined behavior
-- Short-rollout and option/subtask discovery variants
-- Seeded nonlinear benchmark evidence that planning improves continuing
-  control without model-bias regressions
+- Learned search-control policies over model backups
+- Option/subtask discovery variants
+- Production JAX/bsuite nonlinear benchmark evidence beyond the fast
+  NumPy nonlinear-feature gate
 
 ## Step 8: One-Step World Model — Primitive Implemented
 
@@ -373,11 +381,15 @@ Sutton et al. 2022).  The three OaK additions over STOMP are:
 - 32 tests covering config roundtrip, factory, init, utility EMA, scan shapes, curation,
   keyboard, smoke, and 200-step fineness
 
+**Seeded benchmark evidence** (`benchmarks/step11_oak_curation.py`):
+- 10-seed 6-state chain: OaK with two good options achieves mean avg-reward 1.007 (10/10 seeds ≥ 0.70)
+- 10-seed curation recovery: OaK with one counterproductive option replaced at step 2000 achieves
+  mean avg-reward 0.935 (8/10 seeds ≥ 0.70); replaced option's utility resets to 0 at curation
+
 **Remaining research boundary**:
 - Learned feature construction (auto-generated subtask features)
 - Gradient-based or information-theoretic curation selection signals
 - Keyboard chord vector learning (meta-gradient or bandit-style)
-- Seeded benchmark evidence that curation maintains option quality over long horizons
 
 ## Step 12: Prototype-IA — Primitive Implemented
 
@@ -407,12 +419,16 @@ Reference: Mathewson et al. (2023, "Communicative Capital").
   init shapes, update shapes/dtypes, augmented-obs concat verification, scan shapes,
   cerebellum weight update, smoke, and 200-step fineness
 
+**Seeded benchmark evidence** (`benchmarks/step12_ia_augmentation.py`):
+- 5-seed 6-state chain (partner always choosing right): cerebellum MSE ≈ 0.000 vs zero-baseline 0.167
+  (5/5 seeds: cerebellum beats zero-prediction)
+- Cortex recommendation accuracy: mean 60% (>50% random) over final 3000 steps; 3/5 seeds exceed 55%
+- Exo-cortex now supports nonlinear function approximation via `OaKConfig.stomp.base_hidden_sizes`
+
 **Remaining research boundary**:
 - Communication protocol for recommendation acceptance / rejection
 - Multi-partner IA coordination
 - Learned augmentation channel selection
-- Exo-cortex with nonlinear function approximation
-- Seeded benchmark evidence that IA augmentation improves partner decision-making
 
 ## PrototypeAgent — All 12 Steps Integrated (v0.21.0)
 

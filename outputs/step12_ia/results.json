@@ -1,0 +1,46 @@
+{
+  "schema": "alberta.step12.ia_augmentation.v1",
+  "accepted_step12_ia_augmentation": true,
+  "accepted_step12_cerebellum_beats_baseline": true,
+  "accepted_step12_cortex_accuracy": true,
+  "solved_step12_full_research_scope": false,
+  "claim_scope": "ia_cerebellum_prediction_and_cortex_recommendation",
+  "evidence": {
+    "cerebellum_mse_vs_zero_baseline": {
+      "passed": true,
+      "n_seeds": 5,
+      "seeds_where_cere_wins": 5,
+      "mean_cerebellum_mse": 9.473901731746424e-15,
+      "mean_zero_baseline_mse": 0.166666641831398,
+      "per_seed_cere_mse": [
+        9.473901731746424e-15,
+        9.473901731746424e-15,
+        9.473901731746424e-15,
+        9.473901731746424e-15,
+        9.473901731746424e-15
+      ],
+      "per_seed_zero_mse": [
+        0.166666641831398,
+        0.166666641831398,
+        0.166666641831398,
+        0.166666641831398,
+        0.166666641831398
+      ]
+    },
+    "cortex_recommendation_accuracy": {
+      "passed": true,
+      "n_seeds": 5,
+      "seeds_above_55pct": 3,
+      "mean_accuracy": 0.6,
+      "threshold": "mean>0.55 and 3/5 seeds",
+      "per_seed_accuracy": [
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0
+      ]
+    }
+  },
+  "elapsed_s": 128.2682569026947
+}

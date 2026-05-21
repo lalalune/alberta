@@ -113,6 +113,8 @@ outputs/bsuite/**
 !outputs/step7_chain_planning/
 !outputs/step7_dyna/
 !outputs/step10_stomp/
+!outputs/step11_oak/
+!outputs/step12_ia/
 results/
 logs/
 *.png
