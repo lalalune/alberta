@@ -8,6 +8,7 @@ performance metrics (continuing mode).
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,24 @@ import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from bsuite.logging import csv_load
+
+try:
+    from bsuite.logging import csv_load
+except ModuleNotFoundError:
+    from benchmarks.bsuite._bsuite_path import bsuite_missing_message
+
+    class _MissingCSVLoad:
+        """Lazy bsuite CSV loader used when helper code runs without bsuite."""
+
+        @staticmethod
+        def load_bsuite(path: str) -> tuple[pd.DataFrame, dict[str, Any]]:
+            raise ModuleNotFoundError(bsuite_missing_message())
+
+    csv_load = _MissingCSVLoad()
+
+PREFERRED_CONTROL_METRICS = ("total_regret", "episode_return", "reward")
+LOWER_IS_BETTER = {"total_regret": True, "episode_return": False, "reward": False}
+_SEEDED_AGENT_RE = re.compile(r"^(?P<base>.+)_seed(?P<seed>\d+)$")
 
 
 def load_results(
@@ -40,7 +58,11 @@ def load_results(
     results: dict[str, pd.DataFrame] = {}
 
     if agent_names is None:
-        agent_dirs = [d for d in base_path.iterdir() if d.is_dir()]
+        agent_dirs = [
+            d
+            for d in base_path.iterdir()
+            if d.is_dir() and not d.name.startswith(("_", "."))
+        ]
         agent_names = [d.name for d in agent_dirs]
 
     for name in agent_names:
@@ -120,6 +142,374 @@ def compute_online_metrics(
         )
 
     return result
+
+
+def _split_agent_seed(agent_name: str) -> tuple[str, int]:
+    """Split ``agent_seed3`` names emitted by run_sweep comparison mode."""
+    match = _SEEDED_AGENT_RE.match(agent_name)
+    if match is None:
+        return agent_name, 0
+    return match.group("base"), int(match.group("seed"))
+
+
+def _metric_direction(metric: str) -> int:
+    """Return +1 when higher is better and -1 when lower is better."""
+    return -1 if LOWER_IS_BETTER.get(metric, False) else 1
+
+
+def _improvement(candidate: pd.Series, baseline: pd.Series, metric: pd.Series) -> pd.Series:
+    """Compute signed candidate improvement over baseline per metric."""
+    lower_is_better = metric.map(lambda name: LOWER_IS_BETTER.get(str(name), False))
+    return pd.Series(
+        np.where(lower_is_better, baseline - candidate, candidate - baseline),
+        index=candidate.index,
+    )
+
+
+def final_metric_rows(
+    results: dict[str, pd.DataFrame],
+    metric: str,
+    experiments: list[str] | None = None,
+) -> pd.DataFrame:
+    """Return the final non-null metric value per agent, seed, and bsuite id."""
+    rows: list[dict[str, Any]] = []
+    experiment_filter = set(experiments or [])
+
+    for output_agent, df in sorted(results.items()):
+        if metric not in df.columns or "bsuite_id" not in df.columns:
+            continue
+        base_agent, seed = _split_agent_seed(output_agent)
+        working = df.copy()
+        working["experiment"] = working["bsuite_id"].str.split("/").str[0]
+        if experiment_filter:
+            working = working[working["experiment"].isin(experiment_filter)]
+        if working.empty:
+            continue
+
+        for bsuite_id, group in working.groupby("bsuite_id", sort=True):
+            values = group[metric].dropna()
+            if values.empty:
+                continue
+            experiment_name = str(group["experiment"].iloc[0])
+            rows.append(
+                {
+                    "agent": base_agent,
+                    "output_agent": output_agent,
+                    "seed": seed,
+                    "bsuite_id": bsuite_id,
+                    "experiment": experiment_name,
+                    "metric": metric,
+                    "value": float(values.iloc[-1]),
+                }
+            )
+
+    if not rows:
+        return pd.DataFrame(
+            columns=[
+                "agent",
+                "output_agent",
+                "seed",
+                "bsuite_id",
+                "experiment",
+                "metric",
+                "value",
+            ]
+        )
+    return pd.DataFrame(rows).sort_values(["bsuite_id", "seed", "agent"]).reset_index(
+        drop=True
+    )
+
+
+def final_preferred_metric_rows(
+    results: dict[str, pd.DataFrame],
+    experiments: list[str] | None = None,
+) -> pd.DataFrame:
+    """Return final rows using each task's first available control metric."""
+    rows: list[pd.DataFrame] = []
+
+    for metric in PREFERRED_CONTROL_METRICS:
+        metric_rows = final_metric_rows(results, metric=metric, experiments=experiments)
+        if metric_rows.empty:
+            continue
+        metric_rows = metric_rows.copy()
+        metric_rows["_metric_rank"] = PREFERRED_CONTROL_METRICS.index(metric)
+        rows.append(metric_rows)
+
+    if not rows:
+        return final_metric_rows(results, metric=PREFERRED_CONTROL_METRICS[0])
+
+    all_rows = pd.concat(rows, ignore_index=True)
+    task_metric = (
+        all_rows.groupby(["bsuite_id", "experiment", "_metric_rank", "metric"], sort=True)
+        .size()
+        .reset_index(name="n")
+        .sort_values(["bsuite_id", "_metric_rank"])
+        .drop_duplicates(["bsuite_id"], keep="first")
+    )
+    selected = all_rows.merge(
+        task_metric[["bsuite_id", "metric"]],
+        on=["bsuite_id", "metric"],
+        how="inner",
+    )
+    return (
+        selected.drop(columns=["_metric_rank"])
+        .sort_values(["bsuite_id", "seed", "agent"])
+        .reset_index(drop=True)
+    )
+
+
+def compare_sarsa_vs_q(
+    results: dict[str, pd.DataFrame],
+    q_agent: str = "autostep",
+    sarsa_agent: str = "sarsa",
+    metric: str = "total_regret",
+    experiments: list[str] | None = None,
+) -> pd.DataFrame:
+    """Pair final SARSA and Q-learning metrics by seed and bsuite id."""
+    if metric == "auto":
+        return compare_sarsa_vs_q_preferred_metric(
+            results,
+            q_agent=q_agent,
+            sarsa_agent=sarsa_agent,
+            experiments=experiments,
+        )
+
+    rows = final_metric_rows(results, metric=metric, experiments=experiments)
+    if rows.empty:
+        return pd.DataFrame()
+    q_rows = rows[rows["agent"] == q_agent].rename(columns={"value": "q_value"})
+    sarsa_rows = rows[rows["agent"] == sarsa_agent].rename(
+        columns={"value": "sarsa_value"}
+    )
+    pairs = q_rows.merge(
+        sarsa_rows,
+        on=["seed", "bsuite_id", "experiment", "metric"],
+        suffixes=("_q", "_sarsa"),
+    )
+    if pairs.empty:
+        return pairs
+    pairs["improvement_vs_q"] = _improvement(
+        pairs["sarsa_value"],
+        pairs["q_value"],
+        pairs["metric"],
+    )
+    keep = [
+        "seed",
+        "bsuite_id",
+        "experiment",
+        "metric",
+        "q_value",
+        "sarsa_value",
+        "improvement_vs_q",
+    ]
+    return pairs[keep].sort_values(["bsuite_id", "seed"]).reset_index(drop=True)
+
+
+def compare_sarsa_vs_q_preferred_metric(
+    results: dict[str, pd.DataFrame],
+    q_agent: str = "autostep",
+    sarsa_agent: str = "sarsa",
+    experiments: list[str] | None = None,
+) -> pd.DataFrame:
+    """Compare SARSA and Q-learning using each task's preferred metric."""
+    rows = final_preferred_metric_rows(results, experiments=experiments)
+    if rows.empty:
+        return pd.DataFrame()
+    q_rows = rows[rows["agent"] == q_agent].rename(columns={"value": "q_value"})
+    sarsa_rows = rows[rows["agent"] == sarsa_agent].rename(
+        columns={"value": "sarsa_value"}
+    )
+    pairs = q_rows.merge(
+        sarsa_rows,
+        on=["seed", "bsuite_id", "experiment", "metric"],
+        suffixes=("_q", "_sarsa"),
+    )
+    if pairs.empty:
+        return pairs
+    pairs["improvement_vs_q"] = _improvement(
+        pairs["sarsa_value"],
+        pairs["q_value"],
+        pairs["metric"],
+    )
+    keep = [
+        "seed",
+        "bsuite_id",
+        "experiment",
+        "metric",
+        "q_value",
+        "sarsa_value",
+        "improvement_vs_q",
+    ]
+    return pairs[keep].sort_values(["bsuite_id", "seed"]).reset_index(drop=True)
+
+
+def compare_step4_control(
+    results: dict[str, pd.DataFrame],
+    control_agents: list[str] | None = None,
+    baseline_agent: str = "autostep",
+    metric: str = "auto",
+    experiments: list[str] | None = None,
+) -> pd.DataFrame:
+    """Compare Step 4 control candidates against a baseline Q learner."""
+    agents = control_agents or [baseline_agent, "sarsa", "actor_critic"]
+    rows = (
+        final_preferred_metric_rows(results, experiments=experiments)
+        if metric == "auto"
+        else final_metric_rows(results, metric=metric, experiments=experiments)
+    )
+    if rows.empty:
+        return pd.DataFrame()
+
+    rows = rows[rows["agent"].isin(agents)]
+    values = rows.pivot_table(
+        index=["seed", "bsuite_id", "experiment", "metric"],
+        columns="agent",
+        values="value",
+        aggfunc="last",
+    ).reset_index()
+    if baseline_agent not in values.columns:
+        return pd.DataFrame()
+
+    for agent_name in agents:
+        if agent_name == baseline_agent or agent_name not in values.columns:
+            continue
+        values[f"{agent_name}_improvement_vs_{baseline_agent}"] = _improvement(
+            values[agent_name],
+            values[baseline_agent],
+            values["metric"],
+        )
+
+    return values.sort_values(["bsuite_id", "seed"]).reset_index(drop=True)
+
+
+def _summarize_pairs(
+    pairs: pd.DataFrame,
+    improvement_columns: list[str],
+) -> pd.DataFrame:
+    """Summarize paired comparison rows by experiment and overall."""
+    if pairs.empty:
+        return pd.DataFrame()
+    rows: list[dict[str, Any]] = []
+    for experiment_name, group in pairs.groupby("experiment", sort=True):
+        row: dict[str, Any] = {
+            "scope": experiment_name,
+            "n": int(len(group)),
+            "metrics": ", ".join(sorted(group["metric"].unique())),
+        }
+        for col in improvement_columns:
+            if col in group:
+                row[f"{col}_mean"] = float(group[col].mean())
+                row[f"{col}_wins"] = int((group[col] > 0).sum())
+        rows.append(row)
+
+    overall: dict[str, Any] = {
+        "scope": "overall",
+        "n": int(len(pairs)),
+        "metrics": ", ".join(sorted(pairs["metric"].unique())),
+    }
+    for col in improvement_columns:
+        if col in pairs:
+            overall[f"{col}_mean"] = float(pairs[col].mean())
+            overall[f"{col}_wins"] = int((pairs[col] > 0).sum())
+    rows.append(overall)
+    return pd.DataFrame(rows)
+
+
+def format_sarsa_q_report(
+    results: dict[str, pd.DataFrame],
+    q_agent: str = "autostep",
+    sarsa_agent: str = "sarsa",
+    metric: str = "total_regret",
+    experiments: list[str] | None = None,
+) -> str:
+    """Format a Markdown SARSA-vs-Q comparison report."""
+    pairs = compare_sarsa_vs_q(
+        results,
+        q_agent=q_agent,
+        sarsa_agent=sarsa_agent,
+        metric=metric,
+        experiments=experiments,
+    )
+    lines = [
+        "# SARSA vs Q-learning",
+        "",
+        f"Metric: `{metric}`",
+        f"Q agent: `{q_agent}`",
+        f"SARSA agent: `{sarsa_agent}`",
+        "",
+    ]
+    if pairs.empty:
+        lines.append("No paired results found.")
+        return "\n".join(lines)
+
+    summary = _summarize_pairs(pairs, ["improvement_vs_q"])
+    lines.extend(
+        [
+            "## Summary",
+            "",
+            str(summary.to_markdown(index=False)),
+            "",
+            "## Paired Final Metrics",
+            "",
+            str(pairs.to_markdown(index=False)),
+        ]
+    )
+    return "\n".join(lines)
+
+
+def format_step4_control_report(
+    results: dict[str, pd.DataFrame],
+    control_agents: list[str] | None = None,
+    baseline_agent: str = "autostep",
+    metric: str = "auto",
+    experiments: list[str] | None = None,
+) -> str:
+    """Format a Markdown Step 4 control comparison report."""
+    agents = control_agents or [baseline_agent, "sarsa", "actor_critic"]
+    pairs = compare_step4_control(
+        results,
+        control_agents=agents,
+        baseline_agent=baseline_agent,
+        metric=metric,
+        experiments=experiments,
+    )
+    improvement_columns = [
+        f"{agent}_improvement_vs_{baseline_agent}"
+        for agent in agents
+        if agent != baseline_agent
+    ]
+    lines = [
+        "# Step 4 Control Comparison",
+        "",
+        f"Metric: `{metric}`",
+        f"Baseline agent: `{baseline_agent}`",
+        f"Control agents: `{', '.join(agents)}`",
+        "",
+    ]
+    if pairs.empty:
+        lines.append("No paired results found.")
+        return "\n".join(lines)
+
+    summary = _summarize_pairs(pairs, improvement_columns)
+    lines.extend(
+        [
+            "## Summary",
+            "",
+            str(summary.to_markdown(index=False)),
+            "",
+            "## Paired Final Metrics",
+            "",
+            str(pairs.to_markdown(index=False)),
+        ]
+    )
+    return "\n".join(lines)
+
+
+def write_markdown_report(output_path: str | Path, report: str) -> None:
+    """Write a Markdown report, creating parent directories."""
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(report)
 
 
 def compare_agents_bar(

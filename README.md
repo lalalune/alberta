@@ -29,15 +29,15 @@ This framework is developed as part of my D.Eng. work focusing on the foundation
 
 ### Roadmap
 
-Depending on my research trajectory I may or may not implement components required for the Alberta Plan. The current focus of this framework is the Step 1 Baseline Study, investigating the interaction between adaptive optimizers and online normalization.
+Depending on my research trajectory I may or may not implement every component required for the Alberta Plan. The current package includes production-facing kernels through Step 4, while the broad research claims remain deliberately scoped to the evidence that has actually been run.
 
 | Step | Focus | Status |
 |------|-------|--------|
-| 1 | Meta-learned step-sizes (IDBD, Autostep) | **Complete** |
-| 2 | Nonlinear function approximation (MLP, ObGD) | **In Progress** |
-| 3 | GVF predictions, Horde architecture | Planned |
-| 4 | Actor-critic with eligibility traces | Planned |
-| 5-6 | Off-policy learning, average reward | Planned |
+| 1 | Fixed-feature continual supervised learning | **Complete** |
+| 2 | Supervised nonlinear feature finding | **Supervised matrix accepted; broader representation discovery remains research** |
+| 3 | GVF predictions, Horde-style architecture | **Given-feature GVF/Horde accepted; off-policy nonlinear Horde and feature discovery open** |
+| 4 | Continual control | **SARSA accepted; actor-critic implemented but not canonical** |
+| 5-6 | Average reward and continuing control | Planned |
 | 7-12 | Hierarchical, multi-agent, world models | Future |
 
 ## Installation

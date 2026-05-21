@@ -336,6 +336,45 @@ class TestSARSAUpdate:
         pred_changed = not jnp.allclose(old_pred_weights, new_pred_weights)
         assert pred_changed, "Prediction demon head should have been updated"
 
+    def test_td_error_uses_last_observation_prediction(self):
+        """Returned TD error is target - Q(s_t, a_t), not Q(s_{t+1}, a_t)."""
+        agent = _make_agent(n_actions=2, hidden_sizes=(), gamma=0.0, epsilon_start=0.0)
+        state = agent.init(feature_dim=2, key=jr.key(42))
+        head_weights = state.learner_state.head_params.weights
+        state = state.replace(  # type: ignore[attr-defined]
+            learner_state=state.learner_state.replace(  # type: ignore[attr-defined]
+                head_params=state.learner_state.head_params.replace(  # type: ignore[attr-defined]
+                    weights=(
+                        head_weights[0].at[0, 0].set(2.0),
+                        head_weights[1],
+                    )
+                )
+            ),
+            last_action=jnp.array(0, dtype=jnp.int32),
+            last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        )
+
+        next_observation = jnp.array([0.0, 1.0], dtype=jnp.float32)
+        reward = jnp.array(1.0, dtype=jnp.float32)
+        result = agent.update(
+            state,
+            reward=reward,
+            observation=next_observation,
+            terminated=jnp.array(0.0, dtype=jnp.float32),
+            next_action=jnp.array(1, dtype=jnp.int32),
+        )
+
+        previous_q = agent.horde.predict(
+            state.learner_state,
+            state.last_observation,
+        )[0]
+        next_same_action_q = agent.horde.predict(
+            state.learner_state,
+            next_observation,
+        )[0]
+        chex.assert_trees_all_close(result.td_error, reward - previous_q)
+        assert not jnp.allclose(result.td_error, reward - next_same_action_q)
+
     def test_sarsa_vs_qlearning_different_targets(self):
         """SARSA uses Q(s', a') while Q-learning uses max Q(s', :)."""
         agent = _make_agent(n_actions=3, gamma=0.9, epsilon_start=0.0)

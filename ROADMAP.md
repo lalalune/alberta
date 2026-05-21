@@ -189,9 +189,10 @@ The Alberta Plan's Step 4 ("Control I: Continual actor-critic control" — Sutto
   `docs/research/step4_results.md`
 
 **Remaining research boundary**:
-- Apply Autostep per-weight adaptation to the actor step-size (currently a fixed
-  scalar `actor_step_size`); this would close the actor vs. SARSA gap by
-  adapting to task dimensionality automatically.
+- Autostep-for-actor is complete: `NonlinearHordeActorCriticAgent` (commit
+  fea98e1) and `AverageRewardHordeActorCriticAgent` now use per-weight
+  `Autostep` states for all actor parameters; fixed `actor_step_size` scalar
+  removed from both agents.
 - Promote nlhac to canonical Step 4 after Autostep-actor evidence matches SARSA
   on seeded continuing-control benchmarks.
 

@@ -116,6 +116,319 @@ class HordeActorCriticArrayResult:
     critic_td_errors: Float[Array, "num_steps n_demons"]
 
 
+@dataclasses.dataclass(frozen=True)
+class QHordeActorCriticConfig:
+    """Configuration for an action-value Horde actor-critic agent.
+
+    The critic uses one Horde control head per action and learns an expected
+    SARSA target, while the actor is updated by the taken action's TD error.
+    This keeps the policy-gradient actor but gives Step 4 actor-critic the
+    same action-conditioned critic interface as the SARSA baseline.
+    """
+
+    n_actions: int
+    gamma: float = 0.99
+    actor_step_size: float = 0.01
+    actor_lamda: float = 0.9
+    temperature: float = 1.0
+    actor_td_error_clip: float | None = None
+    critic_target: str = "expected_sarsa"
+    actor_update: str = "td_error"
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize this configuration to a dictionary."""
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> QHordeActorCriticConfig:
+        """Reconstruct a ``QHordeActorCriticConfig`` from a dictionary."""
+        return cls(**config)
+
+
+@chex.dataclass(frozen=True)
+class QHordeActorCriticState:
+    """Immutable state for ``QHordeActorCriticAgent``."""
+
+    actor_weights: Float[Array, "n_actions feature_dim"]
+    actor_bias: Float[Array, " n_actions"]
+    actor_trace_weights: Float[Array, "n_actions feature_dim"]
+    actor_trace_bias: Float[Array, " n_actions"]
+    critic_state: MultiHeadMLPState
+    last_observation: Float[Array, " feature_dim"]
+    last_action: Int[Array, ""]
+    rng_key: Array
+    step_count: Int[Array, ""]
+
+
+@chex.dataclass(frozen=True)
+class QHordeActorCriticUpdateResult:
+    """Result from one action-value Horde actor-critic update."""
+
+    state: QHordeActorCriticState
+    action: Int[Array, ""]
+    policy: Float[Array, " n_actions"]
+    q_values: Float[Array, " n_actions"]
+    next_q_values: Float[Array, " n_actions"]
+    target: Float[Array, ""]
+    td_error: Float[Array, ""]
+    bound_metric: Float[Array, ""]
+    critic_result: HordeUpdateResult
+
+
+class QHordeActorCriticAgent:
+    """Softmax actor with an action-value Horde critic.
+
+    The first ``n_actions`` Horde heads must be control demons with externally
+    supplied targets. Only the head for the action taken at ``s_t`` is updated
+    on each transition; optional prediction demons after the action heads may
+    update from supplied cumulants.
+    """
+
+    def __init__(
+        self,
+        config: QHordeActorCriticConfig,
+        critic: HordeLearner,
+        actor_bounder: Bounder | None = None,
+    ) -> None:
+        if config.n_actions <= 0:
+            raise ValueError("n_actions must be positive")
+        if not 0.0 <= config.gamma <= 1.0:
+            raise ValueError("gamma must be in [0, 1]")
+        if config.temperature <= 0:
+            raise ValueError("temperature must be positive")
+        if config.actor_td_error_clip is not None and config.actor_td_error_clip <= 0:
+            raise ValueError("actor_td_error_clip must be positive when provided")
+        if config.critic_target not in {"expected_sarsa", "sampled_sarsa"}:
+            raise ValueError(
+                "critic_target must be 'expected_sarsa' or 'sampled_sarsa'"
+            )
+        if config.actor_update not in {"td_error", "expected_advantage"}:
+            raise ValueError(
+                "actor_update must be 'td_error' or 'expected_advantage'"
+            )
+        if critic.n_demons < config.n_actions:
+            raise ValueError("critic must have at least one head per action")
+        for idx, demon in enumerate(critic.horde_spec.demons[: config.n_actions]):
+            if demon.demon_type is not DemonType.CONTROL:
+                raise ValueError(f"critic head {idx} must be a control demon")
+        self._config = config
+        self._critic = critic
+        self._actor_bounder = actor_bounder
+
+    @property
+    def config(self) -> QHordeActorCriticConfig:
+        """Actor configuration."""
+        return self._config
+
+    @property
+    def critic(self) -> HordeLearner:
+        """Underlying action-value Horde critic."""
+        return self._critic
+
+    @property
+    def actor_bounder(self) -> Bounder | None:
+        """Optional actor update bounder."""
+        return self._actor_bounder
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize this agent to a dictionary."""
+        return {
+            "type": "QHordeActorCriticAgent",
+            "config": self._config.to_config(),
+            "critic": self._critic.to_config(),
+            "actor_bounder": (
+                self._actor_bounder.to_config()
+                if self._actor_bounder is not None
+                else None
+            ),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> QHordeActorCriticAgent:
+        """Reconstruct a ``QHordeActorCriticAgent`` from a dictionary."""
+        config = dict(config)
+        config.pop("type", None)
+        return cls(
+            config=QHordeActorCriticConfig.from_config(config["config"]),
+            critic=HordeLearner.from_config(config["critic"]),
+            actor_bounder=bounder_from_config(config["actor_bounder"])
+            if config.get("actor_bounder")
+            else None,
+        )
+
+    def init(self, feature_dim: int, key: Array) -> QHordeActorCriticState:
+        """Initialize actor and Horde critic state."""
+        actor_key, critic_key = jr.split(key)
+        zeros_actor = jnp.zeros((self._config.n_actions, feature_dim), dtype=jnp.float32)
+        zeros_bias = jnp.zeros((self._config.n_actions,), dtype=jnp.float32)
+        return QHordeActorCriticState(  # type: ignore[call-arg]
+            actor_weights=zeros_actor,
+            actor_bias=zeros_bias,
+            actor_trace_weights=zeros_actor,
+            actor_trace_bias=zeros_bias,
+            critic_state=self._critic.init(feature_dim, critic_key),
+            last_observation=jnp.zeros((feature_dim,), dtype=jnp.float32),
+            last_action=jnp.array(-1, dtype=jnp.int32),
+            rng_key=actor_key,
+            step_count=jnp.array(0, dtype=jnp.int32),
+        )
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def policy(
+        self,
+        state: QHordeActorCriticState,
+        observation: Array,
+    ) -> Float[Array, " n_actions"]:
+        """Compute softmax action probabilities for one observation."""
+        logits = state.actor_weights @ observation + state.actor_bias
+        return jax.nn.softmax(logits / self._config.temperature)
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def q_values(self, state: QHordeActorCriticState, observation: Array) -> Array:
+        """Compute action values from the first ``n_actions`` Horde heads."""
+        values = self._critic.predict(state.critic_state, observation)
+        return cast(Array, values[: self._config.n_actions])
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def select_action(
+        self,
+        state: QHordeActorCriticState,
+        observation: Array,
+    ) -> tuple[Int[Array, ""], Array, Float[Array, " n_actions"]]:
+        """Sample one action from the current softmax policy."""
+        key, sample_key = jr.split(state.rng_key)
+        probs = self.policy(state, observation)
+        action = jr.categorical(sample_key, jnp.log(jnp.maximum(probs, 1e-8))).astype(
+            jnp.int32
+        )
+        return action, key, probs
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def start(
+        self,
+        state: QHordeActorCriticState,
+        observation: Array,
+    ) -> tuple[QHordeActorCriticState, Int[Array, ""], Float[Array, " n_actions"]]:
+        """Select and store the first action for a stream or episode."""
+        action, key, probs = self.select_action(state, observation)
+        new_state = state.replace(  # type: ignore[attr-defined]
+            last_observation=observation,
+            last_action=action,
+            rng_key=key,
+        )
+        return new_state, action, probs
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def update(
+        self,
+        state: QHordeActorCriticState,
+        reward: Array,
+        observation: Array,
+        terminated: Array,
+        prediction_cumulants: Array | None = None,
+    ) -> QHordeActorCriticUpdateResult:
+        """Update actor and action-value Horde critic from one transition."""
+        cfg = self._config
+        prev_obs = state.last_observation
+        old_policy = self.policy(state, prev_obs)
+        next_policy = self.policy(state, observation)
+        sampled_next_action, sampled_key, sampled_policy = self.select_action(
+            state,
+            observation,
+        )
+        q_previous = self.q_values(state, prev_obs)
+        q_next = self.q_values(state, observation)
+        effective_gamma = jnp.where(terminated, 0.0, cfg.gamma)
+        next_value = (
+            q_next[sampled_next_action]
+            if cfg.critic_target == "sampled_sarsa"
+            else jnp.dot(next_policy, q_next)
+        )
+        target = jnp.asarray(reward, dtype=jnp.float32) + effective_gamma * next_value
+        q_old = q_previous[state.last_action]
+        td_error = target - q_old
+
+        cumulants = jnp.full(self._critic.n_demons, jnp.nan, dtype=jnp.float32)
+        cumulants = cumulants.at[state.last_action].set(target)
+        if prediction_cumulants is not None:
+            cumulants = cumulants.at[cfg.n_actions :].set(prediction_cumulants)
+        critic_result = self._critic.update(
+            state.critic_state,
+            prev_obs,
+            cumulants,
+            observation,
+        )
+
+        actor_td_error = (
+            td_error
+            if cfg.actor_td_error_clip is None
+            else jnp.clip(td_error, -cfg.actor_td_error_clip, cfg.actor_td_error_clip)
+        )
+        one_hot = jax.nn.one_hot(state.last_action, cfg.n_actions, dtype=jnp.float32)
+        sampled_actor_grad_bias = (one_hot - old_policy) / cfg.temperature
+        state_value = jnp.dot(old_policy, q_previous)
+        expected_actor_grad_bias = old_policy * (q_previous - state_value) / cfg.temperature
+        actor_grad_bias = (
+            expected_actor_grad_bias
+            if cfg.actor_update == "expected_advantage"
+            else sampled_actor_grad_bias
+        )
+        actor_grad_weights = actor_grad_bias[:, None] * prev_obs[None, :]
+        actor_decay = effective_gamma * cfg.actor_lamda
+        actor_trace_weights = actor_decay * state.actor_trace_weights + actor_grad_weights
+        actor_trace_bias = actor_decay * state.actor_trace_bias + actor_grad_bias
+        actor_scale = (
+            jnp.array(1.0, dtype=jnp.float32)
+            if cfg.actor_update == "expected_advantage"
+            else actor_td_error
+        )
+        actor_steps: tuple[Array, ...] = (
+            cfg.actor_step_size * actor_scale * actor_trace_weights,
+            cfg.actor_step_size * actor_scale * actor_trace_bias,
+        )
+        bound_metric = jnp.array(1.0, dtype=jnp.float32)
+        if self._actor_bounder is not None:
+            actor_steps, bound_metric = self._actor_bounder.bound(
+                actor_steps,
+                actor_td_error,
+                (state.actor_weights, state.actor_bias),
+            )
+        carry_traces = effective_gamma != 0.0
+        updated = state.replace(  # type: ignore[attr-defined]
+            actor_weights=state.actor_weights + actor_steps[0],
+            actor_bias=state.actor_bias + actor_steps[1],
+            actor_trace_weights=jnp.where(
+                carry_traces, actor_trace_weights, jnp.zeros_like(actor_trace_weights)
+            ),
+            actor_trace_bias=jnp.where(
+                carry_traces, actor_trace_bias, jnp.zeros_like(actor_trace_bias)
+            ),
+            critic_state=critic_result.state,
+            step_count=state.step_count + 1,
+        )
+        next_action, key, policy = (
+            (sampled_next_action, sampled_key, sampled_policy)
+            if cfg.critic_target == "sampled_sarsa"
+            else self.select_action(updated, observation)
+        )
+        new_state = updated.replace(
+            last_observation=observation,
+            last_action=next_action,
+            rng_key=key,
+        )
+        return QHordeActorCriticUpdateResult(  # type: ignore[call-arg]
+            state=new_state,
+            action=next_action,
+            policy=policy,
+            q_values=q_previous,
+            next_q_values=q_next,
+            target=target,
+            td_error=td_error,
+            bound_metric=bound_metric,
+            critic_result=critic_result,
+        )
+
+
 class HordeActorCriticAgent:
     """Discrete AC(lambda) actor using a Step 3 Horde/GVF critic.
 

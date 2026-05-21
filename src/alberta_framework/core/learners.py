@@ -19,6 +19,7 @@ from alberta_framework.core.initializers import sparse_init
 from alberta_framework.core.normalizers import (
     EMANormalizerState,
     Normalizer,
+    StreamingBatchNormalizerState,
     WelfordNormalizerState,
 )
 from alberta_framework.core.optimizers import (
@@ -127,7 +128,10 @@ class LinearLearner:
         self,
         optimizer: AnyOptimizer | None = None,
         normalizer: (
-            Normalizer[EMANormalizerState] | Normalizer[WelfordNormalizerState] | None
+            Normalizer[EMANormalizerState]
+            | Normalizer[WelfordNormalizerState]
+            | Normalizer[StreamingBatchNormalizerState]
+            | None
         ) = None,
     ):
         """Initialize the linear learner.
@@ -142,7 +146,12 @@ class LinearLearner:
     @property
     def normalizer(
         self,
-    ) -> Normalizer[EMANormalizerState] | Normalizer[WelfordNormalizerState] | None:
+    ) -> (
+        Normalizer[EMANormalizerState]
+        | Normalizer[WelfordNormalizerState]
+        | Normalizer[StreamingBatchNormalizerState]
+        | None
+    ):
         """The feature normalizer, or None if normalization is disabled."""
         return self._normalizer
 
@@ -1601,6 +1610,132 @@ class TDLinearLearner:
         )
 
 
+@chex.dataclass(frozen=True)
+class TrueOnlineTDState:
+    """State for True Online TD(lambda) with Dutch traces."""
+
+    weights: Float[Array, " feature_dim"]
+    bias: Float[Array, ""]
+    eligibility_traces: Float[Array, " feature_dim"]
+    bias_eligibility_trace: Float[Array, ""]
+    v_old: Float[Array, ""]
+    step_count: Array = None  # type: ignore[assignment]
+    birth_timestamp: float = 0.0
+    uptime_s: float = 0.0
+
+
+@chex.dataclass(frozen=True)
+class TrueOnlineTDUpdateResult:
+    """Result of one True Online TD(lambda) update."""
+
+    state: TrueOnlineTDState
+    prediction: Prediction
+    next_prediction: Prediction
+    td_error: Float[Array, ""]
+    metrics: Float[Array, " 4"]
+
+
+class TrueOnlineTDLearner:
+    """Linear True Online TD(lambda) learner with Dutch traces.
+
+    Implements the van Seijen et al. update for a linear value function with
+    an explicit bias feature. At terminal transitions (``gamma == 0``),
+    ``v_old`` is reset to zero so repeated one-step supervised transitions
+    reduce exactly to LMS.
+    """
+
+    def __init__(self, step_size: float = 0.05, trace_decay: float = 0.9):
+        """Initialize the learner."""
+        self._step_size = step_size
+        self._trace_decay = trace_decay
+
+    def init(self, feature_dim: int) -> TrueOnlineTDState:
+        """Initialize learner state."""
+        return TrueOnlineTDState(
+            weights=jnp.zeros(feature_dim, dtype=jnp.float32),
+            bias=jnp.array(0.0, dtype=jnp.float32),
+            eligibility_traces=jnp.zeros(feature_dim, dtype=jnp.float32),
+            bias_eligibility_trace=jnp.array(0.0, dtype=jnp.float32),
+            v_old=jnp.array(0.0, dtype=jnp.float32),
+            step_count=jnp.array(0, dtype=jnp.int32),
+            birth_timestamp=time.time(),
+            uptime_s=0.0,
+        )
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def predict(self, state: TrueOnlineTDState, observation: Observation) -> Prediction:
+        """Compute scalar value prediction."""
+        return jnp.atleast_1d(jnp.dot(state.weights, observation) + state.bias)
+
+    @functools.partial(jax.jit, static_argnums=(0,))
+    def update(
+        self,
+        state: TrueOnlineTDState,
+        observation: Observation,
+        reward: Array,
+        next_observation: Observation,
+        gamma: Array,
+    ) -> TrueOnlineTDUpdateResult:
+        """Apply one True Online TD(lambda) update."""
+        alpha = jnp.asarray(self._step_size, dtype=jnp.float32)
+        lamda = jnp.asarray(self._trace_decay, dtype=jnp.float32)
+        gamma_scalar = jnp.squeeze(gamma).astype(jnp.float32)
+
+        value = jnp.squeeze(self.predict(state, observation))
+        next_value = jnp.squeeze(self.predict(state, next_observation))
+        td_error = jnp.squeeze(reward) + gamma_scalar * next_value - value
+
+        trace_dot = jnp.dot(state.eligibility_traces, observation)
+        trace_dot = trace_dot + state.bias_eligibility_trace
+        trace_scale = 1.0 - alpha * gamma_scalar * lamda * trace_dot
+        new_traces = gamma_scalar * lamda * state.eligibility_traces + trace_scale * observation
+        new_bias_trace = gamma_scalar * lamda * state.bias_eligibility_trace + trace_scale
+
+        correction = value - state.v_old
+        update_scale = alpha * (td_error + correction)
+        new_weights = (
+            state.weights
+            + update_scale * new_traces
+            - alpha * correction * observation
+        )
+        new_bias = (
+            state.bias
+            + update_scale * new_bias_trace
+            - alpha * correction
+        )
+
+        terminal = gamma_scalar == 0.0
+        stored_traces = jnp.where(terminal, jnp.zeros_like(new_traces), new_traces)
+        stored_bias_trace = jnp.where(terminal, 0.0, new_bias_trace)
+        new_v_old = jnp.where(terminal, 0.0, next_value)
+        new_state = TrueOnlineTDState(
+            weights=new_weights,
+            bias=new_bias,
+            eligibility_traces=stored_traces,
+            bias_eligibility_trace=stored_bias_trace,
+            v_old=new_v_old,
+            step_count=state.step_count + 1,
+            birth_timestamp=state.birth_timestamp,
+            uptime_s=state.uptime_s,
+        )
+        metrics = jnp.array(
+            [
+                td_error**2,
+                td_error,
+                jnp.mean(jnp.abs(new_traces)),
+                new_v_old,
+            ],
+            dtype=jnp.float32,
+        )
+        return TrueOnlineTDUpdateResult(
+            state=new_state,
+            prediction=jnp.atleast_1d(value),
+            next_prediction=jnp.atleast_1d(next_value),
+            td_error=jnp.atleast_1d(td_error),
+            metrics=metrics,
+        )
+
+
 class TDStream(Protocol[StateT]):
     """Protocol for TD experience streams.
 
@@ -1668,4 +1803,44 @@ def run_td_learning_loop[StreamStateT](
     elapsed = time.time() - t0
     final_learner = final_learner.replace(uptime_s=final_learner.uptime_s + elapsed)  # type: ignore[attr-defined]
 
+    return final_learner, metrics
+
+
+def run_true_online_td_loop[StreamStateT](
+    learner: TrueOnlineTDLearner,
+    stream: TDStream[StreamStateT],
+    num_steps: int,
+    key: Array,
+    learner_state: TrueOnlineTDState | None = None,
+) -> tuple[TrueOnlineTDState, Array]:
+    """Run True Online TD(lambda) over a TD stream with ``jax.lax.scan``."""
+    if learner_state is None:
+        learner_state = learner.init(stream.feature_dim)
+    stream_state = stream.init(key)
+
+    def step_fn(
+        carry: tuple[TrueOnlineTDState, StreamStateT],
+        idx: Array,
+    ) -> tuple[tuple[TrueOnlineTDState, StreamStateT], Array]:
+        l_state, s_state = carry
+        timestep, new_s_state = stream.step(s_state, idx)
+        result = learner.update(
+            l_state,
+            timestep.observation,
+            timestep.reward,
+            timestep.next_observation,
+            timestep.gamma,
+        )
+        return (result.state, new_s_state), result.metrics
+
+    t0 = time.time()
+    (final_learner, _), metrics = jax.lax.scan(
+        step_fn,
+        (learner_state, stream_state),
+        jnp.arange(num_steps),
+    )
+    elapsed = time.time() - t0
+    final_learner = final_learner.replace(  # type: ignore[attr-defined]
+        uptime_s=final_learner.uptime_s + elapsed
+    )
     return final_learner, metrics

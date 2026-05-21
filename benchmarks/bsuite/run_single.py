@@ -43,6 +43,7 @@ from benchmarks.bsuite.agents import (  # noqa: E402
     horde_actor_critic,
     lms_dqn,
     nlhac,
+    qhorde_ac,
     sarsa,
 )
 from benchmarks.bsuite.configs import CONFIGS  # noqa: E402
@@ -69,6 +70,7 @@ AGENT_FACTORIES = {
     "actor_critic": actor_critic.default_agent,
     "horde_ac": horde_actor_critic.default_agent,
     "nlhac": nlhac.default_agent,
+    "qhorde_ac": qhorde_ac.default_agent,
 }
 
 
@@ -86,8 +88,7 @@ def make_agent(
     Parameters
     ----------
     agent_type : str
-        One of 'autostep', 'lms', 'adam', 'sarsa', 'actor_critic', or
-        'horde_ac'.
+        One of the configured bsuite agent factory names.
     obs_spec : dm_env.specs.Array
         Observation spec from the environment.
     action_spec : dm_env.specs.DiscreteArray
@@ -123,7 +124,14 @@ def make_agent(
 
     # Add common kwargs
     kwargs["seed"] = seed
-    if actual_type not in {"adam", "actor_critic", "sarsa", "horde_ac", "nlhac"}:
+    if actual_type not in {
+        "adam",
+        "actor_critic",
+        "sarsa",
+        "horde_ac",
+        "nlhac",
+        "qhorde_ac",
+    }:
         kwargs["log_representation"] = log_representation
         kwargs["log_interval"] = log_interval
 

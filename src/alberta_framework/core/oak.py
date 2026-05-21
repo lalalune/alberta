@@ -51,6 +51,7 @@ from alberta_framework.core.options import (
     STOMPUpdateResult,
     SubtaskSpec,
 )
+from alberta_framework.core.types import MLPParams
 
 # ---------------------------------------------------------------------------
 # Default config helper
@@ -285,6 +286,10 @@ class OaKAgent:
     def stomp_agent(self) -> STOMPAgent:
         return self._stomp
 
+    def base_q_values(self, state: OaKState, observation: Array) -> Array:
+        """Compute Q-values for all extended actions."""
+        return self._stomp.base_q_values(state.stomp_state, observation)
+
     def to_config(self) -> dict[str, Any]:
         return self._config.to_config()
 
@@ -515,14 +520,33 @@ class OaKAgent:
         )
 
         base_action_idx = n_prim + idx
-        new_base_q = state.stomp_state.base_q_weights.at[base_action_idx].set(
-            jnp.zeros_like(state.stomp_state.base_q_weights[base_action_idx])
+        ls = state.stomp_state.base_learner_state
+        new_head_weights = tuple(
+            jnp.zeros_like(w) if i == base_action_idx else w
+            for i, w in enumerate(ls.head_params.weights)
+        )
+        new_head_biases = tuple(
+            jnp.zeros_like(b) if i == base_action_idx else b
+            for i, b in enumerate(ls.head_params.biases)
+        )
+        new_head_traces = tuple(
+            (jnp.zeros_like(tw), jnp.zeros_like(tb)) if i == base_action_idx else (tw, tb)
+            for i, (tw, tb) in enumerate(ls.head_traces)
+        )
+        new_head_opt_states = tuple(
+            jax.tree_util.tree_map(jnp.zeros_like, opt) if i == base_action_idx else opt
+            for i, opt in enumerate(ls.head_optimizer_states)
+        )
+        new_base_learner_state = ls.replace(
+            head_params=MLPParams(weights=new_head_weights, biases=new_head_biases),
+            head_traces=new_head_traces,
+            head_optimizer_states=new_head_opt_states,
         )
 
         new_stomp_state = cast(
             STOMPState,
             state.stomp_state.replace(
-                base_q_weights=new_base_q,
+                base_learner_state=new_base_learner_state,
                 option_policies=new_option_policies,
                 option_models=new_option_models,
             ),

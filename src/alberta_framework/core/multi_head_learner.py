@@ -96,6 +96,8 @@ class MultiHeadMLPState:
         trunk_traces: Interleaved ``(w0, b0, w1, b1, ...)``
             eligibility traces for trunk layers
         head_traces: Per-head ``((w_trace, b_trace), ...)``
+        hidden_unit_utilities: EMA utility diagnostics for each hidden layer,
+            shape ``(hidden_sizes[layer],)``. Empty for linear models.
         normalizer_state: Optional online feature normalizer state
         step_count: Scalar step counter
     """
@@ -108,6 +110,7 @@ class MultiHeadMLPState:
     head_optimizer_states: tuple[Any, ...]  # tuple of (w_opt, b_opt) tuples
     trunk_traces: tuple[Array, ...]
     head_traces: tuple[Any, ...]  # tuple of (w_trace, b_trace) tuples
+    hidden_unit_utilities: tuple[Array, ...] = ()
     normalizer_state: AnyNormalizerState | None = None
     step_count: Array = None  # type: ignore[assignment]
     birth_timestamp: float = 0.0
@@ -261,6 +264,7 @@ class MultiHeadMLPLearner:
         head_optimizer: AnyOptimizer | None = None,
         per_head_gamma_lamda: tuple[float, ...] | None = None,
         trace_mode: TraceMode = TraceMode.ACCUMULATING,
+        utility_decay: float = 0.99,
     ):
         """Initialize the multi-head MLP learner.
 
@@ -292,7 +296,11 @@ class MultiHeadMLPLearner:
                 uses standard ``e_t = gl * e_{t-1} + grad``.
                 ``REPLACING`` sets the trace to the gradient where the
                 gradient is nonzero, decaying the old trace elsewhere.
+            utility_decay: EMA decay for hidden-unit utility diagnostics.
         """
+        if not 0.0 <= utility_decay < 1.0:
+            raise ValueError("utility_decay must be in [0, 1)")
+
         self._n_heads = n_heads
         self._hidden_sizes = hidden_sizes
         self._optimizer: AnyOptimizer = optimizer or LMS(step_size=step_size)
@@ -306,6 +314,7 @@ class MultiHeadMLPLearner:
         self._use_layer_norm = use_layer_norm
         self._per_head_gl: tuple[float, ...] | None = per_head_gamma_lamda
         self._trace_mode = trace_mode
+        self._utility_decay = utility_decay
 
         # Validate trunk trace constraint: gamma*lamda > 0 is only safe
         # when there is no trunk (linear baseline). With a trunk, the VJP
@@ -364,6 +373,7 @@ class MultiHeadMLPLearner:
                 list(self._per_head_gl) if self._per_head_gl is not None else None
             ),
             "trace_mode": self._trace_mode.value,
+            "utility_decay": self._utility_decay,
         }
         return config
 
@@ -494,6 +504,10 @@ class MultiHeadMLPLearner:
             head_optimizer_states=tuple(head_opt_states_list),
             trunk_traces=tuple(trunk_traces),
             head_traces=tuple(head_traces_list),
+            hidden_unit_utilities=tuple(
+                jnp.zeros(hidden_size, dtype=jnp.float32)
+                for hidden_size in self._hidden_sizes
+            ),
             normalizer_state=normalizer_state,
             step_count=jnp.array(0, dtype=jnp.int32),
             birth_timestamp=time.time(),
@@ -520,8 +534,28 @@ class MultiHeadMLPLearner:
         Returns:
             Hidden representation of shape ``(H_last,)``
         """
+        hidden, _ = MultiHeadMLPLearner._trunk_forward_with_activations(
+            weights,
+            biases,
+            observation,
+            leaky_relu_slope,
+            use_layer_norm,
+        )
+        return hidden
+
+    @staticmethod
+    def _trunk_forward_with_activations(
+        weights: tuple[Array, ...],
+        biases: tuple[Array, ...],
+        observation: Array,
+        leaky_relu_slope: float,
+        use_layer_norm: bool = True,
+    ) -> tuple[Array, tuple[Array, ...]]:
+        """Forward trunk and return each hidden layer activation."""
         if len(weights) == 0:
-            return observation
+            return observation, ()
+
+        activations: list[Array] = []
         x = observation
         for i in range(len(weights)):
             x = weights[i] @ x + biases[i]
@@ -530,7 +564,8 @@ class MultiHeadMLPLearner:
                 var = jnp.var(x)
                 x = (x - mean) / jnp.sqrt(var + 1e-5)
             x = jnp.where(x >= 0, x, leaky_relu_slope * x)
-        return x
+            activations.append(x)
+        return x, tuple(activations)
 
     @staticmethod
     def _head_forward(head_w: Array, head_b: Array, hidden: Array) -> Array:
@@ -629,13 +664,14 @@ class MultiHeadMLPLearner:
 
         def trunk_fn(
             weights: tuple[Array, ...], biases: tuple[Array, ...]
-        ) -> Array:
-            return self._trunk_forward(weights, biases, obs, slope, ln)
+        ) -> tuple[Array, tuple[Array, ...]]:
+            return self._trunk_forward_with_activations(weights, biases, obs, slope, ln)
 
-        hidden, trunk_vjp_fn = jax.vjp(
+        hidden, trunk_vjp_fn, activations = jax.vjp(
             trunk_fn,
             state.trunk_params.weights,
             state.trunk_params.biases,
+            has_aux=True,
         )
 
         # 4. Per-head forward + compute errors + accumulate cotangent
@@ -672,6 +708,22 @@ class MultiHeadMLPLearner:
         # 5. One backward pass through trunk
         trunk_weight_grads, trunk_bias_grads = trunk_vjp_fn(cotangent)
         # These grads are already error-weighted
+
+        # Hidden-unit utility diagnostics track the instantaneous contribution
+        # ``|activation * downstream_gradient|`` as an EMA.  This is used by
+        # higher-level feature lifecycle wrappers and is empty for linear heads.
+        utility_decay = jnp.asarray(self._utility_decay, dtype=jnp.float32)
+        new_hidden_unit_utilities: list[Array] = []
+        for i in range(len(activations)):
+            old_utility = (
+                state.hidden_unit_utilities[i]
+                if len(state.hidden_unit_utilities) > i
+                else jnp.zeros_like(activations[i])
+            )
+            utility_signal = jnp.abs(activations[i] * trunk_bias_grads[i])
+            new_hidden_unit_utilities.append(
+                utility_decay * old_utility + (1.0 - utility_decay) * utility_signal
+            )
 
         # 6. Update trunk traces and optimizer
         n_trunk_layers = len(state.trunk_params.weights)
@@ -841,6 +893,7 @@ class MultiHeadMLPLearner:
             head_optimizer_states=tuple(new_head_opt_states_list),
             trunk_traces=tuple(new_trunk_traces),
             head_traces=tuple(new_head_traces_list),
+            hidden_unit_utilities=tuple(new_hidden_unit_utilities),
             normalizer_state=new_normalizer_state,
             step_count=state.step_count + 1,
             birth_timestamp=state.birth_timestamp,

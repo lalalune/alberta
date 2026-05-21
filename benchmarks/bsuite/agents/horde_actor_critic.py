@@ -58,6 +58,62 @@ except ModuleNotFoundError as exc:
 
 
 DEFAULT_AUX_GAMMAS: tuple[float, ...] = (0.0, 0.5, 0.9)
+_FEATURE_LIFT_MODES = {"raw", "quadratic", "pairwise"}
+
+
+class _FeatureLift:
+    """Stateless causal observation lift for the linear Horde-AC actor.
+
+    The core ``HordeActorCriticAgent`` intentionally keeps a linear softmax
+    actor. This adapter-level lift tests whether the remaining bsuite gap is
+    actor feature capacity, while preserving temporal uniformity: the same
+    deterministic map is applied on every step and uses only the current
+    observation/history vector.
+    """
+
+    def __init__(
+        self,
+        raw_dim: int,
+        mode: str = "raw",
+        max_feature_dim: int = 4096,
+    ) -> None:
+        if raw_dim <= 0:
+            raise ValueError("raw_dim must be positive")
+        if mode not in _FEATURE_LIFT_MODES:
+            raise ValueError(
+                f"feature_lift must be one of {sorted(_FEATURE_LIFT_MODES)}, got {mode!r}"
+            )
+        if max_feature_dim <= 0:
+            raise ValueError("max_feature_dim must be positive")
+        self.raw_dim = raw_dim
+        self.mode = mode
+        self.max_feature_dim = max_feature_dim
+        dim = self.feature_dim()
+        if dim > max_feature_dim:
+            raise ValueError(
+                f"feature_lift={mode!r} expands {raw_dim} inputs to {dim} features, "
+                f"exceeding max_feature_dim={max_feature_dim}"
+            )
+
+    def feature_dim(self) -> int:
+        """Return output dimensionality."""
+        if self.mode == "raw":
+            return self.raw_dim
+        if self.mode == "quadratic":
+            return 2 * self.raw_dim
+        # raw plus upper-triangular pairwise products, including squares.
+        return self.raw_dim + self.raw_dim * (self.raw_dim + 1) // 2
+
+    def transform(self, observation: jnp.ndarray) -> jnp.ndarray:
+        """Return the lifted feature vector."""
+        obs = jnp.asarray(observation, dtype=jnp.float32).reshape((self.raw_dim,))
+        if self.mode == "raw":
+            return obs
+        if self.mode == "quadratic":
+            return jnp.concatenate((obs, obs * obs))
+        outer = obs[:, None] * obs[None, :]
+        tri_i, tri_j = jnp.triu_indices(self.raw_dim)
+        return jnp.concatenate((obs, outer[tri_i, tri_j]))
 
 
 def _make_horde_actor_critic_agent(
@@ -74,6 +130,8 @@ def _make_horde_actor_critic_agent(
     critic_lamda: float,
     aux_gammas: tuple[float, ...],
     sparsity: float,
+    actor_bounder: Any,
+    actor_td_error_clip: float | None,
 ) -> HordeActorCriticAgent:
     """Build a HordeActorCriticAgent with multi-timescale auxiliary demons.
 
@@ -116,9 +174,10 @@ def _make_horde_actor_critic_agent(
             actor_lamda=actor_lamda,
             temperature=temperature,
             value_head_index=0,
+            actor_td_error_clip=actor_td_error_clip,
         ),
         critic=critic,
-        actor_bounder=bounder,
+        actor_bounder=actor_bounder,
     )
 
 
@@ -137,6 +196,7 @@ class BSuiteHordeActorCriticAgent(base.Agent):  # type: ignore[misc]
         agent: HordeActorCriticAgent,
         seed: int = 0,
         history_extractor: HistoryFeatureExtractor | None = None,
+        feature_lift: _FeatureLift | None = None,
     ) -> None:
         self._agent = agent
         self._num_actions: int = action_spec.num_values
@@ -144,10 +204,12 @@ class BSuiteHordeActorCriticAgent(base.Agent):  # type: ignore[misc]
         self._history_extractor = history_extractor
         self._history_state: Any = None
         if history_extractor is not None:
-            feature_dim = history_extractor.feature_dim()
+            base_feature_dim = history_extractor.feature_dim()
             self._history_state = history_extractor.init()
         else:
-            feature_dim = self._raw_dim
+            base_feature_dim = self._raw_dim
+        self._feature_lift = feature_lift or _FeatureLift(base_feature_dim)
+        feature_dim = self._feature_lift.feature_dim()
         self._state = agent.init(feature_dim=feature_dim, key=jr.key(seed))
         self._jit_start = jax.jit(agent.start)
         self._jit_update = jax.jit(agent.update)
@@ -173,15 +235,19 @@ class BSuiteHordeActorCriticAgent(base.Agent):  # type: ignore[misc]
         """Number of auxiliary prediction demons attached to the critic."""
         return self._n_aux
 
+    @property
+    def feature_lift_mode(self) -> str:
+        """Configured feature lift mode."""
+        return self._feature_lift.mode
+
     def _augment(self, raw_obs: jnp.ndarray) -> jnp.ndarray:
         """Apply the history-feature extractor when configured."""
+        obs = raw_obs
         if self._history_extractor is None:
-            return raw_obs
-        augmented, new_history = self._history_extractor.step(
-            self._history_state, raw_obs
-        )
+            return self._feature_lift.transform(obs)
+        obs, new_history = self._history_extractor.step(self._history_state, raw_obs)
         self._history_state = new_history
-        return jnp.asarray(augmented)
+        return self._feature_lift.transform(jnp.asarray(obs))
 
     def select_action(self, timestep: dm_env.TimeStep) -> int:
         """Return the cached on-policy action or sample a fresh one."""
@@ -246,6 +312,7 @@ class BSuiteHordeActorCriticAgent(base.Agent):  # type: ignore[misc]
         obs = jnp.asarray(observation, dtype=jnp.float32).flatten()
         if self._history_extractor is not None:
             obs, _ = self._history_extractor.step(self._history_state, obs)
+        obs = self._feature_lift.transform(jnp.asarray(obs))
         return float(self._agent.value(self._state, obs))
 
     def get_policy(self, observation: np.ndarray) -> np.ndarray:
@@ -253,6 +320,7 @@ class BSuiteHordeActorCriticAgent(base.Agent):  # type: ignore[misc]
         obs = jnp.asarray(observation, dtype=jnp.float32).flatten()
         if self._history_extractor is not None:
             obs, _ = self._history_extractor.step(self._history_state, obs)
+        obs = self._feature_lift.transform(jnp.asarray(obs))
         return np.asarray(self._agent.policy(self._state, obs))
 
 
@@ -266,6 +334,7 @@ def default_agent(
     meta_step_size: float = 0.01,
     tau: float = 10000.0,
     kappa: float = 2.0,
+    actor_kappa: float | None = None,
     normalizer_decay: float = 0.99,
     discount: float = 0.99,
     temperature: float = 1.0,
@@ -274,9 +343,12 @@ def default_agent(
     critic_lamda: float = 0.0,
     aux_gammas: tuple[float, ...] = DEFAULT_AUX_GAMMAS,
     sparsity: float = 0.0,
+    actor_td_error_clip: float | None = None,
     use_history_features: bool = False,
     history_decay_rates: tuple[float, ...] = (0.5, 0.9, 0.99),
     history_include_raw: bool = True,
+    feature_lift: str = "raw",
+    max_feature_dim: int = 4096,
     seed: int = 0,
     **_: Any,
 ) -> BSuiteHordeActorCriticAgent:
@@ -291,6 +363,9 @@ def default_agent(
     - ``use_history_features``: when True, observations are first passed
       through :class:`HistoryFeatureExtractor` before being given to the Horde
       adapter. The history state resets at episode boundaries.
+    - ``feature_lift``: deterministic causal lift applied after optional
+      history features. ``pairwise`` tests the known structural blocker where
+      the core softmax actor is linear while Q/SARSA use nonlinear MLP heads.
     """
     optimizer: Any
     if optimizer_name == "autostep":
@@ -305,6 +380,7 @@ def default_agent(
         raise ValueError("optimizer_name must be 'autostep' or 'lms'")
 
     bounder = ObGDBounding(kappa=kappa)
+    actor_bounder = bounder if actor_kappa is None else ObGDBounding(kappa=actor_kappa)
     normalizer = EMANormalizer(decay=normalizer_decay)
 
     history_extractor: HistoryFeatureExtractor | None = None
@@ -315,6 +391,14 @@ def default_agent(
             decay_rates=history_decay_rates,
             include_raw=history_include_raw,
         )
+        lift_input_dim = history_extractor.feature_dim()
+    else:
+        lift_input_dim = int(np.prod(obs_spec.shape))
+    feature_lift_transform = _FeatureLift(
+        raw_dim=lift_input_dim,
+        mode=feature_lift,
+        max_feature_dim=max_feature_dim,
+    )
 
     agent = _make_horde_actor_critic_agent(
         n_actions=action_spec.num_values,
@@ -329,6 +413,8 @@ def default_agent(
         critic_lamda=critic_lamda,
         aux_gammas=aux_gammas,
         sparsity=sparsity,
+        actor_bounder=actor_bounder,
+        actor_td_error_clip=actor_td_error_clip,
     )
     return BSuiteHordeActorCriticAgent(
         obs_spec,
@@ -336,4 +422,5 @@ def default_agent(
         agent,
         seed=seed,
         history_extractor=history_extractor,
+        feature_lift=feature_lift_transform,
     )

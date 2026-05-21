@@ -231,6 +231,10 @@ from alberta_framework.core.horde_actor_critic import (
     NonlinearHordeActorCriticConfig,
     NonlinearHordeActorCriticState,
     NonlinearHordeActorCriticUpdateResult,
+    QHordeActorCriticAgent,
+    QHordeActorCriticConfig,
+    QHordeActorCriticState,
+    QHordeActorCriticUpdateResult,
     run_horde_actor_critic_from_arrays,
     run_nonlinear_horde_actor_critic_from_arrays,
 )
@@ -919,6 +923,10 @@ __all__ = [
     "HordeActorCriticConfig",
     "HordeActorCriticState",
     "HordeActorCriticUpdateResult",
+    "QHordeActorCriticAgent",
+    "QHordeActorCriticConfig",
+    "QHordeActorCriticState",
+    "QHordeActorCriticUpdateResult",
     "run_horde_actor_critic_from_arrays",
     # Nonlinear Horde Actor-Critic (Step 4 canonical)
     "NonlinearHordeActorCriticAgent",

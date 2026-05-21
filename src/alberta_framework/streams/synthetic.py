@@ -114,6 +114,99 @@ class RandomWalkStream:
 
 
 @chex.dataclass(frozen=True)
+class HiddenStateAR2State:
+    """State for :class:`HiddenStateAR2Stream`."""
+
+    key: PRNGKeyArray
+    x_prev: Float[Array, " feature_dim"]
+    x_prev2: Float[Array, " feature_dim"]
+
+
+class HiddenStateAR2Stream:
+    """Stationary AR(2) stream with partially observable hidden channels.
+
+    The emitted observation contains the full AR state so downstream feature
+    construction can decide what to mask. The target includes visible linear
+    terms plus a hidden interaction, making the hidden channels behaviorally
+    relevant for Step 3 feature-discovery probes.
+    """
+
+    def __init__(
+        self,
+        feature_dim: int,
+        visible_dim: int = 2,
+        phi1: float = 0.6,
+        phi2: float = -0.2,
+        innovation_std: float = 0.2,
+        nonlinear_coeff: float = 0.5,
+        target_noise_std: float = 0.01,
+    ):
+        """Initialize the AR(2) stream."""
+        if visible_dim <= 0 or visible_dim >= feature_dim:
+            raise ValueError("visible_dim must be in [1, feature_dim)")
+        if feature_dim - visible_dim < 2:
+            raise ValueError("hidden block must contain at least two channels")
+        deterministic_copy = phi1 == 1.0 and phi2 == 0.0 and innovation_std == 0.0
+        violates_stationarity = (
+            phi1 + phi2 >= 1.0 or phi2 - phi1 >= 1.0 or abs(phi2) >= 1.0
+        )
+        if violates_stationarity and not deterministic_copy:
+            raise ValueError("AR(2) coefficients violate the stationarity triangle")
+        self._feature_dim = feature_dim
+        self._visible_dim = visible_dim
+        self._phi1 = phi1
+        self._phi2 = phi2
+        self._innovation_std = innovation_std
+        self._nonlinear_coeff = nonlinear_coeff
+        self._target_noise_std = target_noise_std
+
+    @property
+    def feature_dim(self) -> int:
+        """Return the dimension of observation vectors."""
+        return self._feature_dim
+
+    @property
+    def visible_dim(self) -> int:
+        """Return the number of visible channels."""
+        return self._visible_dim
+
+    def init(self, key: Array) -> HiddenStateAR2State:
+        """Initialize AR state."""
+        key, k1, k2 = jr.split(key, 3)
+        x_prev = jr.normal(k1, (self._feature_dim,), dtype=jnp.float32)
+        x_prev2 = jr.normal(k2, (self._feature_dim,), dtype=jnp.float32)
+        return HiddenStateAR2State(key=key, x_prev=x_prev, x_prev2=x_prev2)
+
+    def step(
+        self,
+        state: HiddenStateAR2State,
+        idx: Array,
+    ) -> tuple[TimeStep, HiddenStateAR2State]:
+        """Generate one AR(2) sample."""
+        del idx
+        key, k_innov, k_noise = jr.split(state.key, 3)
+        innovation = self._innovation_std * jr.normal(
+            k_innov,
+            (self._feature_dim,),
+            dtype=jnp.float32,
+        )
+        x_t = self._phi1 * state.x_prev + self._phi2 * state.x_prev2 + innovation
+        visible_term = jnp.sum(x_t[: self._visible_dim])
+        h0 = x_t[self._visible_dim]
+        h1 = x_t[self._visible_dim + 1]
+        hidden_term = self._nonlinear_coeff * h0 * h1
+        noise = self._target_noise_std * jr.normal(k_noise, (), dtype=jnp.float32)
+        target = visible_term + hidden_term + noise
+        timestep = TimeStep(observation=x_t, target=jnp.atleast_1d(target))
+        new_state = HiddenStateAR2State(
+            key=key,
+            x_prev=x_t,
+            x_prev2=state.x_prev,
+        )
+        return timestep, new_state
+
+
+@chex.dataclass(frozen=True)
 class AbruptChangeState:
     """State for AbruptChangeStream.
 
@@ -235,6 +328,7 @@ class SuttonExperiment1State:
 
     key: PRNGKeyArray
     signs: Float[Array, " num_relevant"]
+    wt_irr: Float[Array, " num_irrelevant"]
     step_count: Int[Array, ""]
 
 
@@ -261,6 +355,8 @@ class SuttonExperiment1Stream:
         num_relevant: int = 5,
         num_irrelevant: int = 15,
         change_interval: int = 20,
+        noise_std: float = 0.0,
+        bias_drift_rate: float = 0.0,
     ):
         """Initialize the Sutton Experiment 1 stream.
 
@@ -272,6 +368,8 @@ class SuttonExperiment1Stream:
         self._num_relevant = num_relevant
         self._num_irrelevant = num_irrelevant
         self._change_interval = change_interval
+        self._noise_std = noise_std
+        self._bias_drift_rate = bias_drift_rate
 
     @property
     def feature_dim(self) -> int:
@@ -291,6 +389,7 @@ class SuttonExperiment1Stream:
         return SuttonExperiment1State(
             key=key,
             signs=signs,
+            wt_irr=jnp.zeros(self._num_irrelevant, dtype=jnp.float32),
             step_count=jnp.array(0, dtype=jnp.int32),
         )
 
@@ -312,7 +411,7 @@ class SuttonExperiment1Stream:
             Tuple of (timestep, new_state)
         """
         del idx  # unused
-        key, key_x, key_which = jr.split(state.key, 3)
+        key, key_x, key_which, key_irr, key_noise = jr.split(state.key, 5)
 
         # Determine if we should flip a sign (not at step 0)
         should_flip = (state.step_count > 0) & (state.step_count % self._change_interval == 0)
@@ -329,17 +428,25 @@ class SuttonExperiment1Stream:
 
         # Apply flip mask conditionally
         new_signs = jnp.where(should_flip, state.signs * flip_mask, state.signs)
+        wt_irr = state.wt_irr + self._bias_drift_rate * jr.normal(
+            key_irr,
+            (self._num_irrelevant,),
+            dtype=jnp.float32,
+        )
 
         # Generate observation from N(0, 1)
         x = jr.normal(key_x, (self.feature_dim,), dtype=jnp.float32)
 
         # Compute target: sum of first num_relevant inputs weighted by signs
         target = jnp.dot(new_signs, x[: self._num_relevant])
+        target = target + jnp.dot(wt_irr, x[self._num_relevant :])
+        target = target + self._noise_std * jr.normal(key_noise, (), dtype=jnp.float32)
 
         timestep = TimeStep(observation=x, target=jnp.atleast_1d(target))
         new_state = SuttonExperiment1State(
             key=key,
             signs=new_signs,
+            wt_irr=wt_irr,
             step_count=state.step_count + 1,
         )
 

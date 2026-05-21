@@ -1,4 +1,4 @@
-# mypy: disable-error-code="attr-defined,call-arg"
+# mypy: disable-error-code="attr-defined,call-arg,no-any-return,unused-ignore"
 """End-to-end Alberta Plan Step 1-4 pipeline glue.
 
 The production pipeline composes the existing packaged pieces conservatively:
@@ -32,6 +32,12 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import Array
 
+from alberta_framework.core.associative_memory import (
+    AssociativeFeatureFamily,
+    AssociativeMemoryConfig,
+    AssociativeMemoryLearner,
+    AssociativeMemoryState,
+)
 from alberta_framework.core.horde import HordeLearner
 from alberta_framework.core.horde_actor_critic import (
     HordeActorCriticAgent,
@@ -61,7 +67,16 @@ from alberta_framework.steps.step4 import (
     step4_update,
 )
 
-Step2Mode = Literal["temporal_context", "upgd", "identity"]
+Step2Mode = Literal["temporal_context", "upgd", "associative", "identity"]
+Step2UPGDPreset = Literal["default", "strict_digit_readout"]
+Step2UPGDReadoutMode = Literal[
+    "linear_mse",
+    "softmax_ce",
+    "adaptive_simplex",
+    "factorized_simplex",
+    "adaptive_factorized_simplex",
+    "two_timescale_simplex",
+]
 ControlMode = Literal["sarsa", "horde_ac"]
 
 CumulantFn = Callable[[Array, Array, Array], Array]
@@ -162,6 +177,11 @@ class Step2UPGDConfig:
     step_size: float = 0.03
     sparsity: float = 0.5
     use_layer_norm: bool = True
+    learner_preset: Step2UPGDPreset = "default"
+    loss_normalization: Literal["target_structure", "target_density"] = (
+        "target_structure"
+    )
+    readout_mode: Step2UPGDReadoutMode = "linear_mse"
 
     def __post_init__(self) -> None:
         """Validate configuration."""
@@ -183,6 +203,60 @@ class Step2UPGDConfig:
         if not 0.0 <= self.sparsity <= 1.0:
             msg = f"sparsity must be in [0, 1], got {self.sparsity}"
             raise ValueError(msg)
+        if self.learner_preset not in ("default", "strict_digit_readout"):
+            msg = f"unknown learner_preset {self.learner_preset!r}"
+            raise ValueError(msg)
+        if self.loss_normalization not in ("target_structure", "target_density"):
+            msg = f"unknown loss_normalization {self.loss_normalization!r}"
+            raise ValueError(msg)
+        valid_readouts = (
+            "linear_mse",
+            "softmax_ce",
+            "adaptive_simplex",
+            "factorized_simplex",
+            "adaptive_factorized_simplex",
+            "two_timescale_simplex",
+        )
+        if self.readout_mode not in valid_readouts:
+            msg = f"unknown readout_mode {self.readout_mode!r}"
+            raise ValueError(msg)
+        if self.learner_preset == "strict_digit_readout" and (
+            self.loss_normalization != "target_structure"
+            or self.readout_mode != "two_timescale_simplex"
+        ):
+            msg = (
+                "strict_digit_readout preset requires "
+                "loss_normalization='target_structure' and "
+                "readout_mode='two_timescale_simplex'"
+            )
+            raise ValueError(msg)
+        if self.learner_preset == "strict_digit_readout" and (
+            self.sparsity != 0.5 or not self.use_layer_norm
+        ):
+            msg = (
+                "strict_digit_readout preset owns sparsity/use_layer_norm; "
+                "use sparsity=0.5 and use_layer_norm=True"
+            )
+            raise ValueError(msg)
+
+    @classmethod
+    def strict_digit_readout(
+        cls,
+        *,
+        observation_dim: int = 64,
+        n_heads: int = 10,
+        hidden_sizes: tuple[int, ...] = (64, 64),
+        step_size: float = 0.018,
+    ) -> Step2UPGDConfig:
+        """Return the promoted strict digit/readout Step 2 config."""
+        return cls(
+            observation_dim=observation_dim,
+            n_heads=n_heads,
+            hidden_sizes=hidden_sizes,
+            step_size=step_size,
+            learner_preset="strict_digit_readout",
+            readout_mode="two_timescale_simplex",
+        )
 
     def output_dim(self) -> int:
         """Penultimate-layer dimensionality used as features."""
@@ -200,6 +274,98 @@ class Step2UPGDConfig:
         config = dict(payload)
         config["hidden_sizes"] = tuple(cast(list[int], config["hidden_sizes"]))
         return cls(**cast(Any, config))
+
+
+@dataclass(frozen=True)
+class Step2AssociativePipelineConfig:
+    """Config for associative Step 2 features in the end-to-end pipeline."""
+
+    vocab_size: int = 16
+    block_size: int = 8
+    suffix_length: int = 4
+    feature_family: AssociativeFeatureFamily = "token_suffix_pair"
+    max_features: int = 512
+    write_lr: float = 1.0
+    retention: float = 0.80
+    utility_lr: float = 0.10
+    utility_decay: float = 0.995
+    min_weight: float = 0.02
+    max_weight: float = 8.0
+    logit_scale: float = 4.0
+    normalize_by_weight: bool = True
+    adaptive_feature_family: bool = False
+    adaptive_window: bool = False
+    adaptive_budget: bool = False
+    scope_lr: float = 0.05
+    budget_lr: float = 0.05
+    initial_budget_fraction: float = 0.5
+    min_effective_budget: int = 1
+    scope_logit_clip: float = 8.0
+
+    def __post_init__(self) -> None:
+        """Validate integer context settings."""
+        if self.vocab_size < 2:
+            raise ValueError("vocab_size must be at least 2")
+        if self.block_size < 1:
+            raise ValueError("block_size must be positive")
+        if self.suffix_length < 2 or self.suffix_length > self.block_size:
+            raise ValueError("suffix_length must be in [2, block_size]")
+        if self.max_features < 1:
+            raise ValueError("max_features must be positive")
+        if self.scope_lr < 0.0:
+            raise ValueError("scope_lr must be non-negative")
+        if self.budget_lr < 0.0:
+            raise ValueError("budget_lr must be non-negative")
+        if not 0.0 < self.initial_budget_fraction <= 1.0:
+            raise ValueError("initial_budget_fraction must be in (0, 1]")
+        if self.min_effective_budget < 1:
+            raise ValueError("min_effective_budget must be positive")
+        if self.min_effective_budget > self.max_features:
+            raise ValueError("min_effective_budget must be <= max_features")
+        if self.scope_logit_clip <= 0.0:
+            raise ValueError("scope_logit_clip must be positive")
+
+    def output_dim(self) -> int:
+        """Return the associative probability-vector dimensionality."""
+        return self.vocab_size
+
+    def to_core_config(self) -> AssociativeMemoryConfig:
+        """Return the core associative memory config."""
+        return AssociativeMemoryConfig(
+            vocab_size=self.vocab_size,
+            block_size=self.block_size,
+            suffix_length=self.suffix_length,
+            feature_family=self.feature_family,
+            max_features=self.max_features,
+            write_lr=self.write_lr,
+            retention=self.retention,
+            utility_lr=self.utility_lr,
+            utility_decay=self.utility_decay,
+            min_weight=self.min_weight,
+            max_weight=self.max_weight,
+            logit_scale=self.logit_scale,
+            normalize_by_weight=self.normalize_by_weight,
+            adaptive_feature_family=self.adaptive_feature_family,
+            adaptive_window=self.adaptive_window,
+            adaptive_budget=self.adaptive_budget,
+            scope_lr=self.scope_lr,
+            budget_lr=self.budget_lr,
+            initial_budget_fraction=self.initial_budget_fraction,
+            min_effective_budget=self.min_effective_budget,
+            scope_logit_clip=self.scope_logit_clip,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-serializable representation."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: dict[str, object],
+    ) -> Step2AssociativePipelineConfig:
+        """Reconstruct from :meth:`to_dict` output."""
+        return cls(**cast(Any, payload))
 
 
 @dataclass(frozen=True)
@@ -267,6 +433,7 @@ class AlbertaPipelineConfig:
 
     features: Step2FeatureConfig = field(default_factory=Step2FeatureConfig)
     upgd: Step2UPGDConfig | None = None
+    associative: Step2AssociativePipelineConfig | None = None
     horde: Step3HordeConfig = field(default_factory=Step3HordeConfig)
     control: Step4SARSAConfig = field(default_factory=Step4SARSAConfig)
     horde_ac: HordeActorCriticPipelineConfig | None = None
@@ -275,7 +442,7 @@ class AlbertaPipelineConfig:
 
     def __post_init__(self) -> None:
         """Validate combinations of step2/control and required sub-configs."""
-        if self.step2 not in ("temporal_context", "upgd", "identity"):
+        if self.step2 not in ("temporal_context", "upgd", "associative", "identity"):
             msg = f"unknown step2 mode {self.step2!r}"
             raise ValueError(msg)
         if self.control_mode not in ("sarsa", "horde_ac"):
@@ -283,6 +450,9 @@ class AlbertaPipelineConfig:
             raise ValueError(msg)
         if self.step2 == "upgd" and self.upgd is None:
             msg = "upgd config is required when step2='upgd'"
+            raise ValueError(msg)
+        if self.step2 == "associative" and self.associative is None:
+            msg = "associative config is required when step2='associative'"
             raise ValueError(msg)
         if self.control_mode == "horde_ac" and self.horde_ac is None:
             msg = "horde_ac config is required when control_mode='horde_ac'"
@@ -301,6 +471,8 @@ class AlbertaPipelineConfig:
         """Return the feature dimensionality passed to Step 3 and Step 4."""
         if self.step2 == "upgd":
             return cast(Step2UPGDConfig, self.upgd).output_dim()
+        if self.step2 == "associative":
+            return cast(Step2AssociativePipelineConfig, self.associative).output_dim()
         if self.step2 == "identity":
             return self.features.observation_dim
         return self.features.output_dim()
@@ -310,6 +482,9 @@ class AlbertaPipelineConfig:
         return {
             "features": self.features.to_dict(),
             "upgd": self.upgd.to_dict() if self.upgd is not None else None,
+            "associative": (
+                self.associative.to_dict() if self.associative is not None else None
+            ),
             "horde": self.horde.to_dict(),
             "control": self.control.to_dict(),
             "horde_ac": (
@@ -323,6 +498,7 @@ class AlbertaPipelineConfig:
     def from_dict(cls, payload: dict[str, object]) -> AlbertaPipelineConfig:
         """Reconstruct from :meth:`to_dict` output."""
         upgd_payload = payload.get("upgd")
+        associative_payload = payload.get("associative")
         horde_ac_payload = payload.get("horde_ac")
         return cls(
             features=Step2FeatureConfig.from_dict(
@@ -330,6 +506,11 @@ class AlbertaPipelineConfig:
             ),
             upgd=Step2UPGDConfig.from_dict(cast(dict[str, object], upgd_payload))
             if upgd_payload is not None
+            else None,
+            associative=Step2AssociativePipelineConfig.from_dict(
+                cast(dict[str, object], associative_payload)
+            )
+            if associative_payload is not None
             else None,
             horde=Step3HordeConfig.from_dict(
                 cast(dict[str, object], payload["horde"])
@@ -360,6 +541,7 @@ class AlbertaPipelineState:
 
     feature_state: TemporalContextState | None
     upgd_state: UPGDState | None
+    associative_state: AssociativeMemoryState | None
     horde_state: MultiHeadMLPState
     control_state: SARSAState | HordeActorCriticState
     last_features: Array
@@ -467,13 +649,42 @@ class AlbertaPipeline:
 
         if self._config.step2 == "upgd":
             upgd_cfg = cast(Step2UPGDConfig, self._config.upgd)
-            self._upgd: UPGDLearner | None = UPGDLearner.step2_default(
-                n_heads=upgd_cfg.n_heads,
-                hidden_sizes=upgd_cfg.hidden_sizes,
-                step_size=upgd_cfg.step_size,
-            )
+            if upgd_cfg.learner_preset == "strict_digit_readout":
+                self._upgd: UPGDLearner | None = (
+                    UPGDLearner.step2_strict_digit_readout_default(
+                        n_heads=upgd_cfg.n_heads,
+                        hidden_sizes=upgd_cfg.hidden_sizes,
+                        step_size=upgd_cfg.step_size,
+                    )
+                )
+            else:
+                self._upgd = UPGDLearner(
+                    n_heads=upgd_cfg.n_heads,
+                    hidden_sizes=upgd_cfg.hidden_sizes,
+                    step_size=upgd_cfg.step_size,
+                    bounder=ObGDBounding(kappa=0.5),
+                    sparsity=upgd_cfg.sparsity,
+                    use_layer_norm=upgd_cfg.use_layer_norm,
+                    perturbation_sigma=1e-4,
+                    perturbation_noise="rademacher",
+                    utility_decay=0.995,
+                    perturbation_beta=2.0,
+                    perturbation_interval=16,
+                    loss_normalization=upgd_cfg.loss_normalization,
+                    readout_mode=upgd_cfg.readout_mode,
+                    track_unit_utilities=False,
+                    track_gradient_history=False,
+                )
         else:
             self._upgd = None
+
+        if self._config.step2 == "associative":
+            assoc_cfg = cast(Step2AssociativePipelineConfig, self._config.associative)
+            self._associative: AssociativeMemoryLearner | None = (
+                AssociativeMemoryLearner(assoc_cfg.to_core_config())
+            )
+        else:
+            self._associative = None
 
         self._horde = make_step3_horde(self._config.horde)
 
@@ -499,7 +710,10 @@ class AlbertaPipeline:
                 actor_bounder=actor_bounder,
             )
         else:
-            self._control = make_step4_sarsa_agent(self._config.control)
+            self._control = make_step4_sarsa_agent(
+                self._config.control,
+                prediction_demons=tuple(self._horde.horde_spec.demons),
+            )
 
         observation_dim = self._observation_dim()
         self._cumulant_fn: CumulantFn = cumulant_fn or _default_cumulant_fn(
@@ -509,6 +723,8 @@ class AlbertaPipeline:
     def _observation_dim(self) -> int:
         if self._config.step2 == "upgd":
             return cast(Step2UPGDConfig, self._config.upgd).observation_dim
+        if self._config.step2 == "associative":
+            return cast(Step2AssociativePipelineConfig, self._config.associative).block_size
         return self._config.features.observation_dim
 
     @property
@@ -532,6 +748,11 @@ class AlbertaPipeline:
         return self._upgd
 
     @property
+    def associative(self) -> AssociativeMemoryLearner | None:
+        """Underlying associative memory learner if configured."""
+        return self._associative
+
+    @property
     def horde(self) -> Any:
         """Underlying Step 3 Horde learner."""
         return self._horde
@@ -550,14 +771,20 @@ class AlbertaPipeline:
         self,
         feature_state: TemporalContextState | None,
         upgd_state: UPGDState | None,
+        associative_state: AssociativeMemoryState | None,
         observation: Array,
-    ) -> tuple[TemporalContextState | None, UPGDState | None, Array]:
+    ) -> tuple[
+        TemporalContextState | None,
+        UPGDState | None,
+        AssociativeMemoryState | None,
+        Array,
+    ]:
         """Produce the Step 2 feature vector for an observation."""
         if self._config.step2 == "temporal_context":
             featurizer = cast(TemporalContextFeaturizer, self._featurizer)
             assert feature_state is not None
             new_feature_state, features = featurizer.step(feature_state, observation)
-            return new_feature_state, upgd_state, features
+            return new_feature_state, upgd_state, associative_state, features
         if self._config.step2 == "upgd":
             upgd = cast(UPGDLearner, self._upgd)
             assert upgd_state is not None
@@ -568,9 +795,17 @@ class AlbertaPipeline:
                 upgd._leaky_relu_slope,  # noqa: SLF001
                 upgd._use_layer_norm,  # noqa: SLF001
             )
-            return feature_state, upgd_state, features
+            return feature_state, upgd_state, associative_state, features
+        if self._config.step2 == "associative":
+            associative = cast(AssociativeMemoryLearner, self._associative)
+            assert associative_state is not None
+            prediction = associative.predict(
+                associative_state,
+                jnp.asarray(observation, dtype=jnp.int32),
+            )
+            return feature_state, upgd_state, associative_state, prediction.probabilities
         # identity
-        return feature_state, upgd_state, observation
+        return feature_state, upgd_state, associative_state, observation
 
     def init(self, key: Array, initial_observation: Array) -> AlbertaPipelineState:
         """Initialize learner state and prime control with the first observation."""
@@ -578,6 +813,7 @@ class AlbertaPipeline:
 
         feature_state: TemporalContextState | None = None
         upgd_state: UPGDState | None = None
+        associative_state: AssociativeMemoryState | None = None
         observation_dim = self._observation_dim()
 
         if self._config.step2 == "temporal_context":
@@ -596,6 +832,13 @@ class AlbertaPipeline:
                 upgd._leaky_relu_slope,  # noqa: SLF001
                 upgd._use_layer_norm,  # noqa: SLF001
             )
+        elif self._config.step2 == "associative":
+            associative = cast(AssociativeMemoryLearner, self._associative)
+            associative_state = associative.init()
+            initial_features = associative.predict(
+                associative_state,
+                jnp.asarray(initial_observation, dtype=jnp.int32),
+            ).probabilities
         else:
             initial_features = initial_observation
 
@@ -610,6 +853,7 @@ class AlbertaPipeline:
             ac = cast(HordeActorCriticAgent, self._control)
             ac_state = ac.init(self.feature_dim, control_key)
             ac_state, _action, _probs = ac.start(ac_state, initial_features)
+            horde_state = ac_state.critic_state
             control_state = ac_state
         else:
             control_state = init_step4_state(
@@ -622,6 +866,7 @@ class AlbertaPipeline:
         return AlbertaPipelineState(
             feature_state=feature_state,
             upgd_state=upgd_state,
+            associative_state=associative_state,
             horde_state=horde_state,
             control_state=control_state,
             last_features=initial_features,
@@ -660,6 +905,7 @@ class AlbertaPipeline:
         terminated: Array,
         horde_cumulants: Array | None = None,
         upgd_targets: Array | None = None,
+        associative_label: Array | None = None,
     ) -> AlbertaPipelineStepResult:
         """Advance every pipeline component by one transition.
 
@@ -680,10 +926,18 @@ class AlbertaPipeline:
                 that drive UPGD learning when ``step2='upgd'``. NaN entries
                 mark inactive heads. When omitted, UPGD weights stay frozen
                 and the trunk acts as a pure feature extractor.
+            associative_label: Optional integer next-token/class label that
+                drives associative-memory writes when ``step2='associative'``.
         """
-        new_feature_state, new_upgd_state, features = self._features_from_observation(
+        (
+            new_feature_state,
+            new_upgd_state,
+            new_associative_state,
+            features,
+        ) = self._features_from_observation(
             state.feature_state,
             state.upgd_state,
+            state.associative_state,
             observation,
         )
         if (
@@ -701,22 +955,28 @@ class AlbertaPipeline:
                 upgd._leaky_relu_slope,  # noqa: SLF001
                 upgd._use_layer_norm,  # noqa: SLF001
             )
+        if (
+            self._config.step2 == "associative"
+            and associative_label is not None
+            and new_associative_state is not None
+        ):
+            associative = cast(AssociativeMemoryLearner, self._associative)
+            assoc_result = associative.update(
+                new_associative_state,
+                jnp.asarray(observation, dtype=jnp.int32),
+                jnp.asarray(associative_label, dtype=jnp.int32),
+            )
+            new_associative_state = assoc_result.state
+            features = assoc_result.predictions
 
         if horde_cumulants is None:
             horde_cumulants = self._cumulant_fn(observation, reward, terminated)
         horde_cumulants = jnp.asarray(horde_cumulants, dtype=jnp.float32)
 
-        horde_result = step3_update(
-            self._horde,
-            state.horde_state,
-            state.last_features,
-            horde_cumulants,
-            features,
-        )
-
         if self._config.control_mode == "horde_ac":
             ac = cast(HordeActorCriticAgent, self._control)
             ac_state = cast(HordeActorCriticState, state.control_state)
+            ac_state = ac_state.replace(critic_state=state.horde_state)
             n_total_demons = self._horde.n_demons
             value_index = cast(
                 HordeActorCriticPipelineConfig, self._config.horde_ac
@@ -744,6 +1004,13 @@ class AlbertaPipeline:
             horde_td_errors = ac_result.critic_result.td_errors
             horde_td_targets = ac_result.critic_result.td_targets
         else:
+            horde_result = step3_update(
+                self._horde,
+                state.horde_state,
+                state.last_features,
+                horde_cumulants,
+                features,
+            )
             sarsa_state = cast(SARSAState, state.control_state)
             control_result = step4_update(
                 self._control,
@@ -751,6 +1018,7 @@ class AlbertaPipeline:
                 reward,
                 features,
                 terminated,
+                prediction_cumulants=horde_cumulants,
             )
             new_control_state = control_result.state
             q_values_or_policy = control_result.q_values
@@ -765,6 +1033,7 @@ class AlbertaPipeline:
         next_state = AlbertaPipelineState(
             feature_state=new_feature_state,
             upgd_state=new_upgd_state,
+            associative_state=new_associative_state,
             horde_state=new_horde_state,
             control_state=new_control_state,
             last_features=features,
@@ -790,6 +1059,7 @@ class AlbertaPipeline:
         terminated: Array,
         horde_cumulants: Array,
         upgd_targets: Array | None = None,
+        associative_labels: Array | None = None,
     ) -> AlbertaPipelineArrayResult:
         """Scan the pipeline over transition arrays.
 
@@ -807,12 +1077,27 @@ class AlbertaPipeline:
             )
         else:
             upgd_targets_array = jnp.asarray(upgd_targets, dtype=jnp.float32)
+        associative_labels_array = (
+            jnp.asarray(associative_labels, dtype=jnp.int32)
+            if associative_labels is not None
+            else jnp.zeros((observations.shape[0],), dtype=jnp.int32)
+        )
+        use_associative_labels = (
+            self._config.step2 == "associative" and associative_labels is not None
+        )
 
         def step_fn(
             carry: AlbertaPipelineState,
-            inputs: tuple[Array, Array, Array, Array, Array],
+            inputs: tuple[Array, Array, Array, Array, Array, Array],
         ) -> tuple[AlbertaPipelineState, tuple[Array, Array, Array, Array, Array, Array]]:
-            obs_t, reward_t, terminated_t, cumulants_t, upgd_target_t = inputs
+            (
+                obs_t,
+                reward_t,
+                terminated_t,
+                cumulants_t,
+                upgd_target_t,
+                associative_label_t,
+            ) = inputs
             result = self.update(
                 carry,
                 obs_t,
@@ -820,6 +1105,7 @@ class AlbertaPipeline:
                 terminated_t,
                 cumulants_t,
                 upgd_target_t if self._config.step2 == "upgd" else None,
+                associative_label_t if use_associative_labels else None,
             )
             return result.state, (
                 result.features,
@@ -833,7 +1119,14 @@ class AlbertaPipeline:
         final_state, outputs = jax.lax.scan(
             step_fn,
             state,
-            (observations, rewards, terminated, horde_cumulants, upgd_targets_array),
+            (
+                observations,
+                rewards,
+                terminated,
+                horde_cumulants,
+                upgd_targets_array,
+                associative_labels_array,
+            ),
         )
         (
             features,
@@ -879,15 +1172,29 @@ def run_pipeline_smoke(
     observation_dim = pipeline._observation_dim()  # noqa: SLF001
 
     data_key, state_key = jr.split(jr.key(seed))
-    observations = jr.normal(
-        data_key,
-        (steps + 1, observation_dim),
-        dtype=jnp.float32,
-    )
-    rewards = jnp.tanh(observations[1:, 0])
+    if cfg.step2 == "associative" and cfg.associative is not None:
+        observations = jr.randint(
+            data_key,
+            (steps + 1, observation_dim),
+            minval=0,
+            maxval=cfg.associative.vocab_size,
+            dtype=jnp.int32,
+        )
+        rewards = jnp.tanh(observations[1:, 0].astype(jnp.float32))
+        associative_labels = (
+            observations[1:, -1] + 3 * observations[1:, -2] + observations[1:, 0]
+        ) % cfg.associative.vocab_size
+    else:
+        observations = jr.normal(
+            data_key,
+            (steps + 1, observation_dim),
+            dtype=jnp.float32,
+        )
+        rewards = jnp.tanh(observations[1:, 0])
+        associative_labels = None
     terminated = jnp.zeros(steps, dtype=jnp.float32)
     cumulant_indices = jnp.arange(cfg.horde.n_demons) % observation_dim
-    horde_cumulants = observations[1:, cumulant_indices]
+    horde_cumulants = observations[1:, cumulant_indices].astype(jnp.float32)
 
     state = pipeline.init(state_key, observations[0])
     result = pipeline.run_arrays(
@@ -896,6 +1203,7 @@ def run_pipeline_smoke(
         rewards,
         terminated,
         horde_cumulants,
+        associative_labels=associative_labels,
     )
     result.q_values.block_until_ready()
 

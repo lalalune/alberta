@@ -171,6 +171,7 @@ class HordeLearner:
         use_layer_norm: bool = True,
         head_optimizer: AnyOptimizer | None = None,
         trace_mode: TraceMode = TraceMode.ACCUMULATING,
+        utility_decay: float = 0.99,
     ):
         """Initialize the Horde learner.
 
@@ -186,6 +187,7 @@ class HordeLearner:
             use_layer_norm: Whether to apply parameterless layer normalization
             head_optimizer: Optional separate optimizer for heads
             trace_mode: Eligibility trace mode (ACCUMULATING or REPLACING)
+            utility_decay: EMA decay for hidden-unit utility diagnostics.
         """
         self._horde_spec = horde_spec
         self._hidden_sizes = hidden_sizes
@@ -194,6 +196,7 @@ class HordeLearner:
         self._leaky_relu_slope = leaky_relu_slope
         self._use_layer_norm = use_layer_norm
         self._trace_mode = trace_mode
+        self._utility_decay = utility_decay
 
         # Compute per-head gamma*lambda products
         per_head_gl = tuple(
@@ -215,6 +218,7 @@ class HordeLearner:
             head_optimizer=head_optimizer,
             per_head_gamma_lamda=per_head_gl,
             trace_mode=trace_mode,
+            utility_decay=utility_decay,
         )
 
     @property

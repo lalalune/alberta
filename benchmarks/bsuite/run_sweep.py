@@ -28,21 +28,24 @@ from benchmarks.bsuite.configs import (  # noqa: E402
     SECONDARY_EXPERIMENTS,
     STANDARD_AGENTS,
 )
-from benchmarks.bsuite.run_single import make_agent, run_continuing  # noqa: E402
-from benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
 
 logger = logging.getLogger(__name__)
 DEFAULT_COMPARISON_STEPS = 200
 
-add_bsuite_to_path()
-try:
-    bsuite: Any = importlib.import_module("bsuite")
-    sweep: Any = importlib.import_module("bsuite.sweep")
-    experiment: Any = importlib.import_module("bsuite.baselines.experiment")
-except ModuleNotFoundError as exc:
-    if exc.name == "bsuite":
-        raise ModuleNotFoundError(bsuite_missing_message()) from exc
-    raise
+
+def require_bsuite() -> tuple[Any, Any, Any]:
+    """Import bsuite modules after local helper functions have been imported."""
+    add_bsuite_to_path()
+    try:
+        return (
+            importlib.import_module("bsuite"),
+            importlib.import_module("bsuite.sweep"),
+            importlib.import_module("bsuite.baselines.experiment"),
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "bsuite":
+            raise ModuleNotFoundError(bsuite_missing_message()) from exc
+        raise
 
 
 class SweepJob(NamedTuple):
@@ -90,7 +93,11 @@ def get_bsuite_ids_for_experiment(
     sweep_ids: list[str] | None = None,
 ) -> list[str]:
     """Get all bsuite_ids for a given experiment name."""
-    ids = sweep_ids if sweep_ids is not None else list(sweep.SWEEP)
+    if sweep_ids is None:
+        _, sweep, _ = require_bsuite()
+        ids = list(sweep.SWEEP)
+    else:
+        ids = sweep_ids
     return [
         bsuite_id for bsuite_id in ids if bsuite_id.split("/")[0] == experiment_name
     ]
@@ -134,6 +141,10 @@ def run_agent_on_id(
     output_agent_name: str | None = None,
 ) -> None:
     """Run a single agent on a single bsuite_id."""
+    bsuite, sweep, experiment = require_bsuite()
+    from benchmarks.bsuite.run_single import make_agent, run_continuing
+    from benchmarks.bsuite.wrappers import ContinuingWrapper
+
     agent_save_path = str(Path(save_path) / (output_agent_name or agent_name))
 
     try:
@@ -187,6 +198,10 @@ def run_continual_sequence(
     overwrite: bool = False,
 ) -> None:
     """Run a single persistent agent across a sequence of environments."""
+    bsuite, _, _ = require_bsuite()
+    from benchmarks.bsuite.run_single import make_agent, run_continuing
+    from benchmarks.bsuite.wrappers import ContinuingWrapper
+
     agent_save_path = str(Path(save_path) / f"{agent_name}_continual")
     agent = None
 

@@ -82,6 +82,11 @@ class Step1KernelConfig:
         """Return a JSON-serializable representation."""
         return asdict(self)
 
+    @classmethod
+    def from_dict(cls, payload: dict[str, object]) -> Step1KernelConfig:
+        """Reconstruct from :meth:`to_dict` output."""
+        return cls(**cast(Any, payload))
+
 
 @dataclass(frozen=True)
 class Step1SmokeResult:

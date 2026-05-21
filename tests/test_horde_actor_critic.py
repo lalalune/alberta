@@ -13,6 +13,9 @@ from alberta_framework.core.horde import HordeLearner
 from alberta_framework.core.horde_actor_critic import (
     HordeActorCriticAgent,
     HordeActorCriticConfig,
+    QHordeActorCriticAgent,
+    QHordeActorCriticConfig,
+    QHordeActorCriticState,
     run_horde_actor_critic_from_arrays,
 )
 from alberta_framework.core.optimizers import Autostep, ObGDBounding
@@ -52,6 +55,44 @@ def _make_agent(n_demons: int = 1) -> HordeActorCriticAgent:
     return HordeActorCriticAgent(
         HordeActorCriticConfig(
             n_actions=2,
+            actor_step_size=0.05,
+            actor_lamda=0.7,
+        ),
+        critic=critic,
+    )
+
+
+def _make_qhorde_agent(n_actions: int = 2, n_aux: int = 0) -> QHordeActorCriticAgent:
+    demons = [
+        GVFSpec(  # type: ignore[call-arg]
+            name=f"q_{idx}",
+            demon_type=DemonType.CONTROL,
+            gamma=0.0,
+            lamda=0.0,
+            cumulant_index=-1,
+        )
+        for idx in range(n_actions)
+    ]
+    demons.extend(
+        GVFSpec(  # type: ignore[call-arg]
+            name=f"aux_{idx}",
+            demon_type=DemonType.PREDICTION,
+            gamma=0.5,
+            lamda=0.0,
+            cumulant_index=0,
+        )
+        for idx in range(n_aux)
+    )
+    critic = HordeLearner(
+        create_horde_spec(demons),
+        hidden_sizes=(),
+        step_size=0.1,
+        use_layer_norm=False,
+    )
+    return QHordeActorCriticAgent(
+        QHordeActorCriticConfig(
+            n_actions=n_actions,
+            gamma=0.9,
             actor_step_size=0.05,
             actor_lamda=0.7,
         ),
@@ -280,6 +321,194 @@ def test_bsuite_horde_ac_pairwise_feature_dim_reaches_actor() -> None:
     assert agent.state.actor_weights.shape == (3, 14)
     action = agent.select_action(dm_env.restart(jnp.ones((4,), dtype=jnp.float32)))
     assert 0 <= action < 3
+
+
+def test_bsuite_qhorde_ac_pairwise_feature_dim_reaches_actor() -> None:
+    """Q-Horde adapter should initialize core actor on lifted features."""
+    dm_env = pytest.importorskip("dm_env", reason="dm_env not installed")
+    pytest.importorskip("bsuite", reason="bsuite not installed")
+    from dm_env import specs
+
+    from benchmarks.bsuite.agents import qhorde_ac
+
+    obs_spec = specs.Array(shape=(4,), dtype=np.float32, name="obs")
+    action_spec = specs.DiscreteArray(num_values=3, name="action")
+    agent = qhorde_ac.default_agent(
+        obs_spec,
+        action_spec,
+        hidden_sizes=(8,),
+        feature_lift="pairwise",
+        max_feature_dim=64,
+    )
+
+    assert agent.feature_lift_mode == "pairwise"
+    assert agent.state.actor_weights.shape == (3, 14)
+    action = agent.select_action(dm_env.restart(jnp.ones((4,), dtype=jnp.float32)))
+    assert 0 <= action < 3
+
+
+def test_qhorde_actor_critic_updates_only_taken_q_head_and_actor() -> None:
+    agent = _make_qhorde_agent(n_actions=2)
+    state = agent.init(feature_dim=2, key=jr.key(10)).replace(  # type: ignore[attr-defined]
+        last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        last_action=jnp.array(1, dtype=jnp.int32),
+    )
+
+    result = agent.update(
+        state,
+        reward=jnp.array(1.0, dtype=jnp.float32),
+        observation=jnp.array([0.0, 1.0], dtype=jnp.float32),
+        terminated=jnp.array(0.0, dtype=jnp.float32),
+    )
+
+    assert isinstance(result.state, QHordeActorCriticState)
+    assert int(result.state.step_count) == 1
+    chex.assert_trees_all_close(result.critic_result.td_targets[1], result.target)
+    assert jnp.isnan(result.critic_result.td_targets[0])
+    assert not jnp.allclose(result.state.actor_weights, state.actor_weights)
+    chex.assert_tree_all_finite(
+        (result.policy, result.q_values, result.next_q_values, result.td_error)
+    )
+
+
+def test_qhorde_actor_critic_auxiliary_prediction_and_terminal_trace_reset() -> None:
+    agent = _make_qhorde_agent(n_actions=2, n_aux=1)
+    state = agent.init(feature_dim=2, key=jr.key(11)).replace(  # type: ignore[attr-defined]
+        last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        last_action=jnp.array(0, dtype=jnp.int32),
+    )
+
+    result = agent.update(
+        state,
+        reward=jnp.array(1.0, dtype=jnp.float32),
+        observation=jnp.array([0.0, 1.0], dtype=jnp.float32),
+        terminated=jnp.array(1.0, dtype=jnp.float32),
+        prediction_cumulants=jnp.array([0.25], dtype=jnp.float32),
+    )
+
+    chex.assert_shape(result.critic_result.td_errors, (3,))
+    chex.assert_trees_all_close(
+        result.critic_result.td_targets[2],
+        jnp.array(0.25, dtype=jnp.float32),
+    )
+    chex.assert_trees_all_close(result.state.actor_trace_weights, jnp.zeros((2, 2)))
+
+
+def test_qhorde_actor_critic_config_roundtrip_and_exports() -> None:
+    base_agent = _make_qhorde_agent(n_actions=2, n_aux=1)
+    agent = QHordeActorCriticAgent(
+        QHordeActorCriticConfig.from_config(
+            {
+                **base_agent.config.to_config(),
+                "actor_td_error_clip": 0.5,
+            }
+        ),
+        base_agent.critic,
+        actor_bounder=ObGDBounding(kappa=1.25),
+    )
+
+    restored = QHordeActorCriticAgent.from_config(agent.to_config())
+
+    assert restored.config == agent.config
+    assert restored.critic.n_demons == 3
+    assert isinstance(restored.actor_bounder, ObGDBounding)
+    from alberta_framework import QHordeActorCriticAgent as TopLevelQHordeAC
+    from alberta_framework.core import QHordeActorCriticAgent as CoreQHordeAC
+
+    assert TopLevelQHordeAC is QHordeActorCriticAgent
+    assert CoreQHordeAC is QHordeActorCriticAgent
+
+
+def test_qhorde_actor_critic_update_is_jittable() -> None:
+    agent = _make_qhorde_agent(n_actions=2, n_aux=1)
+    state = agent.init(feature_dim=2, key=jr.key(12)).replace(  # type: ignore[attr-defined]
+        last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        last_action=jnp.array(0, dtype=jnp.int32),
+    )
+
+    update = jax.jit(agent.update)
+    result = update(
+        state,
+        jnp.array(1.0, dtype=jnp.float32),
+        jnp.array([0.0, 1.0], dtype=jnp.float32),
+        jnp.array(0.0, dtype=jnp.float32),
+        jnp.array([0.5], dtype=jnp.float32),
+    )
+
+    chex.assert_shape(result.policy, (2,))
+    assert int(result.state.step_count) == 1
+
+
+def test_qhorde_actor_critic_sampled_target_uses_returned_action() -> None:
+    base_agent = _make_qhorde_agent(n_actions=2)
+    agent = QHordeActorCriticAgent(
+        QHordeActorCriticConfig.from_config(
+            {
+                **base_agent.config.to_config(),
+                "critic_target": "sampled_sarsa",
+            }
+        ),
+        base_agent.critic,
+    )
+    state = agent.init(feature_dim=2, key=jr.key(13)).replace(  # type: ignore[attr-defined]
+        last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        last_action=jnp.array(0, dtype=jnp.int32),
+    )
+    head_weights = state.critic_state.head_params.weights
+    critic_state = state.critic_state.replace(  # type: ignore[attr-defined]
+        head_params=state.critic_state.head_params.replace(  # type: ignore[attr-defined]
+            weights=(head_weights[0].at[0, 1].set(2.0), *head_weights[1:])
+        )
+    )
+    state = state.replace(critic_state=critic_state)  # type: ignore[attr-defined]
+
+    result = agent.update(
+        state,
+        reward=jnp.array(1.0, dtype=jnp.float32),
+        observation=jnp.array([0.0, 1.0], dtype=jnp.float32),
+        terminated=jnp.array(0.0, dtype=jnp.float32),
+    )
+
+    expected = 1.0 + 0.9 * result.next_q_values[result.action]
+    chex.assert_trees_all_close(result.target, expected)
+
+
+def test_qhorde_actor_critic_expected_advantage_actor_update() -> None:
+    base_agent = _make_qhorde_agent(n_actions=2)
+    agent = QHordeActorCriticAgent(
+        QHordeActorCriticConfig.from_config(
+            {
+                **base_agent.config.to_config(),
+                "actor_update": "expected_advantage",
+            }
+        ),
+        base_agent.critic,
+    )
+    state = agent.init(feature_dim=2, key=jr.key(14)).replace(  # type: ignore[attr-defined]
+        last_observation=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        last_action=jnp.array(0, dtype=jnp.int32),
+    )
+    head_weights = state.critic_state.head_params.weights
+    critic_state = state.critic_state.replace(  # type: ignore[attr-defined]
+        head_params=state.critic_state.head_params.replace(  # type: ignore[attr-defined]
+            weights=(
+                head_weights[0],
+                head_weights[1].at[0, 0].set(2.0),
+                *head_weights[2:],
+            )
+        )
+    )
+    state = state.replace(critic_state=critic_state)  # type: ignore[attr-defined]
+
+    result = agent.update(
+        state,
+        reward=jnp.array(0.0, dtype=jnp.float32),
+        observation=jnp.array([0.0, 1.0], dtype=jnp.float32),
+        terminated=jnp.array(0.0, dtype=jnp.float32),
+    )
+
+    assert result.state.actor_weights[1, 0] > state.actor_weights[1, 0]
+    assert result.state.actor_weights[0, 0] < state.actor_weights[0, 0]
 
 
 # ===========================================================================

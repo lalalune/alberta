@@ -9,8 +9,11 @@ from alberta_framework import (
     EMANormalizer,
     EMANormalizerState,
     Normalizer,
+    StreamingBatchNormalizer,
+    StreamingBatchNormalizerState,
     WelfordNormalizer,
     WelfordNormalizerState,
+    normalizer_from_config,
 )
 
 
@@ -229,19 +232,64 @@ class TestWelfordNormalizer:
         chex.assert_shape(state.p, (feature_dim,))
 
 
+class TestStreamingBatchNormalizer:
+    """Tests for the StreamingBatchNormalizer class."""
+
+    def test_init_creates_correct_state(self, feature_dim):
+        """StreamingBatchNormalizer init should create running moments."""
+        normalizer = StreamingBatchNormalizer(momentum=0.9)
+        state = normalizer.init(feature_dim)
+
+        assert isinstance(state, StreamingBatchNormalizerState)
+        chex.assert_shape(state.mean, (feature_dim,))
+        chex.assert_shape(state.var, (feature_dim,))
+        chex.assert_trees_all_close(state.mean, jnp.zeros(feature_dim))
+        chex.assert_trees_all_close(state.var, jnp.ones(feature_dim))
+        assert state.sample_count == 0.0
+        assert state.momentum == 0.9
+
+    def test_normalize_updates_statistics(self, sample_observation):
+        """Normalizing should update BatchNorm-style running moments."""
+        normalizer = StreamingBatchNormalizer(momentum=0.5)
+        state = normalizer.init(len(sample_observation))
+
+        normalized, new_state = normalizer.normalize(state, sample_observation)
+
+        chex.assert_tree_all_finite(normalized)
+        assert new_state.sample_count == 1.0
+        chex.assert_trees_all_close(new_state.mean, sample_observation)
+        chex.assert_trees_all_close(new_state.var, jnp.ones_like(sample_observation))
+
+    def test_roundtrip_config(self):
+        """StreamingBatchNormalizer should serialize through the dispatcher."""
+        normalizer = StreamingBatchNormalizer(momentum=0.75, epsilon=1e-4)
+        config = normalizer.to_config()
+
+        assert config["type"] == "StreamingBatchNormalizer"
+        restored = normalizer_from_config(config)
+        assert isinstance(restored, StreamingBatchNormalizer)
+        assert restored._momentum == 0.75
+        assert restored._epsilon == 1e-4
+
+
 class TestNormalizerABC:
     """Tests that both normalizers satisfy the ABC contract."""
 
-    @pytest.mark.parametrize("normalizer_cls", [EMANormalizer, WelfordNormalizer])
+    @pytest.mark.parametrize(
+        "normalizer_cls",
+        [EMANormalizer, WelfordNormalizer, StreamingBatchNormalizer],
+    )
     def test_is_normalizer_subclass(self, normalizer_cls):
-        """Both normalizers should be subclasses of Normalizer."""
+        """All normalizers should be subclasses of Normalizer."""
         assert issubclass(normalizer_cls, Normalizer)
 
     @pytest.mark.parametrize(
-        "normalizer", [EMANormalizer(), WelfordNormalizer()], ids=["EMA", "Welford"]
+        "normalizer",
+        [EMANormalizer(), WelfordNormalizer(), StreamingBatchNormalizer()],
+        ids=["EMA", "Welford", "StreamingBatch"],
     )
     def test_init_returns_state_with_required_fields(self, normalizer, feature_dim):
-        """Both normalizer states should have mean, var, and sample_count."""
+        """All normalizer states should have mean, var, and sample_count."""
         state = normalizer.init(feature_dim)
 
         assert hasattr(state, "mean")
@@ -251,7 +299,9 @@ class TestNormalizerABC:
         chex.assert_shape(state.var, (feature_dim,))
 
     @pytest.mark.parametrize(
-        "normalizer", [EMANormalizer(), WelfordNormalizer()], ids=["EMA", "Welford"]
+        "normalizer",
+        [EMANormalizer(), WelfordNormalizer(), StreamingBatchNormalizer()],
+        ids=["EMA", "Welford", "StreamingBatch"],
     )
     def test_normalize_returns_tuple(self, normalizer, sample_observation):
         """normalize should return (array, state) tuple."""
@@ -262,7 +312,9 @@ class TestNormalizerABC:
         assert len(result) == 2
 
     @pytest.mark.parametrize(
-        "normalizer", [EMANormalizer(), WelfordNormalizer()], ids=["EMA", "Welford"]
+        "normalizer",
+        [EMANormalizer(), WelfordNormalizer(), StreamingBatchNormalizer()],
+        ids=["EMA", "Welford", "StreamingBatch"],
     )
     def test_normalize_only_returns_array(self, normalizer, sample_observation):
         """normalize_only should return just an array."""
@@ -272,7 +324,9 @@ class TestNormalizerABC:
         chex.assert_tree_all_finite(result)
 
     @pytest.mark.parametrize(
-        "normalizer", [EMANormalizer(), WelfordNormalizer()], ids=["EMA", "Welford"]
+        "normalizer",
+        [EMANormalizer(), WelfordNormalizer(), StreamingBatchNormalizer()],
+        ids=["EMA", "Welford", "StreamingBatch"],
     )
     def test_update_only_increments_count(self, normalizer, sample_observation):
         """update_only should increment sample_count."""

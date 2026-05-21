@@ -226,7 +226,7 @@ class ExoCortexAgent:
     def recommend(self, state: ExoCortexState, observation: Array) -> Int[Array, ""]:
         """Return the greedy primitive action for a given observation."""
         obs = jnp.asarray(observation, dtype=jnp.float32)
-        q_vals = state.stomp_state.base_q_weights @ obs
+        q_vals = self._oak.base_q_values(state, obs)
         n_prim = self._oak.config.n_primitive_actions
         q_prim = q_vals[:n_prim]
         return jnp.argmax(q_prim).astype(jnp.int32)

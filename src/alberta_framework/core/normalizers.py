@@ -3,7 +3,7 @@
 Implements online (streaming) normalization that updates estimates of mean
 and variance at every time step, following the principle of temporal uniformity.
 
-Two normalizer variants are provided:
+Three normalizer variants are provided:
 
 - ``EMANormalizer``: Exponential moving average estimates of mean and variance.
   Suitable for non-stationary distributions where recent observations should
@@ -12,6 +12,9 @@ Two normalizer variants are provided:
 - ``WelfordNormalizer``: Welford's online algorithm for numerically stable
   estimation of cumulative sample mean and variance with Bessel's correction.
   Suitable for stationary distributions.
+
+- ``StreamingBatchNormalizer``: BatchNorm-style running moments with no warmup
+  schedule, useful as a direct streaming normalization comparator.
 """
 
 from abc import ABC, abstractmethod
@@ -63,10 +66,24 @@ class WelfordNormalizerState:
     p: Float[Array, " feature_dim"]
 
 
-AnyNormalizerState = EMANormalizerState | WelfordNormalizerState
+@chex.dataclass(frozen=True)
+class StreamingBatchNormalizerState:
+    """State for BatchNorm-style streaming feature normalization."""
+
+    mean: Float[Array, " feature_dim"]
+    var: Float[Array, " feature_dim"]
+    sample_count: Float[Array, ""]
+    momentum: Float[Array, ""]
 
 
-class Normalizer[StateT: (EMANormalizerState, WelfordNormalizerState)](ABC):
+AnyNormalizerState = (
+    EMANormalizerState | WelfordNormalizerState | StreamingBatchNormalizerState
+)
+
+
+class Normalizer[
+    StateT: (EMANormalizerState, WelfordNormalizerState, StreamingBatchNormalizerState)
+](ABC):
     """Abstract base class for online feature normalizers.
 
     Normalizes features using running estimates of mean and standard deviation:
@@ -346,12 +363,73 @@ class WelfordNormalizer(Normalizer[WelfordNormalizerState]):
         return normalized, new_state
 
 
+class StreamingBatchNormalizer(Normalizer[StreamingBatchNormalizerState]):
+    """BatchNorm-style online normalizer with exponential running moments.
+
+    This is the single-sample streaming analogue of BatchNorm's running
+    statistics: each time step is treated as a batch of one, with running mean
+    and variance updated by ``momentum``. Unlike :class:`EMANormalizer`, this
+    intentionally has no warmup schedule, making it a distinct Step 1
+    normalization comparator.
+    """
+
+    def __init__(self, epsilon: float = 1e-5, momentum: float = 0.99):
+        """Initialize the streaming BatchNorm-style normalizer."""
+        super().__init__(epsilon=epsilon)
+        self._momentum = momentum
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize configuration to dict."""
+        return {
+            "type": "StreamingBatchNormalizer",
+            "epsilon": self._epsilon,
+            "momentum": self._momentum,
+        }
+
+    def init(self, feature_dim: int) -> StreamingBatchNormalizerState:
+        """Initialize running moments."""
+        return StreamingBatchNormalizerState(
+            mean=jnp.zeros(feature_dim, dtype=jnp.float32),
+            var=jnp.ones(feature_dim, dtype=jnp.float32),
+            sample_count=jnp.array(0.0, dtype=jnp.float32),
+            momentum=jnp.array(self._momentum, dtype=jnp.float32),
+        )
+
+    def normalize(
+        self,
+        state: StreamingBatchNormalizerState,
+        observation: Array,
+    ) -> tuple[Array, StreamingBatchNormalizerState]:
+        """Normalize observation and update BatchNorm-style running moments."""
+        new_count = state.sample_count + 1.0
+        is_first = state.sample_count <= 0.0
+        one_minus_m = 1.0 - state.momentum
+
+        candidate_mean = state.momentum * state.mean + one_minus_m * observation
+        new_mean = jnp.where(is_first, observation, candidate_mean)
+
+        centered = observation - state.mean
+        candidate_var = state.momentum * state.var + one_minus_m * (centered * centered)
+        new_var = jnp.where(is_first, jnp.ones_like(state.var), candidate_var)
+        new_var = jnp.maximum(new_var, self._epsilon)
+
+        normalized = (observation - new_mean) / (jnp.sqrt(new_var) + self._epsilon)
+        new_state = StreamingBatchNormalizerState(
+            mean=new_mean,
+            var=new_var,
+            sample_count=new_count,
+            momentum=state.momentum,
+        )
+        return normalized, new_state
+
+
 # =============================================================================
 # Config serialization dispatcher
 # =============================================================================
 
 _NORMALIZER_REGISTRY: dict[str, type] = {
     "EMANormalizer": EMANormalizer,
+    "StreamingBatchNormalizer": StreamingBatchNormalizer,
     "WelfordNormalizer": WelfordNormalizer,
 }
 

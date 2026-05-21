@@ -163,8 +163,8 @@ def test_make_stomp_agent_two_specs() -> None:
 def test_init_step10_state_shapes() -> None:
     cfg = _make_cfg(obs_dim=4, n_prim=2)
     agent, state = _setup(cfg)
-    chex.assert_shape(state.base_q_weights, (3, 4))  # n_total=3
-    chex.assert_shape(state.base_traces, (3, 4))
+    assert len(state.base_learner_state.head_params.weights) == 3  # n_total=3
+    chex.assert_shape(state.base_learner_state.head_params.weights[0], (1, 4))
     chex.assert_shape(state.option_policies.q_weights, (1, 2, 4))
     chex.assert_shape(state.option_models.next_state_weights, (1, 4, 4))
 
@@ -209,7 +209,7 @@ def test_step10_update_returns_valid_primitive_action() -> None:
 def test_step10_update_state_finite() -> None:
     agent, state = _setup()
     result = step10_update(agent, state, jnp.array(0.0), jnp.ones(4) * 0.1)
-    chex.assert_tree_all_finite(result.state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.base_learner_state)
     chex.assert_tree_all_finite(result.state.option_policies.q_weights)
 
 
@@ -435,7 +435,7 @@ def test_step10_state_stays_finite_over_many_steps() -> None:
     rewards = jr.normal(jr.key(10), (n_steps,)) * 0.1
     obs = jr.normal(jr.key(11), (n_steps, cfg.observation_dim)) * 0.1
     result = run_step10_scan(agent, state, rewards, obs)
-    chex.assert_tree_all_finite(result.state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.base_learner_state)
     chex.assert_tree_all_finite(result.state.option_policies.q_weights)
     chex.assert_tree_all_finite(result.state.option_models.cumreward_ema)
     chex.assert_tree_all_finite(result.state.option_models.discount_ema)

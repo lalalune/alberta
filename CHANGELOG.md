@@ -5,6 +5,102 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2026-05-21
+
+### Added
+
+- **Autostep-for-actor** — per-weight adaptive step-sizes for all actor MLPs
+  - `NonlinearHordeActorCriticAgent` actor now uses `Autostep.init_for_shape` /
+    `update_from_gradient`; fixed scalar `actor_step_size` removed from config
+  - `AverageRewardHordeActorCriticAgent` receives the same upgrade; per-weight
+    `AutostepParamState` stored in `AverageRewardHordeActorCriticState`
+  - Both agents accept an optional `actor_optimizer: Autostep | None` constructor arg
+    (default `Autostep(initial_step_size=0.05)`) and expose `actor_optimizer` property
+  - Config roundtrip includes `actor_optimizer` serialisation
+
+- **Nonlinear STOMP / OaK base Q-function** — replaces hard-coded linear weights
+  - `STOMPState.base_learner_state: MultiHeadMLPState` replaces `base_q_weights` /
+    `base_traces`; the underlying `MultiHeadMLPLearner` has `n_heads = n_total_actions`
+  - `STOMPConfig.base_hidden_sizes: tuple[int, ...] = ()` enables nonlinear trunks;
+    the empty-tuple default preserves previous linear behaviour exactly
+  - Semi-MDP differential Q target (`R_o - r̄·T_o + γ_o·max Q(s')`) computed via
+    NaN-masked `MultiHeadMLPLearner.update` — compatible with both linear and MLP paths
+  - OaK curation resets the curated option's head (weights, biases, traces, optimizer
+    states) inside the `MultiHeadMLPState` rather than zeroing a raw weight slice
+  - `STOMPAgent.base_q_values(state, obs)` and `OaKAgent.base_q_values(state, obs)`
+    expose Q-value computation through the agent API, used by `ExoCortexAgent.recommend`
+    and `PrototypeAgent.act` (both now robot-ready for high-dimensional observations)
+  - `feature_to_subtask_specs` in `prototype_agent.py` handles both linear (head-weight
+    stack) and nonlinear (first trunk-layer proxy) feature-importance extraction
+
+## [0.21.0] - 2026-05-21
+
+### Added
+
+- **PrototypeAgent** — all 12 Alberta Plan steps in a single continuing agent
+  - `PrototypeAgentConfig`: minimal defaults (just `n_primitive_actions` + `observation_dim`)
+  - Single `.update()` integrates world model, buffer, OaK, dreaming, Horde, and IA
+  - `feature_to_subtask_specs`: automatic subtask extraction from OaK Q-weight importances
+  - `run_prototype_scan` / `run_prototype_smoke`: JIT-compiled loop and validity probe
+  - 50 tests covering all components and 200-step fineness
+
+## [0.20.0] - 2026-05-21
+
+### Added
+
+- **Steps 11 and 12: OaK and Intelligence Amplification**
+  - `OaKAgent`: extends STOMP with utility EMA, curation, and option keyboard (Barreto et al.)
+  - `ExoCerebellumAgent` / `ExoCortexAgent` / `IAAgent`: paired cerebellum + cortex
+    augmenting a partner agent's observations and action recommendations
+  - 32 OaK tests + 30 IA tests
+
+## [0.19.0] - 2026-05-20
+
+### Added
+
+- **Step 10: STOMP temporal abstraction**
+  - `STOMPAgent`: subtask-defined options, intra-option differential Q, option outcome models
+  - `SubtaskSpec` / `STOMPSpecArrays` / `STOMPState`: JAX-compatible option state
+  - 36 tests; seeded benchmark proves STOMP options accelerate control ~10x vs flat
+  - `Step10STOMPConfig` production facade
+
+## [0.18.0] - 2026-05-19
+
+### Added
+
+- **Steps 5–9: Average-reward control, world models, and dreaming**
+  - `DifferentialTDLearner` / `DifferentialSARSAAgent` / `DifferentialGTDLearner`:
+    continuing average-reward prediction and control (Steps 5–6)
+  - `AverageRewardHordeLearner` / `AverageRewardHordeActorCriticAgent`:
+    nonlinear shared-trunk Horde for differential GVF prediction and actor-critic
+  - `OneStepWorldModel` / `ActionConditionedWorldModel`: reward + next-obs prediction (Step 8)
+  - `GuardedDreamer` + `RecentObservationBuffer`: error-gated dreaming with real-state anchors (Step 9)
+  - `Step7DynaConfig`: real-transition update + fixed `planning_steps` Dyna backups
+  - Seeded benchmarks: Step 7 prioritized Dyna improves final-window reward from 0.92 → 1.00;
+    six-state chain Dyna wins cumulative reward 8/10 seeds (+41.7%)
+  - RiverSwim benchmark (Step 6): 10/10 seeds, 97.5% right-action rate
+
+## [0.17.1] - 2026-04-10
+
+### Added
+
+- **Autostep-for-GTD(λ)** — per Kearney et al. (2019)
+  - `AutoTDIDBD` optimizer with per-weight step-size adaptation for TD learning
+  - Eligibility traces integrate with Autostep's normalizer and overshoot prevention
+
+### Fixed
+
+- Flax dependency added and version pinned in `pyproject.toml`
+
+## [0.17.0] - 2026-04-05
+
+### Added
+
+- **Replacing traces** — `TraceMode.REPLACING` on `MultiHeadMLPLearner`
+  - Replaces stale trace magnitude on re-visit rather than accumulating
+  - Configurable per-head alongside `TraceMode.ACCUMULATING`
+  - Trace-bounding integration: replaced traces scaled by ObGD bounding factor
+
 ## [0.16.0] - 2026-03-15
 
 ### Added

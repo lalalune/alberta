@@ -13,6 +13,7 @@ from alberta_framework.pipeline import (
     AlbertaPipeline,
     AlbertaPipelineConfig,
     HordeActorCriticPipelineConfig,
+    Step2AssociativePipelineConfig,
     Step2FeatureConfig,
     Step2UPGDConfig,
     make_alberta_pipeline,
@@ -106,6 +107,36 @@ def _small_horde_ac_config() -> AlbertaPipelineConfig:
     )
 
 
+def _small_associative_config() -> AlbertaPipelineConfig:
+    return AlbertaPipelineConfig(
+        features=Step2FeatureConfig.identity(observation_dim=5),
+        associative=Step2AssociativePipelineConfig(
+            vocab_size=8,
+            block_size=5,
+            suffix_length=3,
+            max_features=128,
+            adaptive_feature_family=True,
+            adaptive_window=True,
+            adaptive_budget=True,
+            initial_budget_fraction=0.5,
+        ),
+        horde=Step3HordeConfig(
+            gammas=(0.0,),
+            lamdas=(0.0,),
+            hidden_sizes=(),
+            step_size=0.05,
+        ),
+        control=Step4SARSAConfig(
+            n_actions=2,
+            hidden_sizes=(),
+            epsilon_start=0.0,
+            epsilon_end=0.0,
+            step_size=0.05,
+        ),
+        step2="associative",
+    )
+
+
 def test_pipeline_config_roundtrip_is_json_serializable() -> None:
     config = _small_pipeline_config()
     payload = config.to_dict()
@@ -136,6 +167,19 @@ def test_pipeline_config_roundtrip_with_upgd_and_horde_ac() -> None:
     roundtrip = AlbertaPipelineConfig.from_dict(json.loads(json.dumps(payload)))
     assert roundtrip == config
     assert roundtrip.feature_dim() == 8
+
+
+def test_pipeline_config_roundtrip_with_associative_step2() -> None:
+    config = _small_associative_config()
+    payload = config.to_dict()
+    roundtrip = AlbertaPipelineConfig.from_dict(json.loads(json.dumps(payload)))
+
+    assert roundtrip == config
+    assert roundtrip.feature_dim() == 8
+    assert roundtrip.associative is not None
+    assert roundtrip.associative.adaptive_feature_family
+    assert roundtrip.associative.adaptive_window
+    assert roundtrip.associative.adaptive_budget
 
 
 def test_step3_and_step4_facade_smokes_are_finite() -> None:
@@ -204,6 +248,41 @@ def test_pipeline_init_predict_and_one_step_update_are_finite() -> None:
     assert 0 <= int(result.action) < config.control.n_actions
 
 
+def test_pipeline_sarsa_control_contains_step3_prediction_demons() -> None:
+    """SARSA control mirrors Step 3 GVFs as prediction demons."""
+    config = _small_pipeline_config()
+    pipeline = make_alberta_pipeline(config)
+    assert pipeline.config.control_mode == "sarsa"
+    assert pipeline.control.horde.n_demons == (
+        config.control.n_actions + config.horde.n_demons
+    )
+    assert pipeline.control.horde.horde_spec.demons[config.control.n_actions].name == (
+        "gvf_0"
+    )
+
+    initial_observation = jnp.asarray([0.2, -0.1, 0.4], dtype=jnp.float32)
+    state = pipeline.init(jr.key(0), initial_observation)
+    prediction_head_index = config.control.n_actions
+    old_prediction_head = (
+        state.control_state.learner_state.head_params.weights[prediction_head_index]
+    )
+
+    result = pipeline.update(
+        state,
+        jnp.asarray([0.1, 0.3, -0.2], dtype=jnp.float32),
+        jnp.asarray(0.25, dtype=jnp.float32),
+        jnp.asarray(0.0, dtype=jnp.float32),
+        jnp.asarray([1.0, -0.5], dtype=jnp.float32),
+    )
+
+    new_prediction_head = (
+        result.state.control_state.learner_state.head_params.weights[
+            prediction_head_index
+        ]
+    )
+    assert not jnp.allclose(old_prediction_head, new_prediction_head)
+
+
 def test_pipeline_scan_smoke_is_finite() -> None:
     config = _small_pipeline_config()
     result = run_pipeline_smoke(config, steps=8, seed=3)
@@ -250,6 +329,58 @@ def test_pipeline_with_upgd_step2_smoke() -> None:
     assert smoke.feature_shape == (4, 8)
 
 
+def test_pipeline_upgd_config_is_honored() -> None:
+    """UPGD-backed pipeline forwards supported learner config fields."""
+    config = AlbertaPipelineConfig(
+        features=Step2FeatureConfig.identity(observation_dim=3),
+        upgd=Step2UPGDConfig(
+            observation_dim=3,
+            n_heads=2,
+            hidden_sizes=(8,),
+            step_size=0.02,
+            sparsity=0.25,
+            use_layer_norm=False,
+            loss_normalization="target_density",
+            readout_mode="softmax_ce",
+        ),
+        horde=Step3HordeConfig(gammas=(0.0,), lamdas=(0.0,), hidden_sizes=()),
+        control=Step4SARSAConfig(n_actions=2, hidden_sizes=()),
+        step2="upgd",
+    )
+    pipeline = make_alberta_pipeline(config)
+    assert pipeline.upgd is not None
+
+    upgd_config = pipeline.upgd.to_config()
+    assert upgd_config["step_size"] == 0.02
+    assert upgd_config["sparsity"] == 0.25
+    assert upgd_config["use_layer_norm"] is False
+    assert upgd_config["loss_normalization"] == "target_density"
+    assert upgd_config["readout_mode"] == "softmax_ce"
+
+
+def test_pipeline_upgd_strict_digit_readout_preset() -> None:
+    config = AlbertaPipelineConfig(
+        features=Step2FeatureConfig.identity(observation_dim=64),
+        upgd=Step2UPGDConfig.strict_digit_readout(
+            observation_dim=64,
+            n_heads=10,
+            hidden_sizes=(16, 16),
+            step_size=0.018,
+        ),
+        horde=Step3HordeConfig(gammas=(0.0,), lamdas=(0.0,), hidden_sizes=()),
+        control=Step4SARSAConfig(n_actions=2, hidden_sizes=()),
+        step2="upgd",
+    )
+    pipeline = make_alberta_pipeline(config)
+    assert pipeline.upgd is not None
+
+    upgd_config = pipeline.upgd.to_config()
+    assert upgd_config["hidden_sizes"] == [16, 16]
+    assert upgd_config["readout_mode"] == "two_timescale_simplex"
+    assert upgd_config["readout_fast_head_bounder_mode"] == "separate"
+    assert upgd_config["adaptive_kappa_mode"] == "loss_ratio"
+
+
 def test_pipeline_with_horde_ac_control_smoke() -> None:
     """Horde actor-critic control returns sensible policies and updates."""
     config = _small_horde_ac_config()
@@ -258,6 +389,9 @@ def test_pipeline_with_horde_ac_control_smoke() -> None:
 
     initial_observation = jnp.asarray([0.2, -0.1, 0.4], dtype=jnp.float32)
     state = pipeline.init(jr.key(0), initial_observation)
+    ac_state = state.control_state
+    assert hasattr(ac_state, "critic_state")
+    chex.assert_trees_all_close(state.horde_state, ac_state.critic_state)
 
     horde_predictions, policy = pipeline.predict(state)
     chex.assert_shape(horde_predictions, (2,))
@@ -274,14 +408,54 @@ def test_pipeline_with_horde_ac_control_smoke() -> None:
     )
     assert int(result.state.step_count) == 1
     chex.assert_shape(result.q_values, (2,))
+    next_ac_state = result.state.control_state
+    assert hasattr(next_ac_state, "critic_state")
+    chex.assert_trees_all_close(
+        result.state.horde_state,
+        next_ac_state.critic_state,
+    )
     chex.assert_tree_all_finite(
         (result.features, result.horde_predictions, result.q_values)
     )
+    assert config.horde_ac is not None
     assert 0 <= int(result.action) < config.horde_ac.n_actions
 
     smoke = run_pipeline_smoke(config, steps=4, seed=2)
     assert smoke.finite
     assert smoke.q_values_shape == (4, 2)
+
+
+def test_pipeline_with_associative_step2_smoke() -> None:
+    """Associative Step 2 exposes finite probability features and updates."""
+    config = _small_associative_config()
+    pipeline = make_alberta_pipeline(config)
+    assert pipeline.associative is not None
+    assert pipeline.associative.config.adaptive_feature_family
+    assert pipeline.associative.config.adaptive_window
+    assert pipeline.associative.config.adaptive_budget
+
+    initial_observation = jnp.asarray([1, 2, 3, 4, 5], dtype=jnp.int32)
+    state = pipeline.init(jr.key(0), initial_observation)
+    chex.assert_shape(state.last_features, (8,))
+    assert state.associative_state is not None
+
+    result = pipeline.update(
+        state,
+        jnp.asarray([1, 2, 3, 4, 5], dtype=jnp.int32),
+        jnp.asarray(0.0, dtype=jnp.float32),
+        jnp.asarray(0.0, dtype=jnp.float32),
+        jnp.asarray([1.0], dtype=jnp.float32),
+        associative_label=jnp.asarray(6, dtype=jnp.int32),
+    )
+    assert int(result.state.step_count) == 1
+    chex.assert_shape(result.features, (8,))
+    chex.assert_tree_all_finite(
+        (result.features, result.horde_predictions, result.q_values)
+    )
+
+    smoke = run_pipeline_smoke(config, steps=4, seed=3)
+    assert smoke.finite
+    assert smoke.feature_shape == (4, 8)
 
 
 def test_pipeline_behavioral_learns() -> None:

@@ -23,9 +23,9 @@ not new scientific evidence.
 | Shared nonlinear trunk traces | Guarded; head traces are supported, trunk `gamma * lambda` remains zero with hidden layers | independent per-demon trunks, per-head trunk traces, or a forward-view-correct nonlinear trace derivation |
 | TD/GVF feature discovery | Scoped positive controls only; observable AR(1) interaction features help, hidden/off-policy/general discovery remains open | learned history/state features, MSPBE-aware selection, full auxiliary-question meta-gradient methods |
 | Pavlovian blocking | Instrumented but mixed across horizons | richer conditioning harnesses and nonlinear/latent-state variants |
-| CBP sustained plasticity | Preserves effective rank but does not improve DoD-8 MSE | task families where rank preservation translates to online loss, replacement gates, UPGD/CBP hybrids |
+| CBP sustained plasticity | Preserves effective rank and eliminates dead units but does not improve final-window MSE on DoD-8 sign-flip (LeakyReLU 200k), DoD-8 v2 ReLU sign-flip, or DoD-8 v2 task-shift; research-only surface | task families where rank preservation translates to online loss, replacement gates, UPGD/CBP hybrids |
 | GVF feedback on POMDP | Negative in the current POMDP-RandomWalk ablation | causal feedback schedules, learned recurrent state, and stability gates |
-| Throughput | Passes local in-process learner scans; daemon E2E harness measured at `outputs/daemon_throughput/` and bottlenecked on Orbax checkpoint I/O | replace per-step `save_checkpoint` with async/buffered/incremental checkpointing; consider scan-fused or vmap-batched per-step daemon update once transport/env interaction permits |
+| Throughput | SARSA local scan throughput passes 18/18 CPU configs above 1000 steps/sec (`output/step3_throughput/sarsa_throughput_20260507_074858.csv`); heavy Horde DoD-10 configs fail the 100-demon traced CPU target at 0/6 passing (`output/step3_throughput/horde_throughput_20260507_074718.csv`); daemon E2E remains separately bottlenecked on checkpoint/reporting I/O | optimize 100-demon Horde traces, replace per-step `save_checkpoint` with async/buffered/incremental checkpointing, and measure rlsecd/security-gym E2E once the daemon repo and logs are available |
 | Production API | Given-feature Horde helper added; no packaged general discovery policy | promote only after robust TD/GVF discovery evidence exists |
 
 Reproduce all sweeps in order::
@@ -36,6 +36,7 @@ Reproduce all sweeps in order::
     python "examples/The Alberta Plan/Step3/dod6_pomdp_sweep.py"
     python "examples/The Alberta Plan/Step3/dod7_feature_discovery_sweep.py"
     python "examples/The Alberta Plan/Step3/dod8_plasticity_sweep.py"
+    python "examples/The Alberta Plan/Step3/dod8_taskshift_v2_sweep.py"
     python "examples/The Alberta Plan/Step3/dod9_capstone_sweep.py"
     python benchmarks/horde_throughput.py
     python benchmarks/sarsa_throughput.py
@@ -383,6 +384,56 @@ unit replacement, but it does not improve final-window MSE on this particular
 stream. Treat this as evidence that the CBP plumbing and plasticity diagnostics
 work, not as a positive sustained-performance claim.
 
+### DoD-8 v2: ReLU and task-shift variants
+
+The original DoD-8 sign-flip stream uses LeakyReLU, which lets the
+network re-fit each context by reweighting existing units; that
+configuration cannot show CBP-positive signal even in principle. The
+v2 sweep tests two regimes designed to expose CBP's intended benefit:
+
+* **Variant A — ReLU sign-flip.** Same stream as DoD-8 with
+  `leaky_relu_slope=0.0`. Hard-ReLU produces true dead units that
+  cannot recover via gradient flow; per Dohare et al. (Nature 2024)
+  this is CBP's home turf.
+* **Variant B — Task-shift.** Each context uses a contiguous half of
+  the input vector (alternating low/high) with fresh random weights;
+  the unused half contributes zero to the target. The full input
+  distribution is fixed but the target subspace rotates every 10000
+  steps, forcing genuinely new feature->target maps each context.
+
+5 seeds × 50,000 steps × 4 cells. Reproduce with
+`python "examples/The Alberta Plan/Step3/dod8_taskshift_v2_sweep.py"`;
+artifacts under `output/step3_dod8_v2/{results.csv, summary.json,
+effective_rank_trajectory.csv, SUMMARY.md}`.
+
+| Cell                      | first ctx MSE | last ctx MSE | final-window MSE | eff. rank | dead units | replacements |
+|---------------------------|--------------:|-------------:|-----------------:|----------:|-----------:|-------------:|
+| A_relu_signflip · CBP off | 0.0753        | 0.0638       | 0.0638 ± 0.0432  | 15.62     | 10.2       | 0            |
+| A_relu_signflip · CBP on  | 0.0961        | 0.0783       | 0.0789 ± 0.0453  | 36.75     | 0.0        | 319          |
+| B_taskshift     · CBP off | 0.0467        | 0.0195       | 0.0191 ± 0.0155  | 15.75     | 13.6       | 0            |
+| B_taskshift     · CBP on  | 0.0499        | 0.0223       | 0.0221 ± 0.0177  | 29.05     | 6.8        | 319          |
+
+CBP-on minus CBP-off final-window MSE: Variant A delta = +0.0151
+(CBP hurts), Variant B delta = +0.0029 (CBP hurts; within ~0.2 SD).
+The mechanism works in both variants — replacements ran at the
+configured rate (319 per seed), dead units shrank from 10.2 to 0
+(Variant A) and 13.6 to 6.8 (Variant B), and effective rank roughly
+doubled — but in both cases unit replacement disrupted already-learned
+features faster than the network could re-fit them.
+
+**Verdict — confirmed negative.** The original DoD-8 result was not a
+stream artifact. CBP fails to improve final-window MSE on the
+ReLU-activation variant where CBP is supposed to help most, and on a
+task-shift stream where representations genuinely have to change. In
+the 64-unit, single-head, LMS+ObGD configuration used here on this
+stream family, CBP's replacement schedule is a net cost on prediction
+error. The CBP plumbing, replacement, dead-unit, and rank diagnostics
+all work correctly — the algorithm just does not help at this scale on
+these tasks. CBP remains a research-only surface in the framework
+(retain `CBPMultiHeadMLPLearner` and `ContinualBackpropConfig` for
+future task families and hybrids; do not promote to a default
+component).
+
 ## DoD-9: Critic-for-Control Capstone
 
 **Setup**: Continuing GridWorld torus (4×4, 4 actions, +1 reward at
@@ -477,6 +528,6 @@ integration overhead.
 | 5    | Off-policy IS + ETD prediction | PASS                |
 | 6    | Recurrent state on POMDP       | PASS for traces     |
 | 7    | TD-target feature discovery    | PASS scoped; open general |
-| 8    | 200k plasticity sustained      | MIXED/NEGATIVE      |
+| 8    | 200k plasticity sustained + v2 ReLU/task-shift | NEGATIVE; research-only |
 | 9    | Critic-for-control capstone    | PASS                |
 | 10   | CPU throughput ≥ 1000 steps/s  | PASS local-core; daemon E2E measured, FAIL at ≥500 sps gate (checkpoint-bound) |

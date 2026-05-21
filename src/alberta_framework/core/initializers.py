@@ -61,17 +61,16 @@ def sparse_init(
     else:
         raise ValueError(f"init_type must be 'uniform' or 'normal', got '{init_type}'")
 
-    # Create sparsity mask: for each output neuron, zero out num_zeros inputs
-    # Use vmap over output neurons with independent random permutations
-    row_keys = jr.split(mask_key, fan_out)
+    if num_zeros <= 0:
+        return weights
+    if num_zeros >= fan_in:
+        return jnp.zeros_like(weights)
 
-    def make_row_mask(row_key: Array) -> Float[Array, " fan_in"]:
-        """Create a binary mask for a single output neuron."""
-        perm = jr.permutation(row_key, fan_in)
-        # mask[i] = 1 if perm[i] >= num_zeros, else 0
-        mask = (perm >= num_zeros).astype(jnp.float32)
-        return mask
-
-    masks = jax.vmap(make_row_mask)(row_keys)  # (fan_out, fan_in)
+    # Exact per-row sparsity without per-row random permutations.  `jr.permutation`
+    # lowers to a shuffle kernel that can be very slow to compile in large suites.
+    scores = jr.uniform(mask_key, shape, dtype=jnp.float32)
+    zero_idx = jax.lax.top_k(scores, num_zeros)[1]
+    row_idx = jnp.arange(fan_out)[:, None]
+    masks = jnp.ones(shape, dtype=jnp.float32).at[row_idx, zero_idx].set(0.0)
 
     return weights * masks

@@ -167,6 +167,23 @@ class TestFeatureRelevanceValues:
         chex.assert_shape(rel.trace_activity, (FEATURE_DIM,))
         chex.assert_shape(rel.head_reliance, (N_HEADS, FEATURE_DIM))
 
+    def test_linear_multihead_uses_head_traces_and_step_sizes(self):
+        """Linear Horde-style states report head-level feature activity."""
+        learner = _make_learner(optimizer=Autostep(), hidden_sizes=())
+        state = learner.init(feature_dim=FEATURE_DIM, key=jr.key(42))
+        result = learner.update(
+            state,
+            jnp.ones(FEATURE_DIM, dtype=jnp.float32),
+            jnp.ones(N_HEADS, dtype=jnp.float32),
+        )
+
+        rel = compute_feature_relevance(result.state)
+
+        chex.assert_shape(rel.step_size_activity, (FEATURE_DIM,))
+        chex.assert_shape(rel.trace_activity, (FEATURE_DIM,))
+        assert jnp.any(rel.step_size_activity > 0.0)
+        assert jnp.any(rel.trace_activity > 0.0)
+
 
 # =============================================================================
 # compute_feature_sensitivity

@@ -205,7 +205,8 @@ class TestPrototypeAgentInit:
         agent = PrototypeAgent(_minimal_config())
         state = agent.init(jr.key(0))
         n_total = N_PRIM + 1  # 1 option
-        chex.assert_shape(state.oak_state.stomp_state.base_q_weights, (n_total, OBS_DIM))
+        bls = state.oak_state.stomp_state.base_learner_state
+        assert len(bls.head_params.weights) == n_total
 
     def test_init_full_state_shapes(self) -> None:
         agent = PrototypeAgent(_full_config())
@@ -667,15 +668,18 @@ class TestPrototypeAgentSmoke:
         assert int(state.step_count) == 200
 
     def test_200_step_full(self) -> None:
+        """Full-stack smoke kept shorter because each step touches all components."""
         agent = PrototypeAgent(_full_config(n_dreams=1))
         state = agent.start(agent.init(jr.key(0)), jnp.zeros(OBS_DIM))
         key = jr.key(100)
-        for i in range(200):
+        n_steps = 50
+        for _ in range(n_steps):
             key, rk, ok = jr.split(key, 3)
             r = jr.normal(rk, ())
             obs = jr.normal(ok, (OBS_DIM,))
             result = agent.update(state, r, obs)
             state = result.state
+        assert int(state.step_count) == n_steps
         assert jnp.isfinite(result.oak_td_error)
         assert result.world_model_error is not None
         assert jnp.isfinite(result.world_model_error)

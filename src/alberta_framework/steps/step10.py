@@ -32,7 +32,7 @@ References:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, cast
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -208,7 +208,7 @@ def init_step10_state(
     init_key, start_key = jr.split(key)
     state = agent.init(init_key)
     obs = jnp.asarray(initial_observation, dtype=jnp.float32)
-    return agent.start(state, obs)
+    return cast(STOMPState, agent.start(state, obs))
 
 
 def step10_update(
@@ -230,7 +230,7 @@ def step10_update(
     Returns:
         :class:`STOMPUpdateResult` containing the new state and diagnostics.
     """
-    return agent.update(state, env_reward, next_observation)
+    return cast(STOMPUpdateResult, agent.update(state, env_reward, next_observation))
 
 
 def run_step10_scan(

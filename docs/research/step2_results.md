@@ -470,8 +470,11 @@ The later conclusive learner extends the comparison to the broader controlled,
 synthetic, and digits all-suite matrix; the resource-manager pass closes the
 prior learned-allocation and stateful-external-digits gaps. The broader
 research problem remains open beyond this supervised Step 2 matrix: published-
-scale OPMNIST is not complete, and TD/GVF feature discovery remains Step 3
-research.
+scale OPMNIST is now complete for the latest one-seed UPGD-memory vs fair-MLP
+comparison, but the result is mixed: UPGD-memory wins online MSE, online
+accuracy, and final-window MSE, while fair MLP baselines still win
+final-window accuracy and all-permutation held-out test metrics. TD/GVF feature
+discovery remains Step 3 research.
 
 ### Published-style external stressor pass
 
@@ -589,11 +592,11 @@ pixel-permutation task:
 | Permuted MNIST-style pixels | `uses_full_openml_mnist_split=true`, `uses_full_mnist_task_blocks=true`, `matches_dohare_opmnist_core_protocol=true` | final-window MSE `+0.002199` | `1/0/0` | positive online MSE on one full block |
 | Permuted MNIST-style pixels | same | held-out test accuracy `-0.000600` | `0/1/0` | slight negative vs best fair MLP |
 
-Chunked/resumable true OpenML MNIST follow-up, 1 seed, canonical split,
-60,000-example randomized pixel-permutation task blocks, with 800 configured
-permutations. The latest durable checkpoint has advanced to 2,760,000 online
-steps / 46 full blocks. The latest completed evaluation aggregation remains the
-2,400,000-step / 40-block result:
+Historical chunked/resumable true OpenML MNIST follow-up from the older
+portfolio runner, 1 seed, canonical split, 60,000-example randomized
+pixel-permutation task blocks, with 800 configured permutations. This was the
+earlier 2,400,000-step / 40-block evaluated result and is now superseded by the
+full 800-block UPGD-memory artifact discussed below:
 
 | Stressor | Source/protocol gate | Primary metric vs best fair MLP | Wins/losses/ties | Reading |
 |---|---|---:|---:|---|
@@ -637,15 +640,26 @@ true-OpenML streaming run. The portfolio OPMNIST runner now has atomic
 checkpoints, chunk progress, status/ETA reporting, strict resume validation,
 and migration for legacy UPGD checkpoint states. A separate single-learner
 UPGD-memory OPMNIST runner now evaluates the packaged production learner
-directly; its current full-source/full-block OpenML result is 10 blocks /
-600,000 examples, positive against best fair MLP on all online, final-window,
-and held-out metrics over the 10 observed permutation views. This is not the
-800-task / 48M-example main OPMNIST protocol. Its latest status sidecar reports
-10/800 completed blocks and an approximately 12-hour full-run ETA under current
-CPU contention. Million-step SCR is now closed for the narrowed `slow_meta`
-causal router with the fair MLP comparator preserved. The combined external
-status remains partial because OPMNIST task-count scale is runnable/resumable
-but still not completed.
+directly; the latest full-source/full-task OpenML result completed all 800
+blocks / 48,000,000 examples for one seed. Against same-run raw and sharpened
+MLP baselines, the best UPGD-memory variant improves online MSE by `+0.003782`,
+online accuracy by `+0.012320`, and final-window MSE by `+0.002115` versus the
+best fair MLP for each metric. It loses final-window accuracy by `-0.004200`,
+held-out test MSE by `-0.039517`, and held-out test accuracy by `-0.017840`.
+The follow-up single-UPGD H128 full-scale artifact
+(`outputs/step2_canonical/upgd_memory_opmnist_single_upgd_h128_800block_1seed_results.json`)
+keeps the same 800-task / 48,000,000-update protocol and compares
+`upgd_structure_linear_h128` and `upgd_structure_softmax_h128` against
+`mlp_h64` and `mlp_h128`. `upgd_structure_softmax_h128` improves online MSE by
+`+0.010102`, online accuracy by `+0.018775`, final-window MSE by `+0.006362`,
+and all-permutation held-out test accuracy by `+0.004359` versus `mlp_h128`.
+It still loses final-window accuracy by `-0.001200` and held-out test MSE by
+`-0.047648`, so the OPMNIST evidence remains mixed rather than a complete
+performance closure.
+Million-step SCR is now closed for the narrowed `slow_meta` causal router with
+the fair MLP comparator preserved. The combined external status is therefore no
+longer blocked on OPMNIST task-count completion, but retained-view
+generalization and multi-seed confirmation remain open.
 
 ## What was closed since the audit
 
@@ -849,8 +863,10 @@ seed-positive:
 Current interpretation: this is the strongest Step 2 learner in the repo and
 closes the current supervised all-suite promotion matrix. It remains a causal
 portfolio/routing result, not a proof that one recursive self-contained
-feature-construction mechanism is universal. Published-scale OPMNIST and
-TD/GVF feature discovery remain separate research boundaries.
+feature-construction mechanism is universal. Published-scale OPMNIST is now
+completed for one seed on the latest UPGD-memory/MLP comparison, but the
+held-out all-permutation metrics are still MLP-favored; TD/GVF feature
+discovery remains a separate research boundary.
 
 ### Target-structure UPGD simplification and promotion update
 
@@ -1004,16 +1020,12 @@ result, not a theorem and not a single recursive feature-growth principle.
   predictive-state features lost coupled-hidden AR(1) to raw MLP (`2/8/0`),
   and off-policy gains did not survive the harder variant.
 - True published-scale external comparisons: compact true OpenML MNIST and
-  true OpenML Fashion-MNIST delayed-context evidence are positive. The
-  portfolio OPMNIST runner still has a 46-block checkpoint and a 40-block
-  evaluated aggregation. The single packaged UPGD-memory runner now has a
-  separate 10-block evaluated full-source/full-task-block OpenML MNIST result:
-  600,000 examples, 800 configured random pixel permutations, and positive
-  primary-vs-best-MLP deltas on online MSE (`+0.010216`), online accuracy
-  (`+0.013312`), final-window MSE (`+0.007760`), final-window accuracy
-  (`+0.011600`), held-out MSE (`+0.023794`), and held-out accuracy
-  (`+0.233600`). Full published-scale OPMNIST still needs all 800 blocks /
-  48,000,000 examples, so the published-scale flag correctly remains false.
+  true OpenML Fashion-MNIST delayed-context evidence are positive. The single
+  packaged UPGD-memory runner now has a completed 800-block evaluated
+  full-source/full-task-block OpenML MNIST result: 48,000,000 examples, 800
+  random pixel permutations, no task id, and prediction before update. The
+  result is positive for online MSE, online accuracy, and final-window MSE, but
+  negative for final-window accuracy and all-permutation held-out test metrics.
   Million-step SCR is closed for the narrowed `slow_meta` router at 3 seeds.
 
 ### Resource-manager delayed-context image evidence

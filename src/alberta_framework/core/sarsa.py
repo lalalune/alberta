@@ -257,6 +257,7 @@ class SARSAAgent:
         prediction_demons: list[GVFSpec] | None = None,
         lamda: float = 0.0,
         trace_mode: TraceMode = TraceMode.ACCUMULATING,
+        utility_decay: float = 0.99,
     ):
         """Initialize the SARSA agent.
 
@@ -276,6 +277,7 @@ class SARSAAgent:
                 control demons in the Horde.
             lamda: Trace decay for control demon heads (default: 0.0)
             trace_mode: Eligibility trace mode (ACCUMULATING or REPLACING)
+            utility_decay: EMA decay for hidden-unit utility diagnostics.
         """
         self._sarsa_config = sarsa_config
         self._hidden_sizes = hidden_sizes
@@ -302,6 +304,7 @@ class SARSAAgent:
             use_layer_norm=use_layer_norm,
             head_optimizer=head_optimizer,
             trace_mode=trace_mode,
+            utility_decay=utility_decay,
         )
 
     @property
@@ -485,6 +488,10 @@ class SARSAAgent:
         # Q(s', :) for all actions
         all_preds = self._horde.predict(state.learner_state, observation)
         q_next = all_preds[:n_actions]
+        q_previous = self._horde.predict(
+            state.learner_state,
+            state.last_observation,
+        )[:n_actions]
 
         # SARSA target: r + gamma * Q(s', a') with terminal handling
         effective_gamma = jnp.where(terminated, 0.0, gamma)
@@ -508,7 +515,7 @@ class SARSAAgent:
         )
 
         # TD error for the taken action
-        q_old = all_preds[state.last_action]
+        q_old = q_previous[state.last_action]
         td_error = sarsa_target - q_old
 
         # Epsilon decay
@@ -760,3 +767,42 @@ def run_sarsa_from_arrays(
         td_errors=td_errs,
         actions=actions,
     )
+
+
+def run_sarsa_from_arrays_final_state(
+    agent: SARSAAgent,
+    state: SARSAState,
+    observations: Float[Array, "num_steps feature_dim"],
+    rewards: Float[Array, " num_steps"],
+    terminated: Float[Array, " num_steps"],
+    next_observations: Float[Array, "num_steps feature_dim"],
+) -> SARSAState:
+    """Run the scan-compatible SARSA loop and return only the final state.
+
+    Throughput benchmarks use this helper to avoid materializing per-step
+    Q-values, TD errors, and actions.
+    """
+
+    @jax.jit
+    def _scan_fn(
+        carry: SARSAState,
+        inputs: tuple[Array, Array, Array, Array],
+    ) -> tuple[SARSAState, None]:
+        s = carry
+        _obs, r, term, next_obs = inputs
+        next_action, new_key = agent.select_action(s, next_obs)
+        s = s.replace(rng_key=new_key)  # type: ignore[attr-defined]
+        result = agent.update(s, r, next_obs, term, next_action)
+        return result.state, None
+
+    t0 = time.time()
+    final_state, _ = jax.lax.scan(
+        _scan_fn,
+        state,
+        (observations, rewards, terminated, next_observations),
+    )
+    elapsed = time.time() - t0
+    final_learner = final_state.learner_state.replace(  # type: ignore[attr-defined]
+        uptime_s=final_state.learner_state.uptime_s + elapsed,
+    )
+    return final_state.replace(learner_state=final_learner)  # type: ignore[no-any-return, attr-defined]

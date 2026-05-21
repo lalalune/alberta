@@ -261,7 +261,7 @@ def test_step12_update_state_finite() -> None:
     obs = jnp.ones(4) * 0.3
     result = step12_update(agent, state, obs, jnp.array(1.0), obs * 1.1)
     chex.assert_tree_all_finite(result.state.cerebellum_state.weights)
-    chex.assert_tree_all_finite(result.state.cortex_state.stomp_state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.cortex_state.stomp_state.base_learner_state)
 
 
 def test_step12_update_step_count_increments() -> None:
@@ -473,6 +473,6 @@ def test_step12_state_stays_finite_200_steps() -> None:
     next_obs = jr.normal(jr.key(22), (n_steps, 4)) * 0.1
     result = run_step12_scan(agent, state, obs, rewards, next_obs)
     chex.assert_tree_all_finite(result.state.cerebellum_state.weights)
-    chex.assert_tree_all_finite(result.state.cortex_state.stomp_state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.cortex_state.stomp_state.base_learner_state)
     chex.assert_tree_all_finite(result.predictions)
     chex.assert_tree_all_finite(result.cortex_td_errors)

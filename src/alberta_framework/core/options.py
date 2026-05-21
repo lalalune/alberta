@@ -33,6 +33,8 @@ import jax.random as jr
 from jax import Array
 from jaxtyping import Float, Int
 
+from alberta_framework.core.multi_head_learner import MultiHeadMLPLearner, MultiHeadMLPState
+
 # ---------------------------------------------------------------------------
 # Subtask specification (Python-level; JAX arrays extracted for scan use)
 # ---------------------------------------------------------------------------
@@ -175,13 +177,15 @@ class OptionModelsState:
 class STOMPState:
     """Combined state for the full STOMP agent.
 
-    The base control is a linear differential Q-function over the *extended*
+    The base control is a differential Q-function over the *extended*
     action set ``{a_0, …, a_{K-1}, o_0, …, o_{N-1}}`` where K is the number
-    of primitive actions and N is the number of options.
+    of primitive actions and N is the number of options.  When
+    ``STOMPConfig.base_hidden_sizes`` is empty the base Q is linear (one head
+    per extended action); when non-empty it is a shared-trunk MLP.
 
     Attributes:
-        base_q_weights: Shape ``(K+N, obs_dim)``.  Extended Q-table weights.
-        base_traces: Same shape as ``base_q_weights``.
+        base_learner_state: Extended Q-function state (MultiHeadMLPLearner
+            with ``n_heads = K + N``).
         base_average_reward: Scalar continuing reward rate for base agent.
         base_last_obs: Most recent observation seen by the base agent.
         base_last_action: Last extended action index taken (0..K+N-1).
@@ -198,8 +202,7 @@ class STOMPState:
         step_count: Total primitive steps taken by the agent.
     """
 
-    base_q_weights: Float[Array, "n_total_actions obs_dim"]
-    base_traces: Float[Array, "n_total_actions obs_dim"]
+    base_learner_state: MultiHeadMLPState
     base_average_reward: Float[Array, ""]
     base_last_obs: Float[Array, " obs_dim"]
     base_last_action: Int[Array, ""]
@@ -295,6 +298,23 @@ def _select_action_epsilon_greedy(
     """ε-greedy action selection with Gumbel tie-breaking."""
     key, explore_key, noise_key = jr.split(key, 3)
     q_vals = _q_values_for_obs(q_weights, observation)
+    greedy = jnp.argmax(q_vals + 1e-6 * jr.gumbel(noise_key, (n_actions,))).astype(
+        jnp.int32
+    )
+    random_action = jr.randint(explore_key, (), 0, n_actions).astype(jnp.int32)
+    explore = jr.uniform(key) < jnp.asarray(epsilon, dtype=jnp.float32)
+    action = jnp.where(explore, random_action, greedy)
+    return action, key
+
+
+def _select_action_epsilon_greedy_from_q(
+    q_vals: Array,
+    key: Array,
+    epsilon: float,
+    n_actions: int,
+) -> tuple[Array, Array]:
+    """ε-greedy action selection from pre-computed Q values."""
+    key, explore_key, noise_key = jr.split(key, 3)
     greedy = jnp.argmax(q_vals + 1e-6 * jr.gumbel(noise_key, (n_actions,))).astype(
         jnp.int32
     )
@@ -510,6 +530,7 @@ class STOMPConfig:
     base_step_size: float = 0.05
     base_avg_reward_step_size: float = 0.01
     base_trace_decay: float = 0.0
+    base_hidden_sizes: tuple[int, ...] = ()
     option_step_size: float = 0.05
     option_avg_reward_step_size: float = 0.01
     option_trace_decay: float = 0.0
@@ -554,6 +575,7 @@ class STOMPConfig:
             "base_step_size": self.base_step_size,
             "base_avg_reward_step_size": self.base_avg_reward_step_size,
             "base_trace_decay": self.base_trace_decay,
+            "base_hidden_sizes": list(self.base_hidden_sizes),
             "option_step_size": self.option_step_size,
             "option_avg_reward_step_size": self.option_avg_reward_step_size,
             "option_trace_decay": self.option_trace_decay,
@@ -571,6 +593,8 @@ class STOMPConfig:
         payload.pop("type", None)
         specs_raw = payload.pop("subtask_specs", [])
         specs = tuple(SubtaskSpec(**s) for s in specs_raw)
+        if "base_hidden_sizes" in payload:
+            payload["base_hidden_sizes"] = tuple(payload["base_hidden_sizes"])
         return cls(subtask_specs=specs, **payload)
 
 
@@ -598,6 +622,15 @@ class STOMPAgent:
             raise ValueError("STOMPAgent requires at least one subtask/option")
         self._config = config
         self._spec_arrays = STOMPSpecArrays.from_specs(list(config.subtask_specs))
+        self._base_learner = MultiHeadMLPLearner(
+            n_heads=config.n_total_actions,
+            hidden_sizes=config.base_hidden_sizes,
+            step_size=config.base_step_size,
+            gamma=0.0,
+            lamda=0.0,
+            per_head_gamma_lamda=(config.base_trace_decay,) * config.n_total_actions,
+            sparsity=0.0,
+        )
 
     @property
     def config(self) -> STOMPConfig:
@@ -609,6 +642,15 @@ class STOMPAgent:
         """JAX arrays derived from subtask specifications."""
         return self._spec_arrays
 
+    @property
+    def base_learner(self) -> MultiHeadMLPLearner:
+        """Underlying base Q-function learner."""
+        return self._base_learner
+
+    def base_q_values(self, state: STOMPState, observation: Array) -> Array:
+        """Compute Q-values for all extended actions from a STOMPState."""
+        return self._base_learner.predict(state.base_learner_state, observation)
+
     def to_config(self) -> dict[str, Any]:
         """Serialize agent configuration."""
         return self._config.to_config()
@@ -618,19 +660,17 @@ class STOMPAgent:
         obs_dim = self._config.observation_dim
         n_prim = self._config.n_primitive_actions
         n_opt = self._config.n_options
-        n_total = self._config.n_total_actions
 
-        key, policy_key, option_key = jr.split(key, 3)
+        policy_key, learner_key, option_key = jr.split(key, 3)
         scale = 0.01
-        base_q_weights = scale * jr.normal(key, (n_total, obs_dim), dtype=jnp.float32)
+        base_learner_state = self._base_learner.init(obs_dim, learner_key)
         option_q_weights = scale * jr.normal(
             option_key, (n_opt, n_prim, obs_dim), dtype=jnp.float32
         )
 
         obs_zero = jnp.zeros(obs_dim, dtype=jnp.float32)
         return STOMPState(
-            base_q_weights=base_q_weights,
-            base_traces=jnp.zeros((n_total, obs_dim), dtype=jnp.float32),
+            base_learner_state=base_learner_state,
             base_average_reward=jnp.array(0.0, dtype=jnp.float32),
             base_last_obs=obs_zero,
             base_last_action=jnp.array(0, dtype=jnp.int32),
@@ -661,13 +701,10 @@ class STOMPAgent:
         obs = jnp.asarray(initial_observation, dtype=jnp.float32).reshape(
             (self._config.observation_dim,)
         )
-        key, action_key = jr.split(state.rng_key)
-        action, key = _select_action_epsilon_greedy(
-            state.base_q_weights,
-            obs,
-            key,
-            self._config.epsilon_base,
-            self._config.n_total_actions,
+        key = state.rng_key
+        q_vals = self._base_learner.predict(state.base_learner_state, obs)
+        action, key = _select_action_epsilon_greedy_from_q(
+            q_vals, key, self._config.epsilon_base, self._config.n_total_actions
         )
         return cast(
             STOMPState,
@@ -776,31 +813,32 @@ class STOMPAgent:
         )
         # Only update base Q on: (a) primitive steps, or (b) option termination
         should_update_base = (~is_executing) | (is_executing & option_terminates)
+        n_total = cfg.n_total_actions
+        beta = jnp.asarray(cfg.base_avg_reward_step_size, dtype=jnp.float32)
 
-        def do_base_update(_: None) -> tuple[Array, Array, Array, Array]:
-            return _differential_semidp_q_update(
-                state.base_q_weights,
-                state.base_traces,
-                state.base_average_reward,
-                state.base_last_obs,
-                state.base_last_action,
-                base_reward,
-                obs,
-                step_size=cfg.base_step_size,
-                avg_reward_step_size=cfg.base_avg_reward_step_size,
-                trace_decay=cfg.base_trace_decay,
-                n_actions=cfg.n_total_actions,
-                duration=base_duration,
-                discount=base_discount,
+        def do_base_update(_: None) -> tuple[MultiHeadMLPState, Array, Array]:
+            next_q_vals = self._base_learner.predict(state.base_learner_state, obs)
+            max_next_q = base_discount * jnp.max(next_q_vals)
+            td_target = base_reward - state.base_average_reward * base_duration + max_next_q
+            targets = jnp.full(n_total, jnp.nan, dtype=jnp.float32).at[
+                state.base_last_action
+            ].set(td_target)
+            result = self._base_learner.update(
+                state.base_learner_state, state.base_last_obs, targets
             )
+            td_err = result.errors[state.base_last_action]
+            new_avg_reward = state.base_average_reward + beta * td_err
+            return result.state, new_avg_reward, td_err
 
-        def skip_base_update(_: None) -> tuple[Array, Array, Array, Array]:
-            q_prev = state.base_q_weights[state.base_last_action] @ state.base_last_obs
-            q_next = jnp.max(_q_values_for_obs(state.base_q_weights, obs))
-            td = q_next - q_prev
-            return state.base_q_weights, state.base_traces, state.base_average_reward, td
+        def skip_base_update(_: None) -> tuple[MultiHeadMLPState, Array, Array]:
+            prev_q = self._base_learner.predict(
+                state.base_learner_state, state.base_last_obs
+            )
+            next_q = self._base_learner.predict(state.base_learner_state, obs)
+            td = jnp.max(next_q) - prev_q[state.base_last_action]
+            return state.base_learner_state, state.base_average_reward, td
 
-        new_base_q, new_base_traces, new_avg_r, base_td = jax.lax.cond(
+        new_base_learner_state, new_avg_r, base_td = jax.lax.cond(
             should_update_base, do_base_update, skip_base_update, None
         )
 
@@ -810,8 +848,9 @@ class STOMPAgent:
         key = state.rng_key
         key, ext_key, intra_key = jr.split(key, 3)
 
-        extended_action, _ = _select_action_epsilon_greedy(
-            new_base_q, obs, ext_key, cfg.epsilon_base, cfg.n_total_actions
+        ext_q_vals = self._base_learner.predict(new_base_learner_state, obs)
+        extended_action, _ = _select_action_epsilon_greedy_from_q(
+            ext_q_vals, ext_key, cfg.epsilon_base, cfg.n_total_actions
         )
         intra_action, _ = _select_action_epsilon_greedy(
             new_option_policies.q_weights[option_idx],
@@ -871,8 +910,7 @@ class STOMPAgent:
         )
 
         new_state = STOMPState(
-            base_q_weights=new_base_q,
-            base_traces=new_base_traces,
+            base_learner_state=new_base_learner_state,
             base_average_reward=new_avg_r,
             base_last_obs=obs,
             base_last_action=jnp.where(

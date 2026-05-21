@@ -4,7 +4,14 @@ A research-first framework for the Alberta Plan: Building the foundations of Con
 
 ## Overview
 
-The Alberta Framework implements **Step 1 of the Alberta Plan**: demonstrating that IDBD (Incremental Delta-Bar-Delta) and Autostep with meta-learned step-sizes can match or beat hand-tuned LMS on non-stationary supervised learning problems.
+The Alberta Framework implements production-facing kernels through Step 7 of
+the Alberta Plan. Step 1 is complete for fixed-feature continual supervised
+learning. Step 2 is accepted for the current supervised empirical matrix.
+Step 3 is accepted for given-feature GVF/Horde-style prediction. Step 4 is
+accepted for SARSA control, while actor-critic remains implemented but
+provisional as the canonical control learner. Steps 5-7 have primitive
+production surfaces for average-reward prediction, differential SARSA, and
+bounded one-step Dyna planning.
 
 **Core Philosophy**: Temporal uniformity — every component updates at every time step.
 
@@ -62,7 +69,10 @@ pip install alberta-framework[dev,gymnasium,analysis,docs]
 
 ## Project Status
 
-This is an early-stage research framework (v0.1.0). The API may change as we progress through the Alberta Plan.
+This is an active research framework. The package API may change as the
+remaining research boundaries are closed, especially TD/GVF feature discovery,
+off-policy nonlinear Horde learning, average-reward actor-critic, model-bias
+control in planning, and actor-critic promotion.
 
 ## Citation
 

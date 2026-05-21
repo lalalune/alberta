@@ -115,8 +115,9 @@ Artifacts:
   eligibility traces through all layers, sparse init, 28 tests, bsuite adapter (nlhac)
 - [x] 10-seed catch/0 bsuite evidence: nlhac closes 20 regret units vs linear AC
   (458 vs 478); SARSA (374) remains the dominant baseline at this horizon
-- [ ] Autostep-for-actor: per-weight step-size adaptation for the actor MLP
-  (prerequisite for closing the nlhac vs SARSA gap; then re-gate promotion)
+- [x] Autostep-for-actor: per-weight step-size adaptation for the actor MLP —
+  complete for `NonlinearHordeActorCriticAgent` (fea98e1) and
+  `AverageRewardHordeActorCriticAgent`; re-gate promotion pending seeded evidence
 
 ## rlsecd Integration
 

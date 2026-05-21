@@ -84,8 +84,15 @@ def feature_to_subtask_specs(
         Tuple of up to ``n_subtasks`` :class:`SubtaskSpec` instances, ordered
         by descending feature importance.
     """
-    base_q_abs = jnp.abs(oak_state.stomp_state.base_q_weights)  # (n_total, obs_dim)
-    feature_importance = jnp.max(base_q_abs, axis=0)            # (obs_dim,)
+    bls = oak_state.stomp_state.base_learner_state
+    trunk_ws = bls.trunk_params.weights
+    if len(trunk_ws) == 0:
+        # Linear base Q: head_params.weights[i] has shape (1, obs_dim)
+        base_q_mat = jnp.stack([w[0] for w in bls.head_params.weights])
+    else:
+        # Nonlinear: use first trunk layer as feature-importance proxy
+        base_q_mat = trunk_ws[0]  # (hidden_size, obs_dim)
+    feature_importance = jnp.max(jnp.abs(base_q_mat), axis=0)  # (obs_dim,)
 
     opt_q = oak_state.stomp_state.option_policies.q_weights      # (n_opts, n_prim, obs_dim)
     opt_q_abs = jnp.abs(opt_q)
@@ -428,8 +435,8 @@ class PrototypeAgent:
         """
         obs = jnp.asarray(observation, dtype=jnp.float32)
         n_prim = self._config.oak.n_primitive_actions
-        q_vals = state.oak_state.stomp_state.base_q_weights[:n_prim] @ obs
-        return jnp.argmax(q_vals).astype(jnp.int32)
+        all_q = self._oak.base_q_values(state.oak_state, obs)
+        return jnp.argmax(all_q[:n_prim]).astype(jnp.int32)
 
     # -- Core update ----------------------------------------------------------
 

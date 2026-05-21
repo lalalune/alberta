@@ -107,7 +107,18 @@ def compute_feature_relevance(state: MultiHeadMLPState) -> FeatureRelevance:
     else:
         # No trunk layers — use head info
         feature_dim = state.head_params.weights[0].shape[1]
-        step_size_activity = jnp.zeros(feature_dim)
+        head_step_sizes = []
+        for h in range(n_heads):
+            head_w_opt = state.head_optimizer_states[h][0]
+            if hasattr(head_w_opt, "step_sizes"):
+                head_step_sizes.append(jnp.squeeze(jnp.abs(head_w_opt.step_sizes), axis=0))
+            elif hasattr(head_w_opt, "step_size"):
+                head_step_sizes.append(jnp.full(feature_dim, jnp.abs(head_w_opt.step_size)))
+        step_size_activity = (
+            jnp.mean(jnp.stack(head_step_sizes), axis=0)
+            if head_step_sizes
+            else jnp.zeros(feature_dim)
+        )
 
     # --- Trace activity on input layer ---
     # trunk_traces interleaved: (w0, b0, w1, b1, ...)
@@ -117,7 +128,15 @@ def compute_feature_relevance(state: MultiHeadMLPState) -> FeatureRelevance:
         trace_activity = jnp.mean(jnp.abs(input_traces), axis=0)  # (feature_dim,)
     else:
         feature_dim = state.head_params.weights[0].shape[1]
-        trace_activity = jnp.zeros(feature_dim)
+        head_trace_weights = [
+            jnp.squeeze(jnp.abs(state.head_traces[h][0]), axis=0)
+            for h in range(n_heads)
+        ]
+        trace_activity = (
+            jnp.mean(jnp.stack(head_trace_weights), axis=0)
+            if head_trace_weights
+            else jnp.zeros(feature_dim)
+        )
 
     # --- Normalizer state ---
     normalizer_mean = None

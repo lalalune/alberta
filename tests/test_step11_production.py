@@ -188,7 +188,7 @@ def test_step11_update_increments_step_count() -> None:
 def test_step11_update_state_finite() -> None:
     agent, state = _setup()
     result = step11_update(agent, state, jnp.array(0.5), jnp.ones(4) * 0.1)
-    chex.assert_tree_all_finite(result.state.stomp_state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.stomp_state.base_learner_state)
 
 
 def test_step11_update_td_error_finite() -> None:
@@ -463,6 +463,6 @@ def test_step11_state_stays_finite_200_steps() -> None:
         jr.normal(jr.key(10), (n_steps,)) * 0.1,
         jr.normal(jr.key(11), (n_steps, 3)) * 0.1,
     )
-    chex.assert_tree_all_finite(result.state.stomp_state.base_q_weights)
+    chex.assert_tree_all_finite(result.state.stomp_state.base_learner_state)
     chex.assert_tree_all_finite(result.state.utility_ema)
     chex.assert_tree_all_finite(result.td_errors)
