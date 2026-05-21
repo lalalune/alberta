@@ -379,8 +379,11 @@ Findings:
   (`outputs/bsuite/nlhac_gradclip_adaptive_10seed_500/report.md`) did not close
   Step 4: adaptive NLHAC was `+4.6` overall and `+10.6` on CartPole vs Q, but
   `-1.4` on catch, while SARSA was `+6.6` on catch. Adaptive bounding improves
-  one part of the control profile but does not solve the high-dimensional
-  catch boundary.
+  one part of the control profile but does not solve the high-dimensional catch
+  boundary. A 1000-step confirmation
+  (`outputs/bsuite/nlhac_gradclip_adaptive_10seed_1000/report.md`) sharpened
+  the same conclusion: adaptive NLHAC was `+8.1` overall and `+22.2` on
+  CartPole vs Q, but `-6.0` on catch; SARSA was `+13.4` on catch.
 
 ### Verdict
 

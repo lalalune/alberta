@@ -437,6 +437,29 @@ def audit_step3(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             security_rollout.get("boundary") if security_rollout is not None else None
         ),
     }
+    external_audit_path = root / "outputs/rlsecd_external_audit/status.json"
+    external_audit = load_optional_json(external_audit_path)
+    external_audit_passed = bool(
+        external_audit is not None
+        and external_audit.get("schema") == "alberta.rlsecd_external_audit.v1"
+        and external_audit.get("rlsecd_available") is True
+    )
+    evidence["rlsecd_external_availability"] = {
+        "path": str(external_audit_path),
+        "exists": external_audit is not None,
+        "passed": external_audit_passed,
+        "security_gym_available": (
+            external_audit.get("security_gym_available")
+            if external_audit is not None
+            else None
+        ),
+        "missing_required_repos": (
+            external_audit.get("missing_required_repos")
+            if external_audit is not None
+            else None
+        ),
+        "boundary": external_audit.get("boundary") if external_audit else None,
+    }
 
     local_items = [
         evidence["dod2_nexting"]["passed"],
@@ -457,7 +480,10 @@ def audit_step3(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
     ]
     accepted_local_scope = all(bool(item) for item in local_items)
     open_boundaries = (
-        ["external rlsecd daemon integration for security counterfactual rollout evidence"]
+        [
+            "external rlsecd daemon integration for security counterfactual "
+            "rollout evidence"
+        ]
         if security_rollout_passed
         else ["external rlsecd/security-gym counterfactual action rollout evidence"]
     )

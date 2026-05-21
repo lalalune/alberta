@@ -297,7 +297,7 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - **Step 2**: MLP continual learning solid. Feature discovery lifecycle partial. OPMNIST evidence strong for what's implemented.
 - **Step 3**: 13/13 evidence categories pass including nonlinear shared GTD, off-policy, stress tests. Feature discovery from scratch (TD/GVF constructing new features) remains open.
 - **Step 4**: SARSA dominant on bsuite. AC positive control proven (99.76%, 10/10). Tuned AC (temp=0.5) wins on CartPole (78.2 vs Q 69.9 vs SARSA 67.1). Not dominant across all bsuite environments.
-- **Step 6**: Multi-state continuing control works on deterministic chain (10/10 seeds, 0.9938 reward). Stochastic and gymnasium environments open.
+- **Step 6**: Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym external integration (10/10, +1.356) proven. Gymnasium environments (Jellybean, GARNET) open.
 - **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP (prioritized sweeping) also proven on 20-state chain (8/10 wins, 0.7368 vs 0.7302). Function approximation planning open.
 - **Step 10**: STOMP mechanics + auto-discovery (`subtasks_from_feature_scores`) + semi-MDP Bellman backup + benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
 

@@ -24,6 +24,14 @@ shawwalters/rlsecd` and `gh repo view shawwalters/chronos-sec` both returned
 "Could not resolve to a Repository"; `gh search repos rlsecd --limit 10`
 returned `[]`.
 
+Recheck on 2026-05-21 after the latest Step 4 probes: the reproducible audit
+script `benchmarks/rlsecd_external_audit.py` wrote
+`outputs/rlsecd_external_audit/status.json`. It found the local
+`security-gym` checkout but no local `rlsecd` or `chronos-sec` checkout under
+the configured workspace roots, and the GitHub probes still did not expose
+accessible `shawwalters/rlsecd` or `shawwalters/chronos-sec` repositories.
+This artifact is now referenced directly by the Step 3 solution gate.
+
 ## Step 4 Active-Defense Control
 
 External dependency:

@@ -430,7 +430,9 @@ CONFIGS: dict[str, AgentConfig] = {
             "aux_gammas": (0.0, 0.5, 0.9),
         },
     ),
-    # Canonical Step 4: MLP actor + Horde critic (closes the catch/0 regret gap)
+    # Canonical Step 4 actor-critic research track: MLP actor + Horde critic.
+    # Current evidence improves over the linear actor but does not close the
+    # catch/0 gap to SARSA.
     "nlhac": AgentConfig(
         agent_type="nlhac",
         label="NL-Horde-AC MLP actor+critic (64,)+aux{0.0,0.5,0.9}",
@@ -512,6 +514,29 @@ CONFIGS: dict[str, AgentConfig] = {
             "actor_step_size": 0.01,
             "actor_lamda": 0.9,
             "actor_hidden_sizes": (32,),
+            "critic_lamda": 0.0,
+            "aux_gammas": (0.0, 0.5, 0.9),
+        },
+    ),
+    "nlhac_gradclip_wide": AgentConfig(
+        agent_type="nlhac",
+        label="NL-Horde-AC gradclip wider actor/critic",
+        kwargs={
+            "hidden_sizes": (64, 64),
+            "optimizer_name": "autostep",
+            "initial_step_size": 0.01,
+            "meta_step_size": 0.01,
+            "tau": 10000.0,
+            "kappa": 2.0,
+            "actor_kappa": 2.0,
+            "actor_td_error_clip": 1.0,
+            "actor_gradient_clip_norm": 1.0,
+            "normalizer_decay": 0.99,
+            "discount": 0.99,
+            "temperature": 0.5,
+            "actor_step_size": 0.01,
+            "actor_lamda": 0.9,
+            "actor_hidden_sizes": (64, 64),
             "critic_lamda": 0.0,
             "aux_gammas": (0.0, 0.5, 0.9),
         },

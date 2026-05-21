@@ -473,6 +473,94 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "stronger on catch"
         ),
     }
+    nlhac_adaptive_1000_path = (
+        root / "outputs/bsuite/nlhac_gradclip_adaptive_10seed_1000/report.md"
+    )
+    nlhac_adaptive_1000_exists = nlhac_adaptive_1000_path.exists()
+    nlhac_adaptive_1000_rows = (
+        parse_markdown_summary_table(read_text(nlhac_adaptive_1000_path))
+        if nlhac_adaptive_1000_exists
+        else {}
+    )
+    nlhac_adaptive_1000_overall = nlhac_adaptive_1000_rows.get("overall", {}).get(
+        "numeric_values", []
+    )
+    nlhac_adaptive_1000_cartpole = nlhac_adaptive_1000_rows.get("cartpole", {}).get(
+        "numeric_values", []
+    )
+    nlhac_adaptive_1000_catch = nlhac_adaptive_1000_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    nlhac_adaptive_1000_q_promotion = bool(
+        len(nlhac_adaptive_1000_overall) >= 5
+        and len(nlhac_adaptive_1000_cartpole) >= 5
+        and len(nlhac_adaptive_1000_catch) >= 5
+        and nlhac_adaptive_1000_overall[0] >= 20
+        and nlhac_adaptive_1000_overall[3] > 0.0
+        and nlhac_adaptive_1000_cartpole[3] > 0.0
+        and nlhac_adaptive_1000_catch[3] > 0.0
+    )
+    nlhac_adaptive_1000_sarsa_promotion = bool(
+        nlhac_adaptive_1000_q_promotion
+        and nlhac_adaptive_1000_overall[3] > nlhac_adaptive_1000_overall[1]
+        and nlhac_adaptive_1000_cartpole[3] > nlhac_adaptive_1000_cartpole[1]
+        and nlhac_adaptive_1000_catch[3] > nlhac_adaptive_1000_catch[1]
+    )
+    evidence["nonlinear_horde_actor_critic_adaptive_obgd_1000_probe"] = {
+        "path": str(nlhac_adaptive_1000_path),
+        "exists": nlhac_adaptive_1000_exists,
+        "overall": nlhac_adaptive_1000_rows.get("overall", {}),
+        "catch": nlhac_adaptive_1000_rows.get("catch", {}),
+        "cartpole": nlhac_adaptive_1000_rows.get("cartpole", {}),
+        "passed": nlhac_adaptive_1000_exists,
+        "promotion_vs_q_passed": nlhac_adaptive_1000_q_promotion,
+        "promotion_vs_sarsa_passed": nlhac_adaptive_1000_sarsa_promotion,
+        "boundary": (
+            "adaptive-ObGD NLHAC 10-seed 1000-step probe improves overall "
+            "and cartpole against Q, but catch remains negative and SARSA "
+            "remains stronger on catch"
+        ),
+    }
+    nlhac_wide_catch_path = (
+        root / "outputs/bsuite/nlhac_gradclip_wide_catch3_500/report.md"
+    )
+    nlhac_wide_catch_exists = nlhac_wide_catch_path.exists()
+    nlhac_wide_catch_rows = (
+        parse_markdown_summary_table(read_text(nlhac_wide_catch_path))
+        if nlhac_wide_catch_exists
+        else {}
+    )
+    nlhac_wide_catch_values = nlhac_wide_catch_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    # Table columns after n are: SARSA mean/wins, base NLHAC mean/wins,
+    # then wide NLHAC mean/wins.
+    nlhac_wide_mean = (
+        nlhac_wide_catch_values[5] if len(nlhac_wide_catch_values) >= 6 else None
+    )
+    nlhac_wide_sarsa_mean = (
+        nlhac_wide_catch_values[1] if len(nlhac_wide_catch_values) >= 2 else None
+    )
+    evidence["nonlinear_horde_actor_critic_wide_catch_probe"] = {
+        "path": str(nlhac_wide_catch_path),
+        "exists": nlhac_wide_catch_exists,
+        "summary": nlhac_wide_catch_rows.get("catch", {}),
+        "wide_mean_improvement_vs_q": nlhac_wide_mean,
+        "sarsa_mean_improvement_vs_q": nlhac_wide_sarsa_mean,
+        "passed": nlhac_wide_catch_exists,
+        "promotion_vs_q_passed": bool(
+            nlhac_wide_mean is not None and nlhac_wide_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            nlhac_wide_mean is not None
+            and nlhac_wide_sarsa_mean is not None
+            and nlhac_wide_mean > nlhac_wide_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 pilot widening both actor and critic to (64, 64) "
+            "did not improve the NLHAC catch boundary"
+        ),
+    }
     nlhac_variant_search_path = (
         root / "outputs/bsuite/nlhac_gradclip_variant_catch5_1000/report.md"
     )
@@ -607,7 +695,8 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 "
             "steps, but SARSA remains stronger; the action-value NLQHorde "
             "actor-critic search did not improve the catch boundary; "
-            "adaptive-ObGD NLHAC improved cartpole but regressed catch"
+            "adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps "
+            "but regressed catch"
         ),
         (
             "local security-gym counterfactual rollout passes, but active-defense "
