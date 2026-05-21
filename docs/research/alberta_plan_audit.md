@@ -13,7 +13,7 @@
 |------|-----------|-------------|-----------------|---------------------|
 | 1 | Representation I — Continual supervised learning | Full implementation | 30-seed factorial, multiple non-stationarity types | **YES** |
 | 2 | Representation II — Supervised feature finding | FixedBudgetFeatureLearner + UPGD + memory | Lifecycle beats MLP on 1/3 out-of-class streams (30 seeds, d=+3.213); UPGD on 3/3; single-seed OPMNIST | **PARTIAL (lifecycle proven on polynomial)** |
-| 3 | Prediction I — Continual GVF prediction | HordeLearner + TD(λ) + off-policy | 6-category solution gate; nonlinear off-policy open | **PARTIAL** |
+| 3 | Prediction I — Continual GVF prediction | HordeLearner + TD(λ) + nonlinear GTD | 13-category solution gate, all passing incl. nonlinear shared GTD | **STRONG PARTIAL (feature discovery open)** |
 | 4 | Control I — Continual actor-critic control | SARSA complete; AC tuned wins CartPole | Positive ctrl 10/10 seeds (0.9976). Tuned AC 78.2 > Q 69.9 > SARSA 67.1 on CartPole | **PARTIAL (SARSA proven, AC working)** |
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907, 97.5% right) | **LOCAL+STOCHASTIC: YES / FULL SCOPE: NO** |
@@ -65,17 +65,27 @@
 
 ---
 
-### Step 3: Prediction I — PARTIAL ⚠️
+### Step 3: Prediction I — STRONG PARTIAL ⚠️
 
 **Paper requirement**: GVF prediction in sequential settings with state, off-policy learning, recurrent networks, state construction.
 
-**Implemented**: HordeLearner, GVFSpec/DemonType, TD(λ) per-demon traces, linear off-policy TD (ETD/Retrace), independent demon Horde.
+**Implemented**: HordeLearner, GVFSpec/DemonType, TD(λ) per-demon traces, linear off-policy TD (ETD/Retrace), independent demon Horde, nonlinear shared-trunk GTD.
 
-**Key gap**: Nonlinear shared-trunk forward-view traces with γλ > 0 remain guarded (VJP path couples head errors before trace accumulation). General TD/GVF feature discovery — the core Step 3 research frontier — is open.
+**Evidence** — all 13 categories passing:
+- dod2_nexting, dod3_pavlovian, dod5_linear_off_policy, dod6_recurrent_state, dod7_td_gvf_feature_bridge, dod9_control_bridge: original 6 categories ✅
+- `gradient_td_correction`: linear multi-demon off-policy GTD correction ✅
+- `hidden_off_policy_feature_discovery`: hidden-state TD/GVF feature discovery positive control ✅
+- `independent_nonlinear_trace_horde`: independent nonlinear demon full γλ traces ✅
+- `nonlinear_off_policy_horde`: nonlinear per-demon importance-weighted Horde prediction ✅
+- `nonlinear_shared_gtd_horde`: nonlinear shared-trunk off-policy GTD correction ✅
+- `nonlinear_shared_gtd_stress`: production multi-regime stress test ✅
+- `production_nonlinear_shared_gtd_backend`: production-facing corrected off-policy Horde backend ✅
 
-**Evidence**: 6-category solution gate all passing (nexting, pavlovian, off-policy, POMDP, feature bridge, control bridge). `outputs/step3_solution_gate.json`: `solved_step3_full_research_scope: false`.
+`outputs/step3_solution_gate.json`: `accepted_given_feature_step3: true`, 13/13 evidence categories pass.
 
-**Verdict**: Given-feature prediction genuinely complete. Feature discovery and nonlinear off-policy are documented open boundaries.
+**Remaining open boundary**: General TD/GVF feature discovery from scratch — constructing new features without supervision. The current tests use hidden state and given feature architectures. This is the core Step 3 research frontier.
+
+**Verdict**: Given-feature Horde prediction genuinely complete with 13 passing evidence categories. Nonlinear off-policy is now proven (shared GTD, stress tests pass). Open: feature discovery from scratch.
 
 ---
 
@@ -257,7 +267,7 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 ### What IS partial but honestly documented:
 - **Step 2**: MLP continual learning solid. Feature discovery lifecycle partial. OPMNIST evidence strong for what's implemented.
-- **Step 3**: Given-feature HordeLearner complete. Nonlinear off-policy and feature discovery open.
+- **Step 3**: 13/13 evidence categories pass including nonlinear shared GTD, off-policy, stress tests. Feature discovery from scratch (TD/GVF constructing new features) remains open.
 - **Step 4**: SARSA dominant on bsuite. AC positive control proven (99.76%, 10/10). Tuned AC (temp=0.5) wins on CartPole (78.2 vs Q 69.9 vs SARSA 67.1). Not dominant across all bsuite environments.
 - **Step 6**: Multi-state continuing control works on deterministic chain (10/10 seeds, 0.9938 reward). Stochastic and gymnasium environments open.
 - **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP (prioritized sweeping) also proven on 20-state chain (8/10 wins, 0.7368 vs 0.7302). Function approximation planning open.
