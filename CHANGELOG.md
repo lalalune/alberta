@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   positive) with no NaN weights (`benchmarks/prototype_end_to_end.py`,
   results in `outputs/prototype_end_to_end/`)
 
+### Added (continued)
+
+- **`AdaptiveObGDBounding`** (Elsayed et al. 2024, Appendix B) — ObGD global
+  bounding followed by per-weight RMS normalisation; registered in
+  `_BOUNDER_REGISTRY` and exported from `alberta_framework`; 3 tests added to
+  `tests/test_config_serialization.py`
+
 ### Fixed
 
 - **PrototypeAgent dreaming JIT regression** — guarded dreaming scan closure

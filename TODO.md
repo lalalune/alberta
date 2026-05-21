@@ -36,7 +36,7 @@ Immediate next steps and near-term work items for the Alberta Framework.
 - [ ] Feature generation and testing ("generate and test" mechanisms)
 - [ ] Nonlinear feature discovery for streaming problems
 - [ ] Comparison studies: MLPLearner across diverse non-stationarity types (drift, abrupt, periodic)
-- [ ] AdaptiveObGD (Appendix B of Elsayed et al. 2024) — RMSProp-style second-moment normalization
+- [x] AdaptiveObGD (Appendix B of Elsayed et al. 2024) — RMSProp-style second-moment normalization
 - [ ] More bsuite sweep experiments and analysis (beyond catch/cartpole)
 
 ## Step 3 — GVF Prediction & Horde

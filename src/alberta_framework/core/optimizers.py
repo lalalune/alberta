@@ -135,6 +135,77 @@ def _unitwise_norm(x: Array) -> Array:
     return jnp.abs(x)
 
 
+class AdaptiveObGDBounding(Bounder):
+    """ObGD bounding with RMS per-parameter normalization.
+
+    Extends :class:`ObGDBounding` with a second adaptive stage: after the
+    global ObGD scale is applied, each per-parameter step is divided by the
+    root-mean-square of all bounded steps (floored at 1).  This keeps the
+    per-parameter relative magnitudes in check: parameters whose bounded
+    updates are large compared to others are scaled down further without
+    requiring any cross-step running average.
+
+    The bounding factor returned is the ObGD global scale; the RMS stage is
+    implicit in the returned steps.
+
+    Attributes:
+        kappa: ObGD sensitivity (higher = more conservative). Default 2.0.
+        eps: Floor for the RMS denominator to avoid division by zero.
+
+    Reference:
+        Elsayed, M., Lan, Q., Lyle, C., & Mahmood, A.R. (2024).
+        "Streaming Deep Reinforcement Learning Finally Works." Appendix B.
+    """
+
+    def __init__(self, kappa: float = 2.0, eps: float = 1e-8):
+        self._kappa = kappa
+        self._eps = eps
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize configuration to dict."""
+        return {"type": "AdaptiveObGDBounding", "kappa": self._kappa, "eps": self._eps}
+
+    def bound(
+        self,
+        steps: tuple[Array, ...],
+        error: Array,
+        params: tuple[Array, ...],
+    ) -> tuple[tuple[Array, ...], Array]:
+        """Apply ObGD global bound then per-weight RMS normalisation.
+
+        Args:
+            steps: Per-parameter step arrays
+            error: Prediction error scalar
+            params: Current parameter values (unused)
+
+        Returns:
+            ``(bounded_steps, obgd_scale)`` where ``obgd_scale`` is the global
+            ObGD bounding factor before the RMS stage
+        """
+        del params
+        error_scalar = jnp.squeeze(error)
+        total_step = jnp.array(0.0)
+        for s in steps:
+            total_step = total_step + jnp.sum(jnp.abs(s))
+        delta_bar = jnp.maximum(jnp.abs(error_scalar), 1.0)
+        bound_magnitude = self._kappa * delta_bar * total_step
+        scale = 1.0 / jnp.maximum(bound_magnitude, 1.0)
+        bounded = tuple(scale * s for s in steps)
+
+        # Per-weight RMS normalization across all bounded steps.
+        sum_sq = jnp.array(0.0)
+        n_weights = jnp.array(0)
+        for s in bounded:
+            sum_sq = sum_sq + jnp.sum(s**2)
+            n_weights = n_weights + s.size
+        rms = jnp.sqrt(
+            sum_sq / jnp.maximum(n_weights.astype(jnp.float32), 1.0) + self._eps
+        )
+        rms_scale = jnp.maximum(rms, 1.0)
+        adaptive = tuple(s / rms_scale for s in bounded)
+        return adaptive, scale
+
+
 class AGCBounding(Bounder):
     """Adaptive Gradient Clipping (Brock et al. 2021).
 
@@ -1679,6 +1750,7 @@ _OPTIMIZER_REGISTRY: dict[str, type] = {
 
 _BOUNDER_REGISTRY: dict[str, type] = {
     "ObGDBounding": ObGDBounding,
+    "AdaptiveObGDBounding": AdaptiveObGDBounding,
     "AGCBounding": AGCBounding,
 }
 

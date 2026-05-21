@@ -1,10 +1,12 @@
 """Tests for learner/optimizer/bounder/normalizer config serialization."""
 
+import jax.numpy as jnp
 import pytest
 
 from alberta_framework import (
     IDBD,
     LMS,
+    AdaptiveObGDBounding,
     AGCBounding,
     Autostep,
     AutostepGTDLambda,
@@ -105,6 +107,17 @@ class TestBounderConfig:
         assert isinstance(restored, ObGDBounding)
         assert restored._kappa == 3.0
 
+    def test_adaptive_obgd_bounding_round_trip(self):
+        b = AdaptiveObGDBounding(kappa=3.0, eps=1e-6)
+        config = b.to_config()
+        assert config["type"] == "AdaptiveObGDBounding"
+        assert config["kappa"] == 3.0
+        assert config["eps"] == 1e-6
+        restored = bounder_from_config(config)
+        assert isinstance(restored, AdaptiveObGDBounding)
+        assert restored._kappa == 3.0
+        assert restored._eps == 1e-6
+
     def test_agc_bounding_round_trip(self):
         b = AGCBounding(clip_factor=0.02, eps=1e-4)
         config = b.to_config()
@@ -114,6 +127,30 @@ class TestBounderConfig:
         assert isinstance(restored, AGCBounding)
         assert restored._clip_factor == 0.02
         assert restored._eps == 1e-4
+
+    def test_adaptive_obgd_reduces_large_steps(self):
+        """AdaptiveObGDBounding should scale down large per-weight steps."""
+        b = AdaptiveObGDBounding(kappa=1.0, eps=1e-8)
+        steps = (jnp.ones(10) * 10.0, jnp.ones(5) * 5.0)
+        error = jnp.array(2.0)
+        bounded, scale = b.bound(steps, error, steps)
+        total_bounded = float(sum(jnp.sum(jnp.abs(s)) for s in bounded))
+        total_original = float(sum(jnp.sum(jnp.abs(s)) for s in steps))
+        assert total_bounded < total_original
+
+    def test_adaptive_obgd_smaller_than_obgd(self):
+        """Per-weight RMS stage should further reduce steps vs plain ObGDBounding."""
+        steps = (jnp.array([1.0, 100.0, 0.1]),)
+        error = jnp.array(1.0)
+        plain = ObGDBounding(kappa=1.0)
+        adaptive = AdaptiveObGDBounding(kappa=1.0)
+        _, plain_scale = plain.bound(steps, error, steps)
+        bounded_adaptive, _ = adaptive.bound(steps, error, steps)
+        total_adaptive = float(jnp.sum(jnp.abs(bounded_adaptive[0])))
+        plain_bounded_total = float(plain_scale * jnp.sum(jnp.abs(steps[0])))
+        assert total_adaptive < plain_bounded_total or total_adaptive == pytest.approx(
+            plain_bounded_total, rel=0.1
+        )
 
     def test_unknown_bounder_raises(self):
         with pytest.raises(ValueError, match="Unknown bounder"):

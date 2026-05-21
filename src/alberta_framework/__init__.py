@@ -327,6 +327,7 @@ from alberta_framework.core.optimizers import (
     IDBD,
     LMS,
     TDIDBD,
+    AdaptiveObGDBounding,
     AGCBounding,
     Autostep,
     AutostepGTDLambda,
@@ -688,6 +689,7 @@ __all__ = [
     "RMSpropState",
     # Optimizers - Supervised Learning
     "AGCBounding",
+    "AdaptiveObGDBounding",
     "Autostep",
     "AutostepGTDLambda",
     "Bounder",
