@@ -19,7 +19,7 @@ The Alberta Framework follows the 12-step "retreat and return" strategy from the
 - Publication-quality experiment infrastructure (statistics, visualization, export)
 - Factorial studies with multiple non-stationarity types and scale ranges
 
-## Step 2: Nonlinear Function Approximation — In Progress (v0.5.0–v0.9.0)
+## Step 2: Nonlinear Function Approximation — Supervised Matrix Accepted (v0.5.0–v0.17.x)
 
 **Goal**: Extend from linear to nonlinear function approximation while maintaining streaming, single-step updates. Demonstrate that ObGD's overshooting prevention enables stable MLP learning in the continual setting.
 
@@ -42,15 +42,23 @@ The Alberta Framework follows the 12-step "retreat and return" strategy from the
 - Feature relevance diagnostics (`compute_feature_relevance`, `compute_feature_sensitivity`, `relevance_to_dict`) for periodic daemon reporting
 - IDBD-MLP optimizer (Meyer): per-parameter adaptive step-sizes for MLPs via `IDBDParamState`, with `h_decay_mode` (`prediction_grads`/`loss_grads`)
 - Orbax checkpointing: replaced hand-rolled npz+json with `orbax-checkpoint` for versioned pytree serialization; added `load_checkpoint_metadata` and `checkpoint_exists` utilities
+- Production target-structure UPGD default for the supervised vector-target Step 2 matrix
+- Strict digit/readout UPGD preset for the one-branch online-MSE digit conflict
+- UPGD-memory, associative-memory, and temporal-context Step 2 production helpers
+- Step 2 pipeline modes for identity, temporal-context, UPGD, and associative features
 
-**Planned**:
-- Neuron utility tracking (per-hidden-unit EMA of gradient magnitude)
-- Feature generation and testing ("generate and test" mechanisms)
-- Nonlinear feature discovery for streaming problems
+**Remaining research boundary**:
+- TD/GVF-target feature discovery belongs to Step 3 and remains open
+- No theorem of universal recursive representation learning is claimed
+- Full published-scale OPMNIST now has a completed one-seed 800-task OpenML
+  MNIST run for the latest UPGD-memory/MLP comparison; the remaining external
+  scale boundary is multi-seed confirmation and all-metric closure. A follow-up
+  single-UPGD H128 run wins held-out all-permutation accuracy, but fair MLP
+  baselines still win final-window accuracy and held-out test MSE
 - Comparison studies across diverse non-stationarity types
 - AdaptiveObGD (Appendix B of Elsayed et al. 2024) with RMSProp-style second-moment normalization
 
-## Step 3: GVF Prediction & Horde — Phase 1 Complete (v0.15.0)
+## Step 3: GVF Prediction & Horde — Given-Feature Gate Complete (v0.15.0+)
 
 **Goal**: Move from supervised prediction to General Value Function (GVF) predictions using the Horde architecture. Formalize rlsecd's existing multi-head predictions as GVF demons, extend to temporal predictions (γ > 0) with eligibility traces, and build the foundation that Step 4 control will use.
 
@@ -78,16 +86,22 @@ A demon with a fixed target policy π is a **prediction demon** (knowledge). A d
 
 Eligibility traces are essential for temporal GVF predictions (γ > 0) and for efficient credit assignment in control. We have traces for linear TD (TD-IDBD/AutoTDIDBD) but not for MLP.
 
-**Deliverables**:
-- Eligibility traces on `MultiHeadMLPLearner`: per-parameter trace arrays matching weight shapes
-- TD(λ) update rule integrated with existing Optimizer/Bounder composition
-- Trace decay λ configurable per demon (part of GVF answer functions, per Horde §4)
-- Accumulating vs replacing traces option
-- Integration with ObGD bounding for stable TD learning with MLP
+**Delivered local scope**:
+- Per-parameter trace arrays on `MultiHeadMLPLearner`
+- Head TD(λ) trace updates integrated with Optimizer/Bounder composition
+- Per-demon trace decay via `per_head_gamma_lamda`
+- Accumulating vs replacing trace modes
+- ObGD-compatible trace scaling after bounded updates
+
+**Research boundary**:
+- Nonlinear shared-trunk traces with γλ > 0 remain guarded because the current
+  VJP path folds per-head errors into the trunk cotangent before trace
+  accumulation. Use `IndependentDemonHorde` when temporal traces need
+  independent nonlinear trunks.
 
 ### Phase 3: Horde Learning Loop
 
-**Deliverables**:
+**Delivered**:
 - `HordeLearner` or extend `MultiHeadMLPLearner` to accept `HordeSpec`
 - Per-demon TD targets computed from each demon's question functions
 - Per-demon γ handling (some heads γ=0 single-step, others γ>0 temporal)
@@ -98,10 +112,15 @@ Eligibility traces are essential for temporal GVF predictions (γ > 0) and for e
 
 The Horde paper uses GQ(λ) (Maei & Sutton 2010) for off-policy learning — each demon can learn about a target policy π different from the behavior policy b. This requires importance sampling ratios π(s,a)/b(s,a).
 
-**Deliverables**:
-- Importance sampling ratio computation per demon
-- GQ(λ) or GTD(λ) integration for stable off-policy learning with function approximation
-- Off-policy prediction demons: e.g., "what would session risk be if we blocked this IP?"
+**Delivered local scope**:
+- Linear off-policy TD with Retrace-style clipping
+- ETD linear learner plumbing and tests
+- Off-policy linear prediction tests
+
+**Research boundary**:
+- Nonlinear Horde/GQ/GTD with per-demon importance sampling remains open.
+- The security-gym counterfactual action question requires the external
+  rlsecd/active-defense rollout path and logs.
 
 ### Downstream: rlsecd as a Formal Horde
 
@@ -145,33 +164,127 @@ The Alberta Plan's Step 4 ("Control I: Continual actor-critic control" — Sutto
 - 30 tests, example (`sarsa_cartpole.py`), documentation (`sarsa-control.md`)
 
 **Downstream: rlsecd as active defender**:
-- rlsecd gains `--gym-control` mode: existing prediction demons + one SARSA control demon
-- Maps 6 security-gym actions (pass/alert/throttle/block/unblock/isolate) to action heads
-- Prediction demons continue learning knowledge; control demon learns to act
-- Generates (state, action, reward, outcome) experience for autoresearch LLM oracle pipeline
+- Framework-side contracts map the 6 security-gym actions
+  (pass/alert/throttle/block_source/unblock/isolate) to action heads.
+- rlsecd still needs the external `--gym-control` daemon loop: existing
+  prediction demons + one SARSA/Horde-AC control path.
+- Prediction demons continue learning knowledge; control demon learns to act.
+- The active-defense rollout should generate `(state, action, reward,
+  outcome)` experience for the autoresearch LLM oracle pipeline once the
+  rlsecd/chronos-sec repos and logs are available.
 
-### Step 4b: Actor-Critic — Planned
+### Step 4b: Actor-Critic — Implemented, Provisional
 
-**Key components**:
-- Stream AC(lambda): Actor-critic with eligibility traces
-- Policy gradient with ObGD-style overshooting prevention
-- Continuous and discrete action spaces
-- Gymnasium integration for control benchmarks
+**Delivered**:
+- Linear/discrete and continuous actor-critic cores
+- Horde-backed actor-critic adapter using a Step 3 Horde critic
+- Pipeline `control_mode="horde_ac"` with one synchronized critic state
+- bsuite comparison reports showing current actor-critic evidence is not yet
+  strong enough to replace SARSA as the canonical Step 4 learner
 
-## Steps 5–6: Continuing Control — Future
+**Remaining research boundary**:
+- Promote actor-critic only after predefined evidence beats Q/SARSA on seeded
+  continuing-control benchmarks.
+
+## Steps 5–6: Continuing Control — Primitive Implemented
 
 **Goal**: Transition from episodic to continuing (average-reward) formulations, which are more natural for long-lived agents.
 
-**Key components**:
-- Average reward TD learning
-- Differential value functions
-- Continuing actor-critic methods
+**Delivered primitive surface**:
+- `DifferentialTDLearner` for average-reward prediction
+- `DifferentialSARSAAgent` for continuing average-reward control
+- Production facades `steps.step5` and `steps.step6`
+- Scan-compatible tests and smoke probes
 
-## Steps 7–12: Intelligence — Future
+**Remaining research boundary**:
+- Nonlinear average-reward Horde/GVF integration
+- Average-reward actor-critic with shared nonlinear features
+- Continuing-control benchmark evidence beyond primitive probes
+
+## Step 7: Planning — Primitive Implemented
+
+**Goal**: Add bounded background planning from a learned transition model while
+preserving foreground, continuing real-time control.
+
+**Delivered primitive surface**:
+- `Step7DynaConfig` combining Step 6 differential SARSA and Step 8 one-step
+  world-model configs
+- Real transition update first, then a fixed `planning_steps` budget of
+  model-generated one-step backups
+- Search-control strategies for random, reward-prioritized, and
+  transition-surprise-prioritized planning actions
+- Warmup-gated planning so the world model must receive real transitions before
+  generated backups are accepted
+- Real action context restoration after planning, so background backups do not
+  corrupt the live environment interaction state
+- Production facade `steps.step7` with scan-compatible smoke tests
+
+**Remaining research boundary**:
+- Predecessor-based prioritized sweeping and learned search-control
+- Off-policy accounting for imagined behavior
+- Short-rollout and option/subtask discovery variants
+- Seeded benchmark evidence that planning improves continuing control without
+  model-bias regressions
+
+## Step 8: One-Step World Model — Primitive Implemented
+
+**Goal**: Learn a compact one-step environment predictor that supports Dyna-style background planning.
+
+The world model predicts reward and next observation from the current observation and action.
+It is the model-learning component used inside Step 7 (Dyna planning) and is also the building
+block for the error-gated dreaming in Step 9.
+
+**Delivered primitive surface**:
+- `OneStepWorldModel` predicting scalar reward and per-channel next observation (no discount head)
+- Action-conditioned input `concat(observation, one_hot(action))` with optional observation-by-action product features
+- Discrete (`n_actions` one-hot) and continuous/vector (`n_actions=None`) action support
+- Observation bounds tracking (`observation_min`, `observation_max`) for imagination clipping
+- Step count and production facade `steps.step8` with config serialization and smoke tests
+
+**Remaining research boundary**:
+- Multi-step world models and latent dynamics prediction
+- Ensemble disagreement as an uncertainty signal for dream gating
+- Seeded benchmark evidence of world-model prediction error curves
+
+## Step 9: Guarded Dreaming — Primitive Implemented
+
+**Goal**: Extend Dyna's one-step planning to error-gated, real-state-anchored dreaming while
+preserving the continuing average-reward control formulation from Step 6.
+
+Step 9 introduces two improvements over the simple warmup-gated Dyna in Step 7:
+
+1. **Error gating**: Dreams are accepted only when the world model's running prediction-error
+   EMA is below a configurable threshold (`dreaming_max_model_error`). This protects the
+   control policy from a poorly calibrated model during early learning.
+2. **Buffer-anchored imagination**: A ring buffer of recent real observations supplies dream
+   anchors instead of always using the current state. This improves state-space coverage of
+   imagined experience without additional environment interaction.
+
+The world model is upgraded to `ActionConditionedWorldModel`, which adds a learned discount/
+termination head needed for principled multi-step rollouts. The control learner remains the
+linear differential SARSA agent from Step 6 (`DifferentialSARSAAgent`).
+
+**Delivered primitive surface**:
+- `Step9DreamingConfig`: observation dim, n_actions, world-model and dreaming hyperparameters,
+  planning budget, buffer capacity
+- `Step9DreamingState`: combined control + world-model + observation-buffer state
+- `step9_update`: real transition update → world model update → buffer add → guarded dream scan
+- `run_step9_scan`: JIT-compiled scan over real continuing transition arrays
+- `run_step9_smoke`: deterministic integration probe
+- 22 tests covering config validation, warmup gating, error gating, zero-budget, scan shapes,
+  buffer growth, and long-horizon fineness
+
+**Remaining research boundary**:
+- Multi-step rollout dreaming (horizon > 1) with behavior model policy
+- Prioritized dream selection (surprise × utility scoring)
+- Ensemble or latent-space uncertainty for the dream acceptance gate
+- Seeded benchmark evidence that guarded dreaming improves continuing control over
+  Step 7 one-step Dyna on continuing gymnasium tasks
+
+## Steps 10–12: Intelligence — Future
 
 **Goal**: Integrate all components into a cohesive architecture.
 
-- Planning with learned transition models
 - Subtask and option discovery (STOMP progression)
 - Hierarchical architectures
 - Multi-agent coordination

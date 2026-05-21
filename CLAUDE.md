@@ -4,7 +4,7 @@ A research-first framework for the Alberta Plan: Building the foundations of Con
 
 ## Project Overview
 
-Implements the Alberta Plan for AI Research, progressing through increasingly complex continual learning settings. Step 1 (complete): IDBD/Autostep beat hand-tuned LMS. Step 2 (substantial): nonlinear function approximation with MLP, ObGD, and IDBD-MLP. Step 3 Phase 1 (complete): GVF types, HordeLearner, per-head trace decay. Step 4a (complete): SARSA on-policy control via Horde.
+Implements the Alberta Plan for AI Research, progressing through increasingly complex continual learning settings. Step 1 (complete): IDBD/Autostep beat hand-tuned LMS. Step 2 (substantial): nonlinear function approximation with MLP, ObGD, and IDBD-MLP. Step 3 Phase 1 (complete): GVF types, HordeLearner, per-head trace decay. Step 4a (complete): SARSA on-policy control via Horde. Steps 5–6 (primitive): differential TD and SARSA for continuing average-reward control. Step 7 (primitive): Dyna planning with one-step world model. Step 8 (primitive): one-step world model facade. Step 9 (primitive): guarded dreaming with error-gated, buffer-anchored imagined transitions.
 
 **Core Philosophy**: Temporal uniformity — every component updates at every time step.
 

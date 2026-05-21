@@ -4,6 +4,34 @@ Immediate next steps and near-term work items for the Alberta Framework.
 
 ## Step 2 — Remaining Work
 
+- [ ] Full OPMNIST solution gate: at least 3 completed published-scale seeds
+      (800 tasks, 48,000,000 updates/seed, all held-out permutation views) with
+      the promoted Step 2 learner beating the best fair MLP comparator on
+      online MSE, online accuracy, final-window MSE, final-window accuracy,
+      held-out test MSE, and held-out test accuracy. This is the condition for
+      `opmnist_solution_status(...)[solved_opmnist_step2] == true`; fresh
+      `step2_upgd_memory_opmnist.py` outputs write this as `solution_status`.
+      Promotion command: `python benchmarks/step2_opmnist_solution_gate.py
+      <result_json>` must exit 0 without `--allow-unsolved`.
+      Run-plan command: `python benchmarks/step2_opmnist_full_run_plan.py
+      --write-plan outputs/step2_opmnist_solution_full/plan.json`.
+      The default plan targets `step2_hybrid_memory_trace` and
+      `step2_hybrid_memory_trace_adaptive_sharp` against h64/h128 fair MLP and
+      sharpened-MLP comparators.
+      Parallel seed outputs must be merged with
+      `benchmarks/step2_opmnist_merge_seed_results.py` before promotion.
+      Preferred coordinator: `python
+      benchmarks/step2_opmnist_solution_pipeline.py --run-next --no-dry-run`
+      to resume the first missing seed, then `--merge-ready --audit
+      --no-dry-run` once all split seed results exist.
+      Use `--run-next --run-next-chunks N --no-dry-run` for bounded scheduler
+      windows; it checkpoints/statuses partial progress without writing final
+      result JSONs.
+      Fresh seed results must retain their `manifest` blocks with argv, git,
+      environment, method-list, and source-hash provenance for paper writing.
+      The merged artifact must preserve these manifests and SHA-256 hashes in
+      `manifest.split_results`; `solved_opmnist_step2` stays false unless
+      `artifact_provenance.provenance_complete` is true.
 - [ ] Neuron utility tracking (per-hidden-unit EMA of gradient magnitude)
 - [ ] Feature generation and testing ("generate and test" mechanisms)
 - [ ] Nonlinear feature discovery for streaming problems
@@ -28,18 +56,20 @@ Formalize rlsecd's multi-head predictions as GVF demons (Sutton et al. 2011, "Ho
 - [x] Trunk trace guard: `MultiHeadMLPLearner` validates trunk `gamma * lamda = 0` when hidden layers present
 
 ### Phase 2: TD(λ) Eligibility Traces for MLP
-- [ ] Per-parameter eligibility trace arrays on `MultiHeadMLPLearner` (matching weight shapes in each layer)
-- [ ] TD(λ) update rule: `e_t = γ_t * λ * e_{t-1} + ∇_θ q̂(s,a)` integrated with Optimizer/Bounder composition
-- [ ] Trace decay λ configurable per demon (Horde §4: λ is an "answer function")
+- [x] Per-parameter eligibility trace arrays on `MultiHeadMLPLearner` (matching weight shapes in each layer)
+- [x] Head TD(λ) update rule: `e_t = γ_t * λ * e_{t-1} + ∇_θ q̂(s,a)` integrated with Optimizer/Bounder composition
+- [x] Trace decay λ configurable per demon (Horde §4: λ is an "answer function") via `per_head_gamma_lamda`
 - [x] Accumulating vs replacing traces option (`TraceMode` enum, replacing traces in `MultiHeadMLPLearner`)
 - [x] Integration with ObGD bounding — traces scaled by bounding factor after trunk and head bounding
-- [ ] Test: TD(λ=0) reduces to existing single-step MLP update
-- [ ] Test: linear MLP (`hidden_sizes=()`) with traces matches `TDLinearLearner` results
+- [x] Test: TD(λ=0) / γλ=0 resets traces on the MLP path and supports arbitrary γ with λ=0
+- [x] Test: linear MLP (`hidden_sizes=()`) permits temporal traces and roundtrips per-head γλ
+- [ ] Research boundary: nonlinear shared-trunk temporal traces with γλ>0 remain guarded; use `IndependentDemonHorde` for per-demon nonlinear trunks
 
 ### Phase 3: Off-Policy Prediction (Stretch)
-- [ ] Importance sampling ratios π(s,a)/b(s,a) per demon
-- [ ] GQ(λ) or GTD(λ) for stable off-policy learning with function approximation (Maei & Sutton 2010)
-- [ ] Off-policy prediction demon test: learn about a policy different from behavior
+- [x] Linear off-policy TD with Retrace-style clipping and ETD plumbing
+- [ ] Nonlinear Horde importance sampling ratios π(s,a)/b(s,a) per demon
+- [ ] GQ(λ) or GTD(λ) for stable nonlinear off-policy learning with function approximation (Maei & Sutton 2010)
+- [x] Linear off-policy prediction demon test: learn about a policy different from behavior
 - [ ] Test on security-gym: "what would happen if we blocked this IP?" (prediction about untaken action)
 
 ## Step 4a — SARSA (On-Policy TD Control) — Complete (v0.16.0)
@@ -58,20 +88,30 @@ Formalize rlsecd's multi-head predictions as GVF demons (Sutton et al. 2011, "Ho
 - [x] Documentation: `docs/guide/sarsa-control.md`
 
 ### Remaining Step 4a Work
-- [ ] bsuite catch/cartpole comparison: SARSA agent alongside existing DQN agents
-- [ ] Multi-seed statistical comparison of SARSA vs Q-learning (AlbertaAgent)
+- [x] bsuite catch/cartpole comparison: SARSA agent alongside existing DQN agents
+- [x] Multi-seed statistical comparison of SARSA vs Q-learning (AlbertaAgent)
+- [x] Broader primary bsuite SARSA-vs-Q report
+
+Artifacts:
+
+- `outputs/bsuite/sarsa_vs_q_catch_cartpole_10seed/sarsa_vs_q.md`
+- `outputs/bsuite/sarsa_vs_q_primary_10seed/sarsa_vs_q.md`
 
 ### Downstream Integration (rlsecd)
-- [ ] rlsecd `--gym-control` mode: existing 5 prediction demons + SARSA control demon
-- [ ] Maps 6 security-gym actions (pass/alert/throttle/block/unblock/isolate) to action heads
-- [ ] Validate throughput: predict+update must sustain >1000 evt/s on CPU
-- [ ] Generate (state, action, reward, outcome) experience for autoresearch LLM oracle pipeline
+- [ ] External: rlsecd `--gym-control` mode: existing 5 prediction demons + SARSA control demon
+- [x] Framework-side contract maps 6 security-gym actions (pass/alert/throttle/block_source/unblock/isolate) to action heads
+- [x] Local SARSA scan throughput sustains >1000 steps/sec on CPU
+- [ ] External: rlsecd end-to-end throughput must include parsing, feature extraction, learner update, checkpoint/reporting, and action dispatch
+- [ ] External: generate `(state, action, reward, outcome)` experience for autoresearch LLM oracle pipeline from rlsecd/security-gym rollouts
 
-## Step 4b — Actor-Critic (Planned)
+## Step 4b — Actor-Critic (Implemented, Provisional)
 
-- [ ] Stream AC(lambda): Actor-critic with eligibility traces
-- [ ] Policy gradient with ObGD-style overshooting prevention
-- [ ] Continuous and discrete action spaces
+- [x] Stream AC(lambda): Actor-critic with eligibility traces
+- [x] Policy gradient with ObGD-style overshooting prevention hook
+- [x] Continuous and discrete action spaces
+- [x] Horde-backed actor-critic critic path using Step 3 machinery
+- [x] bsuite runner/reporting path for Q/SARSA/AC/Horde-AC comparisons
+- [ ] Research boundary: do not promote actor-critic or Horde-AC as canonical Step 4 until seeded bsuite evidence beats Q/SARSA on a predefined gate
 
 ## rlsecd Integration
 
@@ -81,11 +121,35 @@ Formalize rlsecd's multi-head predictions as GVF demons (Sutton et al. 2011, "Ho
 - [x] AF-4: JIT-compile `predict()`/`update()` on MLPLearner and MultiHeadMLPLearner (upstream)
 - [x] AF-2: Get permission from Edan Meyer to publish IDBD-MLP
 - [x] AF-2: Merge IDBD-MLP into main (Meyer adaptation with IDBDParamState, 18 tests)
-- [ ] AF-2: IDBD-MLP 100k-event replay test in rlsecd
-- [ ] AF-2: IDBD-MLP full 1.6M log stability test
-- [ ] Simplify rlsecd SecurityAgent to use Orbax checkpoint utilities (format v2)
-- [ ] Simplify rlsecd SecurityAgent to use framework config serialization
-- [ ] Integrate `compute_feature_relevance` into rlsecd periodic reporting (60s interval)
+- [ ] External: AF-2 IDBD-MLP 100k-event replay test in rlsecd
+- [ ] External: AF-2 IDBD-MLP full 1.6M log stability test
+- [ ] External: simplify rlsecd SecurityAgent to use Orbax checkpoint utilities (format v2)
+- [ ] External: simplify rlsecd SecurityAgent to use framework config serialization
+- [ ] External: integrate `compute_feature_relevance` into rlsecd periodic reporting (60s interval)
+
+## Step 8 — One-Step World Model (Primitive Implemented)
+
+- [x] `OneStepWorldModel`: reward + next-observation prediction from `concat(obs, action_one_hot)`
+- [x] Observation bounds tracking for imagination clipping
+- [x] Production facade `steps.step8` with config serialization and smoke tests
+- [ ] Multi-step world model or latent dynamics extension (research boundary)
+- [ ] Ensemble uncertainty signal for dream gating (research boundary)
+- [ ] Seeded benchmark: world-model prediction error curves on continuing gymnasium tasks
+
+## Step 9 — Guarded Dreaming (Primitive Implemented)
+
+- [x] `Step9DreamingConfig`: unified config for control + world model + dreaming knobs
+- [x] `Step9DreamingState`: combined control + world-model + observation-buffer state
+- [x] `step9_update`: real update → world model update → buffer add → guarded dream scan
+- [x] Error gate: dreams accepted only when `model_error_ema <= dreaming_max_model_error`
+- [x] `RecentObservationBuffer`: ring buffer for real-state dream anchors
+- [x] Warmup gate: dreams blocked until `step_count >= dreaming_warmup_steps`
+- [x] Zero-budget path (scan over empty arange) is JIT-compatible
+- [x] `run_step9_scan` / `run_step9_smoke` with config roundtrip and 22 tests
+- [x] Production facade `steps.step9`; exported from `steps/__init__.py`
+- [ ] Multi-step rollout dreaming (horizon > 1) with a learned behavior model
+- [ ] Prioritized dream selection (surprise × utility from `score_dream_candidates`)
+- [ ] Seeded benchmark evidence: guarded dreaming vs Step 7 one-step Dyna on continuing tasks
 
 ## Infrastructure
 
