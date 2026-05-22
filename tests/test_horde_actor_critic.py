@@ -287,7 +287,7 @@ def test_bsuite_horde_ac_pairwise_feature_lift_values() -> None:
     """The adapter's pairwise lift should expose relational actor features."""
     pytest.importorskip("dm_env", reason="dm_env not installed")
     pytest.importorskip("bsuite", reason="bsuite not installed")
-    from alberta_framework.benchmarks.bsuite.agents.horde_actor_critic import _FeatureLift
+    from benchmarks.bsuite.agents.horde_actor_critic import _FeatureLift
 
     lift = _FeatureLift(raw_dim=3, mode="pairwise")
     features = lift.transform(jnp.array([1.0, 2.0, 3.0], dtype=jnp.float32))
@@ -305,7 +305,7 @@ def test_bsuite_horde_ac_pairwise_feature_dim_reaches_actor() -> None:
     pytest.importorskip("bsuite", reason="bsuite not installed")
     from dm_env import specs
 
-    from alberta_framework.benchmarks.bsuite.agents import horde_actor_critic
+    from benchmarks.bsuite.agents import horde_actor_critic
 
     obs_spec = specs.Array(shape=(4,), dtype=np.float32, name="obs")
     action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -329,7 +329,7 @@ def test_bsuite_qhorde_ac_pairwise_feature_dim_reaches_actor() -> None:
     pytest.importorskip("bsuite", reason="bsuite not installed")
     from dm_env import specs
 
-    from alberta_framework.benchmarks.bsuite.agents import qhorde_ac
+    from benchmarks.bsuite.agents import qhorde_ac
 
     obs_spec = specs.Array(shape=(4,), dtype=np.float32, name="obs")
     action_spec = specs.DiscreteArray(num_values=3, name="action")

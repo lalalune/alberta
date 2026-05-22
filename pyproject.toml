@@ -79,7 +79,7 @@ alberta-evidence-gate = "alberta_framework.cli:evidence_gate_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["alberta_framework"]
-exclude = ["alberta_framework/benchmarks*", "alberta_framework/examples*", "alberta_framework/scripts*"]
+exclude = ["alberta_framework/examples*", "alberta_framework/scripts*"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -112,7 +112,6 @@ line-length = 100
 target-version = "py313"
 extend-exclude = [
     ".claude",
-    "alberta_framework/benchmarks",
     "alberta_framework/examples",
     "alberta_framework/scripts",
     "benchmarks",
@@ -134,7 +133,6 @@ warn_unused_ignores = true
 strict = true
 files = ["alberta_framework"]
 exclude = [
-    "^alberta_framework/benchmarks/",
     "^alberta_framework/examples/",
     "^alberta_framework/scripts/",
 ]
@@ -205,7 +203,7 @@ ignore_missing_imports = true
 
 # Benchmarks use dynamic dm_env/bsuite/haiku types that mypy can't fully resolve
 [[tool.mypy.overrides]]
-module = "alberta_framework.benchmarks.*"
+module = ["benchmarks.*", "alberta_framework.benchmarks.*"]
 disable_error_code = ["call-arg", "arg-type", "union-attr", "attr-defined", "operator"]
 
 # chex dataclasses don't have full mypy support - disable strict checks for core modules

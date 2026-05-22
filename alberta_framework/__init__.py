@@ -42,6 +42,9 @@ References
 
 __version__ = "0.17.1"
 
+import importlib as _importlib
+import sys as _sys
+
 # Baseline optimizers
 from alberta_framework.core.actor_critic import (
     ActorCriticAgent,
@@ -1137,3 +1140,9 @@ if _pipeline_available:
         "make_alberta_pipeline",
         "run_pipeline_smoke",
     ]
+
+# Benchmarks live in the repository-level ``benchmarks`` package so they can be
+# run exactly as documented: ``python benchmarks/<script>.py``. Keep the old
+# package import path as an alias without maintaining a second file tree.
+benchmarks = _importlib.import_module("benchmarks")
+_sys.modules.setdefault("alberta_framework.benchmarks", benchmarks)

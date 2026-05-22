@@ -8,12 +8,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from alberta_framework.benchmarks.bsuite._bsuite_path import (
+from benchmarks.bsuite._bsuite_path import (
     add_bsuite_to_path,
     candidate_bsuite_paths,
     import_root_for_bsuite_checkout,
 )
-from alberta_framework.benchmarks.bsuite.analysis import (
+from benchmarks.bsuite.analysis import (
     compare_sarsa_vs_q,
     compare_sarsa_vs_q_preferred_metric,
     compare_step4_control,
@@ -21,7 +21,7 @@ from alberta_framework.benchmarks.bsuite.analysis import (
     format_step4_control_report,
     load_results,
 )
-from alberta_framework.benchmarks.bsuite.run_sweep import (
+from benchmarks.bsuite.run_sweep import (
     build_sweep_jobs,
     experiment_names_from_bsuite_ids,
     get_bsuite_ids_for_experiment,
@@ -154,7 +154,7 @@ def test_load_results_ignores_internal_directories(
         return pd.DataFrame({"bsuite_id": ["catch/0"], "total_regret": [1.0]}), {}
 
     monkeypatch.setattr(
-        "alberta_framework.benchmarks.bsuite.analysis.csv_load.load_bsuite",
+        "benchmarks.bsuite.analysis.csv_load.load_bsuite",
         fake_load_bsuite,
     )
 

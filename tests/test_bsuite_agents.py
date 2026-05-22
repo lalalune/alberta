@@ -12,7 +12,7 @@ dm_env = pytest.importorskip("dm_env", reason="dm_env not installed (install wit
 pytest.importorskip("bsuite", reason="bsuite not installed")
 from dm_env import specs  # noqa: E402
 
-from alberta_framework.benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
+from benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Minimal stub environment for unit tests (no bsuite import needed)
@@ -171,7 +171,7 @@ class TestAlbertaAgent:
     def agent(self):
         """Create a simple AlbertaAgent for testing."""
         from alberta_framework import MultiHeadMLPLearner, ObGDBounding
-        from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
+        from benchmarks.bsuite.agents.base import AlbertaAgent
 
         obs_spec = specs.Array(shape=(3,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -264,7 +264,7 @@ class TestAlbertaAgent:
     def test_n_heads_mismatch_raises(self) -> None:
         """n_heads != num_actions should raise ValueError."""
         from alberta_framework import MultiHeadMLPLearner
-        from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
+        from benchmarks.bsuite.agents.base import AlbertaAgent
 
         obs_spec = specs.Array(shape=(3,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -282,7 +282,7 @@ class TestAlbertaAgentRepresentationLogging:
     def agent_with_logging(self):
         """Create an AlbertaAgent with representation logging enabled."""
         from alberta_framework import Autostep, MultiHeadMLPLearner, ObGDBounding
-        from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
+        from benchmarks.bsuite.agents.base import AlbertaAgent
 
         obs_spec = specs.Array(shape=(3,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -362,7 +362,7 @@ class TestAgentFactories:
 
     def test_autostep_dqn_creates_agent(self) -> None:
         """autostep_dqn.default_agent should create a valid agent."""
-        from alberta_framework.benchmarks.bsuite.agents import autostep_dqn
+        from benchmarks.bsuite.agents import autostep_dqn
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -374,7 +374,7 @@ class TestAgentFactories:
 
     def test_lms_dqn_creates_agent(self) -> None:
         """lms_dqn.default_agent should create a valid agent."""
-        from alberta_framework.benchmarks.bsuite.agents import lms_dqn
+        from benchmarks.bsuite.agents import lms_dqn
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -386,7 +386,7 @@ class TestAgentFactories:
 
     def test_adam_dqn_creates_agent(self) -> None:
         """adam_dqn.default_agent should create a valid agent."""
-        from alberta_framework.benchmarks.bsuite.agents import adam_dqn
+        from benchmarks.bsuite.agents import adam_dqn
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -398,7 +398,7 @@ class TestAgentFactories:
 
     def test_horde_ac_creates_agent_with_aux_demons(self) -> None:
         """horde_actor_critic.default_agent attaches 3 auxiliary demons by default."""
-        from alberta_framework.benchmarks.bsuite.agents import horde_actor_critic
+        from benchmarks.bsuite.agents import horde_actor_critic
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -416,7 +416,7 @@ class TestAgentFactories:
 
     def test_horde_ac_history_features_change_feature_dim(self) -> None:
         """Enabling history features should expand the critic feature dim."""
-        from alberta_framework.benchmarks.bsuite.agents import horde_actor_critic
+        from benchmarks.bsuite.agents import horde_actor_critic
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -434,7 +434,7 @@ class TestAgentFactories:
 
     def test_nlhac_actor_step_size_alias_controls_actor_optimizer(self) -> None:
         """NLHAC configs use actor_step_size as the actor Autostep initializer."""
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -450,7 +450,7 @@ class TestAgentFactories:
 
     def test_nlhac_actor_gradient_clip_norm_passes_to_core_config(self) -> None:
         """NLHAC adapter exposes the core actor gradient clipping hook."""
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -466,7 +466,7 @@ class TestAgentFactories:
 
     def test_nlhac_actor_layer_norm_can_be_disabled(self) -> None:
         """NLHAC adapter exposes the core actor layer-norm switch."""
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -482,7 +482,7 @@ class TestAgentFactories:
 
     def test_nlhac_actor_epsilon_passes_to_core_config(self) -> None:
         """NLHAC adapter exposes the core actor policy-mixture floor."""
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -498,7 +498,7 @@ class TestAgentFactories:
 
     def test_nlhac_actor_td_error_normalizer_passes_to_core_config(self) -> None:
         """NLHAC adapter exposes actor-only TD-error normalization."""
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -517,7 +517,7 @@ class TestAgentFactories:
     def test_nlhac_adaptive_bounder_configures_critic_and_actor(self) -> None:
         """NLHAC adapter exposes adaptive ObGD for critic and actor bounds."""
         from alberta_framework import AdaptiveObGDBounding
-        from alberta_framework.benchmarks.bsuite.agents import nlhac
+        from benchmarks.bsuite.agents import nlhac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -535,7 +535,7 @@ class TestAgentFactories:
 
     def test_nlqhorde_ac_creates_agent(self) -> None:
         """Nonlinear Q-Horde AC factory creates an action-value critic agent."""
-        from alberta_framework.benchmarks.bsuite.agents import nlqhorde_ac
+        from benchmarks.bsuite.agents import nlqhorde_ac
 
         obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
         action_spec = specs.DiscreteArray(num_values=3, name="action")
@@ -562,7 +562,7 @@ class TestIntegration:
     def test_smoke_continuing_100_steps(self) -> None:
         """Run an agent for 100 steps on a continuing stub env."""
         from alberta_framework import MultiHeadMLPLearner, ObGDBounding
-        from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
+        from benchmarks.bsuite.agents.base import AlbertaAgent
 
         inner = StubEpisodicEnv(episode_length=5)
         env = ContinuingWrapper(inner, mode="continuing")
@@ -592,7 +592,7 @@ class TestIntegration:
     def test_smoke_standard_1_episode(self) -> None:
         """Run an agent for 1 episode in standard mode on stub env."""
         from alberta_framework import MultiHeadMLPLearner
-        from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
+        from benchmarks.bsuite.agents.base import AlbertaAgent
 
         inner = StubEpisodicEnv(episode_length=5)
         env = ContinuingWrapper(inner, mode="standard")
@@ -621,7 +621,7 @@ class TestIntegration:
 
     def test_adam_dqn_smoke_100_steps(self) -> None:
         """Run Adam DQN agent for 100 steps on continuing stub env."""
-        from alberta_framework.benchmarks.bsuite.agents import adam_dqn
+        from benchmarks.bsuite.agents import adam_dqn
 
         inner = StubEpisodicEnv(episode_length=5)
         env = ContinuingWrapper(inner, mode="continuing")
@@ -644,7 +644,7 @@ class TestIntegration:
 
     def test_horde_ac_smoke_100_steps(self) -> None:
         """Run Horde actor-critic adapter for 100 steps on continuing stub env."""
-        from alberta_framework.benchmarks.bsuite.agents import horde_actor_critic
+        from benchmarks.bsuite.agents import horde_actor_critic
 
         inner = StubEpisodicEnv(episode_length=5)
         env = ContinuingWrapper(inner, mode="continuing")
@@ -668,7 +668,7 @@ class TestIntegration:
 
     def test_horde_ac_history_smoke_100_steps(self) -> None:
         """Horde actor-critic with history features survives episode boundaries."""
-        from alberta_framework.benchmarks.bsuite.agents import horde_actor_critic
+        from benchmarks.bsuite.agents import horde_actor_critic
 
         inner = StubEpisodicEnv(episode_length=5)
         env = ContinuingWrapper(inner, mode="continuing")
