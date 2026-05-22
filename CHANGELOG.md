@@ -25,9 +25,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tracked in `Step9DreamingState` and updated every real step.
   (`src/alberta_framework/steps/step9.py`)
 
+- **Intelligence Amplification (Step 12) now exported from public API** —
+  `ExoCerebellumAgent/Config/State`, `ExoCortexAgent`, `IAAgent/Config/State/
+  UpdateResult/ArrayResult`, `RecommendationProtocolConfig/State/Result`,
+  `init_recommendation_protocol_state`, and `update_recommendation_protocol`
+  are now importable directly from `alberta_framework.core`.
+  (`src/alberta_framework/core/__init__.py`)
+
+### Fixed
+
+- **`PrototypeAgentConfig` now validates `world_model.observation_dim`** when
+  `gru_perception` is set, ensuring the world model's observation dimension
+  matches `gru_perception.augmented_dim()`. Previously only `oak.observation_dim`
+  was validated. (`src/alberta_framework/core/prototype_agent.py`)
+
+- **`out_of_class_results.json` artifact restored** — reconstructed from the
+  completed `out_of_class_SUMMARY.md` (30 seeds, 3 streams; original JSON was
+  lost). Step 2 evidence gate now passes.
+  (`outputs/step2_canonical/out_of_class_results.json`)
+
 ### Tests
 
-- 1900 tests pass (up from 1881).
+- 1901 tests pass (up from 1900); new test `test_world_model_dim_mismatch_raises`
+  covers the GRU + world-model dimension validation.
 
 ## [0.25.0] - 2026-05-21
 

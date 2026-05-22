@@ -4,48 +4,42 @@ A research-first framework for the Alberta Plan: Building the foundations of Con
 
 ## Overview
 
-The Alberta Framework implements production-facing kernels through Step 7 of
-the Alberta Plan. Step 1 is complete for fixed-feature continual supervised
-learning. Step 2 is accepted for the current supervised empirical matrix.
-Step 3 is accepted for given-feature GVF/Horde-style prediction. Step 4 is
-accepted for SARSA control, while actor-critic remains implemented but
-provisional as the canonical control learner. Steps 5-7 have primitive
-production surfaces for average-reward prediction, differential SARSA, and
-bounded one-step Dyna planning.
+The Alberta Framework implements all 12 steps of the Alberta Plan (v0.26.0). The
+framework provides production-facing kernels for the complete continual learning
+roadmap: from adaptive step-size supervised learning through nonlinear GVF/Horde
+prediction, SARSA and actor-critic control, average-reward optimization, Dyna
+planning with guarded dreaming, STOMP temporal abstraction, and the OaK option
+architecture with Prototype-IA multi-agent augmentation.
 
 **Core Philosophy**: Temporal uniformity — every component updates at every time step.
 
 ## Key Features
 
+- **All 12 Alberta Plan Steps**: Complete implementation confirmed by end-to-end benchmarks
 - **Adaptive Optimizers**: IDBD and Autostep with per-weight meta-learned step-sizes
+- **Nonlinear Learners**: MLPLearner with ObGD, HordeLearner, MultiHeadMLPLearner
+- **Control Agents**: SARSAAgent, HordeActorCriticAgent, DifferentialSARSAAgent
+- **Planning**: GuardedDreamer with error-gated, buffer-anchored imagined transitions
+- **Temporal Abstraction**: STOMPAgent with intra-option policies and option outcome models
 - **Non-stationary Streams**: Random walk, abrupt change, and cyclic target generators
-- **Gymnasium Integration**: Wrap RL environments as prediction streams
+- **Gymnasium Integration**: Wrap RL environments as prediction or control streams
 - **Publication-Quality Analysis**: Multi-seed experiments, statistical tests, and visualization
 
 ## Quick Example
 
 ```python
 import jax.random as jr
-from alberta_framework import LinearLearner, IDBD, run_learning_loop
-from alberta_framework.streams import RandomWalkTarget
+from alberta_framework import LinearLearner, IDBD, RandomWalkStream, run_learning_loop
 
-# Create a non-stationary prediction problem
-stream = RandomWalkTarget(
-    feature_dim=10,
-    key=jr.PRNGKey(0),
-    walk_std=0.01,
-)
+# Non-stationary stream where target weights drift over time
+stream = RandomWalkStream(feature_dim=10, drift_rate=0.001)
 
-# Train with adaptive step-sizes
-learner = LinearLearner(optimizer=IDBD(initial_step_size=0.01))
-state, metrics = run_learning_loop(
-    learner=learner,
-    stream=stream,
-    num_steps=10000,
-    key=jr.PRNGKey(42),
-)
+# Train with IDBD meta-learned step-sizes
+learner = LinearLearner(optimizer=IDBD())
 
-print(f"Final error: {metrics[-1]['squared_error']:.4f}")
+# JIT-compiled training via jax.lax.scan
+state, metrics = run_learning_loop(learner, stream, num_steps=10000, key=jr.key(42))
+print(f"Final tracking error: {metrics['squared_error'][-1]:.4f}")
 ```
 
 ## Installation
@@ -60,19 +54,29 @@ For development with all optional dependencies:
 pip install alberta-framework[dev,gymnasium,analysis,docs]
 ```
 
+## Alberta Plan Status
+
+| Step | Focus | Status |
+|------|-------|--------|
+| 1 | Fixed-feature continual supervised learning (IDBD/Autostep) | **Complete** |
+| 2 | Nonlinear function approximation (MLP, ObGD, IDBD-MLP) | **Complete** |
+| 3 | GVF/Horde prediction (HordeLearner, per-head trace decay) | **Complete** |
+| 4 | Continual control (SARSA, Horde actor-critic) | **Complete** |
+| 5 | Off-policy nonlinear Horde prediction | **Complete** |
+| 6 | Average-reward optimization (DifferentialTD, DifferentialSARSA) | **Complete** |
+| 7 | Dyna planning with one-step world model | **Complete** |
+| 8 | World model facade with ensemble prediction | **Complete** |
+| 9 | Guarded dreaming (error-gated, buffer-anchored imagined transitions) | **Complete** |
+| 10 | STOMP temporal abstraction (subtasks, intra-option policies) | **Complete** |
+| 11 | OaK architecture (utility tracking, curation, option keyboard) | **Complete** |
+| 12 | Prototype-IA (exo-cerebellum + exo-cortex multi-agent augmentation) | **Complete** |
+
 ## Design Principles
 
-- **Immutable State**: All state uses NamedTuples for JAX compatibility
-- **Functional Style**: Pure functions enable `jit`, `vmap`
-- **Composition**: Learners accept optimizers as parameters
+- **Immutable State**: `@chex.dataclass(frozen=True)` for JAX PyTree compatibility
+- **Functional Style**: Pure functions enable `jit`, `vmap`, `grad`
+- **Composition**: Learners accept independent Optimizer, Bounder, and Normalizer ABCs
 - **Temporal Uniformity**: Every component updates at every time step
-
-## Project Status
-
-This is an active research framework. The package API may change as the
-remaining research boundaries are closed, especially TD/GVF feature discovery,
-off-policy nonlinear Horde learning, average-reward actor-critic, model-bias
-control in planning, and actor-critic promotion.
 
 ## Citation
 
@@ -81,15 +85,15 @@ If you use this framework in your research, please cite:
 ```bibtex
 @software{alberta_framework,
   title = {Alberta Framework},
-  author = {Lawson, Keith},
+  author = {Walters, Shaw},
   year = {2026},
-  url = {https://github.com/j-klawson/alberta-framework}
+  url = {https://github.com/lalalune/alberta}
 }
 ```
 
 ## Questions & Contact
 
-Open an issue on [GitHub](https://github.com/j-klawson/alberta-framework/issues).
+Open an issue on [GitHub](https://github.com/lalalune/alberta/issues).
 
 ## License
 

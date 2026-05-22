@@ -748,6 +748,19 @@ class TestGRUPerceptionConfig:
                 gru_perception=GRUPerceptionConfig(observation_dim=4, hidden_dim=8),
             )
 
+    def test_world_model_dim_mismatch_raises(self) -> None:
+        from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+        with pytest.raises(ValueError, match="world_model.observation_dim"):
+            PrototypeAgentConfig(
+                oak=_oak_cfg(obs_dim=12),  # correct: 4+8
+                world_model=ActionConditionedWorldModelConfig(
+                    observation_dim=4,  # wrong — should be 12
+                    n_actions=2,
+                ),
+                gru_perception=GRUPerceptionConfig(observation_dim=4, hidden_dim=8),
+            )
+
     def test_prototype_config_roundtrip_with_gru(self) -> None:
         cfg = _gru_config()
         restored = PrototypeAgentConfig.from_config(cfg.to_config())

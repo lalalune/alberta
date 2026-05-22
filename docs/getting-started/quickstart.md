@@ -18,17 +18,18 @@ from alberta_framework import (
     LinearLearner,
     LMS,
     IDBD,
+    RandomWalkStream,
     run_learning_loop,
 )
-from alberta_framework.streams import RandomWalkTarget
 from alberta_framework.utils import compute_tracking_error
 
 # Create a non-stationary stream where true weights drift over time
-stream = RandomWalkTarget(
+# Both runs share the same stream config — the random key controls
+# the initial weights; run_learning_loop handles the per-run key.
+stream = RandomWalkStream(
     feature_dim=10,
-    key=jr.PRNGKey(0),
-    walk_std=0.01,  # How fast the target drifts
-    noise_std=0.1,  # Observation noise
+    drift_rate=0.01,  # How fast the target drifts
+    noise_std=0.1,    # Observation noise
 )
 
 # Train with fixed step-size (LMS)
@@ -37,24 +38,16 @@ lms_state, lms_metrics = run_learning_loop(
     learner=lms_learner,
     stream=stream,
     num_steps=10000,
-    key=jr.PRNGKey(42),
+    key=jr.key(42),
 )
 
-# Reset stream for fair comparison
-stream = RandomWalkTarget(
-    feature_dim=10,
-    key=jr.PRNGKey(0),  # Same seed!
-    walk_std=0.01,
-    noise_std=0.1,
-)
-
-# Train with adaptive step-sizes (IDBD)
+# Train with adaptive step-sizes (IDBD) — same stream, same key for fair comparison
 idbd_learner = LinearLearner(optimizer=IDBD(initial_step_size=0.01))
 idbd_state, idbd_metrics = run_learning_loop(
     learner=idbd_learner,
     stream=stream,
     num_steps=10000,
-    key=jr.PRNGKey(42),
+    key=jr.key(42),
 )
 
 # Compare tracking error

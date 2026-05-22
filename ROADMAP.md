@@ -475,7 +475,6 @@ Reference: Mathewson et al. (2023, "Communicative Capital").
 - Exo-cortex now supports nonlinear function approximation via `OaKConfig.stomp.base_hidden_sizes`
 
 **Remaining research boundary**:
-- Communication protocol for recommendation acceptance / rejection
 - Multi-partner IA coordination
 - Learned augmentation channel selection
 
@@ -506,7 +505,6 @@ running in real time on a robot trained in simulator and transferred to the real
 
 **Remaining research boundary**:
 - Learned subtask feature construction at scale
-- Communication protocol for IA recommendation acceptance/rejection
 - Full prioritized sweeping queues with recursive priority propagation
 
 ## References

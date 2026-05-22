@@ -1,8 +1,8 @@
 site_name: Alberta Framework
 site_description: A research-first framework for the Alberta Plan - Building the foundations of Continual AI
-site_url: https://github.com/j-klawson/alberta-framework
-repo_url: https://github.com/j-klawson/alberta-framework
-repo_name: j-klawson/alberta-framework
+site_url: https://lalalune.github.io/alberta
+repo_url: https://github.com/lalalune/alberta
+repo_name: lalalune/alberta
 
 theme:
   name: material
@@ -32,17 +32,11 @@ theme:
 
 plugins:
   - search
-  - gen-files:
-      scripts:
-        - docs/gen_ref_pages.py
-  - literate-nav:
-      nav_file: SUMMARY.md
-  - section-index
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
-          paths: [src]
+          paths: [.]
           options:
             docstring_style: numpy
             docstring_options:
@@ -91,8 +85,18 @@ nav:
     - Concepts: guide/concepts.md
     - Optimizers: guide/optimizers.md
     - Streams: guide/streams.md
+    - SARSA Control: guide/sarsa-control.md
+    - Actor-Critic Control: guide/actor-critic-control.md
     - Gymnasium Integration: guide/gymnasium.md
     - Daemon Usage: guide/daemon-usage.md
     - Experiments: guide/experiments.md
-  - API Reference: reference/
+    - End-to-End Pipeline: guide/end-to-end-pipeline.md
+    - Production Kernels: guide/step1-step2-production.md
+  - Research:
+    - Alberta Plan Audit: research/alberta_plan_audit.md
+    - Step 1 Results: research/step1_results.md
+    - Step 3 Results: research/step3_results.md
+    - Step 4 Results: research/step4_results.md
+    - Steps 5-6 Results: research/step5_step6_average_reward.md
+    - Step 7 Results: research/step7_dyna_planning.md
   - Contributing: contributing.md
