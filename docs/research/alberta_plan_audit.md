@@ -2,8 +2,8 @@
 
 **Date**: 2026-05-21 (updated 2026-05-21)
 **Scope**: Systematic comparison of implementation against Sutton et al. (2022) paper requirements.  
-**Method**: Paper review, code audit, test execution (1609 passing, 3 skipped), benchmark generation.
-**Last update**: Step 7 CartPole FA Dyna benchmark run (2026-05-21): ceiling effect — both linear-model Dyna and real-only achieve reward=1.0/step on all 10 seeds; planning benefit not measurable on this trivially-easy task. Step 9 guarded dreaming benchmark proven: 9/10 seeds win over naive Dyna, +0.0117. Step 6 stochastic RiverSwim (10/10, 0.907) + security-gym (10/10, +1.356). Step 4 NL-HAC gradclip: 12/20 wins (60%). Step 8 PrototypeAgent e2e: 5/5 seeds reward=1.0, no NaN. Step 10: STOMP 5474-step speedup (6/10) + auto-discovery 10/10.
+**Method**: Paper review, code audit, test execution (1881 tests collected), benchmark generation.
+**Last update (2026-05-21)**: Step 7 CartPole FA Dyna benchmark: ceiling effect — both linear-model Dyna and real-only achieve reward=1.0/step on all 10 seeds even at 1500 steps; CartPole too easy for linear Q to differentiate planning benefit. CartPole with linear Q converges within ~200 steps regardless of planning augmentation. FA Dyna IS proven on 7-dim Fourier chain (6/10 wins, 0.887 vs 0.785) and MLP bandit (8/10 Q-gap wins). Step 4 exhaustive NLHAC probe: actor_epsilon, actor_td_error_normalizer, no-actor-LN all ruled out — catch gap is genuine research boundary. steps3_5_accepted_completion_gate.py added: accepted_scope_complete=true.
 
 ---
 
