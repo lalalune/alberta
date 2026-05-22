@@ -31,13 +31,18 @@ import jax.random as jr
 from jax import Array
 
 from alberta_framework.core.oak import (
+    KeyboardChordLearnerConfig,
+    KeyboardChordLearnerState,
     OaKAgent,
     OaKArrayResult,
     OaKConfig,
     OaKState,
     OaKUpdateResult,
+    init_keyboard_chord_learner,
     keyboard_action,
     keyboard_q_values,
+    learned_feature_subtask_specs,
+    update_keyboard_chord_learner,
 )
 from alberta_framework.core.options import STOMPConfig, SubtaskSpec
 
@@ -307,13 +312,18 @@ def run_step11_smoke(
 
 
 __all__ = [
+    "KeyboardChordLearnerConfig",
+    "KeyboardChordLearnerState",
     "Step11OaKConfig",
     "Step11SmokeResult",
     "init_step11_state",
+    "init_keyboard_chord_learner",
     "keyboard_action",
     "keyboard_q_values",
+    "learned_feature_subtask_specs",
     "make_step11_oak_agent",
     "run_step11_scan",
     "run_step11_smoke",
     "step11_update",
+    "update_keyboard_chord_learner",
 ]

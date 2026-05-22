@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, cast
 
@@ -93,6 +94,19 @@ class Step8SmokeResult:
         return payload
 
 
+@dataclass(frozen=True)
+class Step8EnsemblePrediction:
+    """Aggregate prediction and disagreement from multiple Step 8 models."""
+
+    reward_predictions: Array
+    next_observation_predictions: Array
+    mean_reward: Array
+    mean_next_observation: Array
+    reward_disagreement: Array
+    next_observation_disagreement: Array
+    total_disagreement: Array
+
+
 def make_step8_world_model(
     config: Step8WorldModelConfig | None = None,
 ) -> OneStepWorldModel:
@@ -118,6 +132,44 @@ def step8_update(
     return cast(
         WorldModelUpdateResult,
         model.update(state, observation, action, reward, next_observation),
+    )
+
+
+def step8_ensemble_predict(
+    model: OneStepWorldModel,
+    states: Sequence[WorldModelState],
+    observation: Array,
+    action: Array,
+) -> Step8EnsemblePrediction:
+    """Predict with an ensemble of Step 8 states and return disagreement.
+
+    The states are intentionally explicit rather than hidden in a new learner
+    object. This keeps ensemble use compatible with existing checkpointing and
+    lets downstream systems choose their own bootstrap or seed strategy.
+    """
+    if not states:
+        raise ValueError("states must contain at least one world-model state")
+    predictions = [model.predict(state, observation, action) for state in states]
+    reward_predictions = jnp.stack([pred.reward for pred in predictions], axis=0)
+    next_observation_predictions = jnp.stack(
+        [pred.next_observation for pred in predictions],
+        axis=0,
+    )
+    mean_reward = jnp.mean(reward_predictions, axis=0)
+    mean_next_observation = jnp.mean(next_observation_predictions, axis=0)
+    reward_disagreement = jnp.var(reward_predictions, axis=0)
+    next_observation_disagreement = jnp.mean(
+        jnp.var(next_observation_predictions, axis=0)
+    )
+    total_disagreement = reward_disagreement + next_observation_disagreement
+    return Step8EnsemblePrediction(
+        reward_predictions=reward_predictions,
+        next_observation_predictions=next_observation_predictions,
+        mean_reward=mean_reward,
+        mean_next_observation=mean_next_observation,
+        reward_disagreement=reward_disagreement,
+        next_observation_disagreement=next_observation_disagreement,
+        total_disagreement=total_disagreement,
     )
 
 

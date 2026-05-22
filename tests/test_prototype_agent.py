@@ -701,3 +701,129 @@ class TestPrototypeAgentSmoke:
             if (i + 1) % 50 == 0:
                 agent, state = agent.curate(state, ck)
         assert jnp.isfinite(result.oak_td_error)
+
+
+# ---------------------------------------------------------------------------
+# GRU Perception (Step 8 sub-component a)
+# ---------------------------------------------------------------------------
+
+GRU_OBS_DIM = 4
+GRU_HIDDEN = 8
+GRU_AUG_DIM = GRU_OBS_DIM + GRU_HIDDEN
+
+
+def _gru_config() -> PrototypeAgentConfig:
+    from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+    return PrototypeAgentConfig(
+        oak=_oak_cfg(obs_dim=GRU_AUG_DIM),
+        gru_perception=GRUPerceptionConfig(
+            observation_dim=GRU_OBS_DIM,
+            hidden_dim=GRU_HIDDEN,
+        ),
+    )
+
+
+class TestGRUPerceptionConfig:
+    def test_augmented_dim(self) -> None:
+        from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+        cfg = GRUPerceptionConfig(observation_dim=4, hidden_dim=16)
+        assert cfg.augmented_dim() == 20
+
+    def test_config_roundtrip(self) -> None:
+        from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+        cfg = GRUPerceptionConfig(observation_dim=6, hidden_dim=32)
+        restored = GRUPerceptionConfig.from_config(cfg.to_config())
+        assert restored.observation_dim == 6
+        assert restored.hidden_dim == 32
+
+    def test_oak_dim_mismatch_raises(self) -> None:
+        from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+        with pytest.raises(ValueError, match="oak.observation_dim"):
+            PrototypeAgentConfig(
+                oak=_oak_cfg(obs_dim=4),  # wrong — should be 4+8=12
+                gru_perception=GRUPerceptionConfig(observation_dim=4, hidden_dim=8),
+            )
+
+    def test_prototype_config_roundtrip_with_gru(self) -> None:
+        cfg = _gru_config()
+        restored = PrototypeAgentConfig.from_config(cfg.to_config())
+        assert restored.gru_perception is not None
+        assert restored.gru_perception.observation_dim == GRU_OBS_DIM
+        assert restored.gru_perception.hidden_dim == GRU_HIDDEN
+
+
+class TestGRUPerceptionStateInit:
+    def test_hidden_zeros_at_init(self) -> None:
+        agent = PrototypeAgent(_gru_config())
+        state = agent.init(jr.key(0))
+        assert state.gru_state is not None
+        chex.assert_shape(state.gru_state.hidden, (GRU_HIDDEN,))
+        assert float(jnp.max(jnp.abs(state.gru_state.hidden))) == pytest.approx(0.0)
+
+    def test_weight_shapes_correct(self) -> None:
+        agent = PrototypeAgent(_gru_config())
+        state = agent.init(jr.key(1))
+        gru = state.gru_state
+        chex.assert_shape(gru.W_z, (GRU_HIDDEN, GRU_OBS_DIM))
+        chex.assert_shape(gru.U_z, (GRU_HIDDEN, GRU_HIDDEN))
+        chex.assert_shape(gru.b_z, (GRU_HIDDEN,))
+
+    def test_no_gru_state_when_disabled(self) -> None:
+        agent = PrototypeAgent(_minimal_config())
+        state = agent.init(jr.key(0))
+        assert state.gru_state is None
+
+
+class TestGRUPerceptionUpdate:
+    def test_hidden_updates_after_start(self) -> None:
+        agent = PrototypeAgent(_gru_config())
+        state0 = agent.init(jr.key(0))
+        obs = jr.normal(jr.key(1), (GRU_OBS_DIM,))
+        state1 = agent.start(state0, obs)
+        assert float(jnp.max(jnp.abs(state1.gru_state.hidden))) > 0.0
+
+    def test_oak_receives_augmented_obs(self) -> None:
+        """OaK last_obs should have augmented dimension after start."""
+        agent = PrototypeAgent(_gru_config())
+        state = agent.start(agent.init(jr.key(0)), jr.normal(jr.key(1), (GRU_OBS_DIM,)))
+        stored = state.oak_state.stomp_state.base_last_obs
+        chex.assert_shape(stored, (GRU_AUG_DIM,))
+
+    def test_update_changes_hidden(self) -> None:
+        agent = PrototypeAgent(_gru_config())
+        state = agent.start(agent.init(jr.key(0)), jnp.zeros(GRU_OBS_DIM))
+        h0 = state.gru_state.hidden
+        obs = jr.normal(jr.key(2), (GRU_OBS_DIM,))
+        result = agent.update(state, jnp.array(1.0), obs)
+        h1 = result.state.gru_state.hidden
+        assert not jnp.allclose(h0, h1)
+
+    def test_update_finite(self) -> None:
+        agent = PrototypeAgent(_gru_config())
+        state = agent.start(agent.init(jr.key(0)), jnp.zeros(GRU_OBS_DIM))
+        for _ in range(10):
+            obs = jr.normal(jr.key(42), (GRU_OBS_DIM,))
+            result = agent.update(state, jnp.array(1.0), obs)
+            state = result.state
+        assert jnp.isfinite(result.oak_td_error)
+        assert jnp.all(jnp.isfinite(state.gru_state.hidden))
+
+    def test_curate_preserves_gru_config(self) -> None:
+        from alberta_framework.core.prototype_agent import GRUPerceptionConfig
+
+        agent = PrototypeAgent(
+            PrototypeAgentConfig(
+                oak=_oak_cfg(specs=(_SPEC0, _SPEC1), obs_dim=GRU_AUG_DIM),
+                gru_perception=GRUPerceptionConfig(
+                    observation_dim=GRU_OBS_DIM, hidden_dim=GRU_HIDDEN
+                ),
+            )
+        )
+        state = agent.start(agent.init(jr.key(0)), jnp.zeros(GRU_OBS_DIM))
+        new_agent, new_state = agent.curate(state, jr.key(99))
+        assert new_agent.config.gru_perception is not None
+        assert new_agent.config.gru_perception.hidden_dim == GRU_HIDDEN

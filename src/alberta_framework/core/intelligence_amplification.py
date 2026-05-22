@@ -343,6 +343,97 @@ class IAArrayResult:
     cortex_td_errors: Float[Array, " num_steps"]
 
 
+@dataclasses.dataclass(frozen=True)
+class RecommendationProtocolConfig:
+    """Configuration for recommendation acceptance/rejection feedback."""
+
+    acceptance_ema_decay: float = 0.95
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.acceptance_ema_decay < 1.0:
+            raise ValueError("acceptance_ema_decay must be in [0, 1)")
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dictionary."""
+        return {
+            "type": "RecommendationProtocolConfig",
+            "acceptance_ema_decay": self.acceptance_ema_decay,
+        }
+
+    @classmethod
+    def from_config(cls, payload: dict[str, Any]) -> RecommendationProtocolConfig:
+        """Reconstruct from :meth:`to_config` output."""
+        data = dict(payload)
+        data.pop("type", None)
+        return cls(**data)
+
+
+@chex.dataclass(frozen=True)
+class RecommendationProtocolState:
+    """State for partner acceptance/rejection feedback."""
+
+    accepted_count: Int[Array, ""]
+    rejected_count: Int[Array, ""]
+    acceptance_ema: Float[Array, ""]
+    step_count: Int[Array, ""]
+
+
+@chex.dataclass(frozen=True)
+class RecommendationProtocolResult:
+    """Result of one recommendation feedback event."""
+
+    state: RecommendationProtocolState
+    recommendation: Int[Array, ""]
+    partner_action: Int[Array, ""]
+    effective_action: Int[Array, ""]
+    accepted: Array
+
+
+def init_recommendation_protocol_state() -> RecommendationProtocolState:
+    """Initialize recommendation feedback counters."""
+    return RecommendationProtocolState(
+        accepted_count=jnp.array(0, dtype=jnp.int32),
+        rejected_count=jnp.array(0, dtype=jnp.int32),
+        acceptance_ema=jnp.array(0.0, dtype=jnp.float32),
+        step_count=jnp.array(0, dtype=jnp.int32),
+    )
+
+
+def update_recommendation_protocol(
+    config: RecommendationProtocolConfig,
+    state: RecommendationProtocolState,
+    recommendation: Array,
+    partner_action: Array,
+) -> RecommendationProtocolResult:
+    """Record whether a partner accepted or rejected a recommendation.
+
+    A recommendation is accepted when the partner's executed action equals the
+    recommendation.  The effective action is the recommendation on acceptance
+    and the partner action on rejection, giving callers a single action stream
+    for replay or downstream logging.
+    """
+    rec = jnp.asarray(recommendation, dtype=jnp.int32)
+    action = jnp.asarray(partner_action, dtype=jnp.int32)
+    accepted = rec == action
+    accepted_i = accepted.astype(jnp.int32)
+    rejected_i = (~accepted).astype(jnp.int32)
+    accepted_f = accepted.astype(jnp.float32)
+    decay = jnp.asarray(config.acceptance_ema_decay, dtype=jnp.float32)
+    new_state = RecommendationProtocolState(
+        accepted_count=state.accepted_count + accepted_i,
+        rejected_count=state.rejected_count + rejected_i,
+        acceptance_ema=decay * state.acceptance_ema + (1.0 - decay) * accepted_f,
+        step_count=state.step_count + 1,
+    )
+    return RecommendationProtocolResult(
+        state=new_state,
+        recommendation=rec,
+        partner_action=action,
+        effective_action=jnp.where(accepted, rec, action),
+        accepted=accepted,
+    )
+
+
 class IAAgent:
     """Alberta Plan Step 12 Intelligence Amplification agent.
 
@@ -507,4 +598,9 @@ __all__ = [
     "IAConfig",
     "IAState",
     "IAUpdateResult",
+    "RecommendationProtocolConfig",
+    "RecommendationProtocolResult",
+    "RecommendationProtocolState",
+    "init_recommendation_protocol_state",
+    "update_recommendation_protocol",
 ]

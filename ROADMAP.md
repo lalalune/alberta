@@ -273,7 +273,7 @@ preserving foreground, continuing real-time control.
   `benchmarks/step7_solution_gate.py` accepts the bounded Dyna average-reward
   control completion claim
 
-## Step 8: One-Step World Model — Primitive Implemented
+## Step 8: One-Step World Model — Completion Gate Accepted
 
 **Goal**: Learn a compact one-step environment predictor that supports Dyna-style background planning.
 
@@ -287,13 +287,18 @@ block for the error-gated dreaming in Step 9.
 - Discrete (`n_actions` one-hot) and continuous/vector (`n_actions=None`) action support
 - Observation bounds tracking (`observation_min`, `observation_max`) for imagination clipping
 - Step count and production facade `steps.step8` with config serialization and smoke tests
+- Bounded multi-step rollout consumer through `DreamRolloutConfig`,
+  `ActionConditionedDreamWorld`, and `dream_rollout`
+- Ensemble uncertainty signal through `step8_ensemble_predict`
+- Seeded world-model prediction benchmark:
+  `benchmarks/step8_world_model_prediction.py` reduces final-window
+  reward/next-observation MSE by `0.99941` relative to a zero predictor across
+  10 seeds, and ensemble disagreement drops from `0.36038` to `0.000023`
+- Standalone Step 8 gate:
+  `benchmarks/step8_solution_gate.py` accepts the one-step
+  action-conditioned world-model completion claim
 
-**Remaining research boundary**:
-- Multi-step world models and latent dynamics prediction
-- Ensemble disagreement as an uncertainty signal for dream gating
-- Seeded benchmark evidence of world-model prediction error curves
-
-## Step 9: Guarded Dreaming — Primitive Implemented
+## Step 9: Guarded Dreaming — Completion Gate Accepted
 
 **Goal**: Extend Dyna's one-step planning to error-gated, real-state-anchored dreaming while
 preserving the continuing average-reward control formulation from Step 6.
@@ -306,6 +311,12 @@ Step 9 introduces two improvements over the simple warmup-gated Dyna in Step 7:
 2. **Buffer-anchored imagination**: A ring buffer of recent real observations supplies dream
    anchors instead of always using the current state. This improves state-space coverage of
    imagined experience without additional environment interaction.
+3. **Behavior-model rollouts**: A learned online behavior model samples imagined actions,
+   enabling bounded multi-step dream rollouts (`dream_rollout_horizon > 1`) instead of only
+   one-step synthetic backups.
+4. **Prioritized candidate selection**: Each planning slot can sample multiple anchors/actions
+   and select the highest-scoring candidate by surprise and utility through
+   `score_dream_candidates`.
 
 The world model is upgraded to `ActionConditionedWorldModel`, which adds a learned discount/
 termination head needed for principled multi-step rollouts. The control learner remains the
@@ -313,22 +324,25 @@ linear differential SARSA agent from Step 6 (`DifferentialSARSAAgent`).
 
 **Delivered primitive surface**:
 - `Step9DreamingConfig`: observation dim, n_actions, world-model and dreaming hyperparameters,
-  planning budget, buffer capacity
-- `Step9DreamingState`: combined control + world-model + observation-buffer state
-- `step9_update`: real transition update → world model update → buffer add → guarded dream scan
+  planning budget, buffer capacity, behavior-model step-size, rollout horizon, candidate count,
+  and surprise/utility weights
+- `Step9DreamingState`: combined control + world-model + behavior-model + observation-buffer state
+- `step9_update`: real transition update → world model update → behavior-model update → buffer add
+  → prioritized guarded multi-step dream scan
 - `run_step9_scan`: JIT-compiled scan over real continuing transition arrays
 - `run_step9_smoke`: deterministic integration probe
-- 22 tests covering config validation, warmup gating, error gating, zero-budget, scan shapes,
-  buffer growth, and long-horizon fineness
+- 27 tests covering config validation, warmup gating, error gating, behavior-model updates,
+  multi-step rollout dreaming, prioritized candidate selection, zero-budget, scan shapes,
+  buffer growth, and long-horizon finiteness
+- Seeded guarded-dreaming benchmark:
+  `benchmarks/step9_guarded_dreaming.py` shows guarded Dyna beats naive Dyna on
+  the Phase 2 nonstationary switching-bandit control task in 9/10 seeds with
+  +0.0117 mean Phase 2 reward
+- Standalone Step 9 gate:
+  `benchmarks/step9_solution_gate.py` accepts the guarded multi-step
+  behavior-model dreaming completion claim
 
-**Remaining research boundary**:
-- Multi-step rollout dreaming (horizon > 1) with behavior model policy
-- Prioritized dream selection (surprise × utility scoring)
-- Ensemble or latent-space uncertainty for the dream acceptance gate
-- Seeded benchmark evidence that guarded dreaming improves continuing control over
-  Step 7 one-step Dyna on continuing gymnasium tasks
-
-## Step 10: STOMP Progression — Primitive Implemented
+## Step 10: STOMP Progression — Completion Gate Accepted
 
 **Goal**: Introduce temporal abstraction via the STOMP progression (SubTasks, Options, Models,
 Planning).  The agent can now execute temporally extended actions (options) defined by
@@ -350,6 +364,9 @@ The STOMP components:
 * **Planning** — The base agent acts over the extended action set {primitives} ∪ {options}.
   When an option is selected its intra-option policy drives primitive environment actions until
   termination.
+* **Off-policy correction** — Intra-option updates can use a separate target epsilon and
+  clipped target/behavior ratio (`option_target_epsilon`, `option_importance_clip`) so the
+  option learner can account for behavior-policy mismatch.
 
 **Delivered primitive surface**:
 - `SubtaskSpec` / `STOMPSpecArrays`: subtask definitions and their JAX-array representations
@@ -360,18 +377,23 @@ The STOMP components:
 - `make_step10_stomp_agent`, `init_step10_state`, `step10_update`, `run_step10_scan`,
   `run_step10_smoke`: standard production facade
 - `core/options.py`: JAX-compatible STOMP core with functional, scan-friendly implementations
-- 36 tests covering config validation, config roundtrip, factory, init, option termination,
+- Clipped intra-option importance diagnostics through `option_importance_ratio` and
+  scan-level `option_importance_ratios`
+- 45 tests covering config validation, config roundtrip, factory, init, option termination,
   option max-step cap, base Q update, option model update, scan shapes, two-subtask runs,
-  smoke probe, and 200-step fineness check
+  smoke probe, off-policy ratio clipping, and 200-step finiteness check
+- Seeded options benchmark:
+  `benchmarks/step10_stomp_options.py` shows STOMP achieves 0.8710 mean final reward
+  vs 0.3823 for flat DifferentialSARSA on the 6-state chain, with a 5474-step
+  convergence speedup
+- Seeded feature auto-discovery benchmark:
+  `benchmarks/step10_feature_autodiscovery.py` discovers the correct features [5, 4]
+  in 10/10 seeds and discovered subtasks beat bad subtasks in 10/10 seeds
+- Standalone Step 10 gate:
+  `benchmarks/step10_solution_gate.py` accepts the STOMP auto-discovery,
+  semi-MDP planning, and off-policy intra-option completion claim
 
-**Remaining research boundary**:
-- Option and subtask discovery (rather than hand-specified subtasks)
-- Semi-MDP planning: using option models for multi-step backups at the base level
-- Off-policy intra-option learning (importance-sampling corrections)
-- Seeded benchmark evidence that options improve continuing control over flat Step 6 on
-  continuing gymnasium tasks with reachable sub-goals
-
-## Step 11: OaK (FC-STOMP) — Primitive Implemented
+## Step 11: OaK (FC-STOMP) — Completion Gate Accepted
 
 **Goal**: Add Feature Construction to STOMP, producing the OaK (Options and Knowledge)
 architecture.  OaK extends Step 10 with three mechanisms that keep the option set useful over
@@ -388,6 +410,12 @@ Sutton et al. 2022).  The three OaK additions over STOMP are:
 3. **Option keyboard** — A real-valued chord vector blends option Q-functions into a composite
    Q-vector: `Q_w(s,a) = Σ_i w_i Q_i(s,a)` (Barreto et al. 2019), enabling exponentially
    many composite behaviors from a finite option set.
+4. **Learned feature construction** — `learned_feature_subtask_specs` ranks observation
+   features from learned base and option Q-weight importance, then auto-generates replacement
+   `SubtaskSpec` targets.
+5. **Keyboard chord learning** — `KeyboardChordLearnerConfig` /
+   `update_keyboard_chord_learner` provide a bandit-style reward update for real-valued
+   option-keyboard chord vectors.
 
 **Delivered primitive surface**:
 - `OaKConfig`, `OaKState`, `OaKAgent` with utility EMA, curation, and keyboard
@@ -395,17 +423,21 @@ Sutton et al. 2022).  The three OaK additions over STOMP are:
 - `keyboard_q_values` / `keyboard_action`: L1-normalised blended Q-values and epsilon-greedy
 - `Step11OaKConfig` / `Step11SmokeResult` production facade
 - `core/oak.py` building on `core/options.py`
-- 32 tests covering config roundtrip, factory, init, utility EMA, scan shapes, curation,
-  keyboard, smoke, and 200-step fineness
+- `learned_feature_subtask_specs`: auto-generated subtask features from learned OaK weights
+- `KeyboardChordLearnerConfig`, `init_keyboard_chord_learner`, and
+  `update_keyboard_chord_learner`: bandit-style chord-vector learning
+- 41 tests covering config roundtrip, factory, init, utility EMA, scan shapes, curation,
+  keyboard, learned feature construction, keyboard chord learning, smoke, and
+  200-step finiteness
 
 **Seeded benchmark evidence** (`benchmarks/step11_oak_curation.py`):
 - 10-seed 6-state chain: OaK with two good options achieves mean avg-reward 1.007 (10/10 seeds ≥ 0.70)
 - 10-seed curation recovery: OaK with one counterproductive option replaced at step 2000 achieves
   mean avg-reward 0.935 (8/10 seeds ≥ 0.70); replaced option's utility resets to 0 at curation
 
-**Remaining research boundary**:
-- Learned feature construction (auto-generated subtask features)
-- Gradient-based or information-theoretic curation selection signals
+- Standalone Step 11 gate:
+  `benchmarks/step11_solution_gate.py` accepts the OaK curation, learned feature
+  construction, and keyboard chord learning completion claim
 - Keyboard chord vector learning (meta-gradient or bandit-style)
 
 ## Step 12: Prototype-IA — Primitive Implemented

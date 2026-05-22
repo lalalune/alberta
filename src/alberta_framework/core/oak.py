@@ -50,6 +50,7 @@ from alberta_framework.core.options import (
     STOMPState,
     STOMPUpdateResult,
     SubtaskSpec,
+    subtasks_from_feature_scores,
 )
 from alberta_framework.core.types import MLPParams
 
@@ -179,6 +180,136 @@ class OaKArrayResult:
     option_terminations: Array
     pseudo_rewards: Float[Array, " num_steps"]
     utility_emas: Float[Array, "num_steps n_options"]
+
+
+# ---------------------------------------------------------------------------
+# Learned feature construction and keyboard chord learning
+# ---------------------------------------------------------------------------
+
+
+def learned_feature_subtask_specs(
+    oak_state: OaKState,
+    *,
+    n_subtasks: int = 4,
+    threshold: float = 0.5,
+    pseudo_reward_scale: float = 1.0,
+    max_option_steps: int = 20,
+    min_score: float = 0.0,
+) -> tuple[SubtaskSpec, ...]:
+    """Construct subtask specs from learned OaK feature importance.
+
+    Feature scores combine base extended-action Q weights and intra-option
+    primitive-action Q weights.  The highest-scoring observation features are
+    converted into :class:`SubtaskSpec` objects for curation or replacement.
+    """
+    bls = oak_state.stomp_state.base_learner_state
+    if len(bls.trunk_params.weights) == 0:
+        base_q = jnp.stack([w[0] for w in bls.head_params.weights])
+    else:
+        base_q = bls.trunk_params.weights[0]
+    base_scores = jnp.max(jnp.abs(base_q), axis=0)
+
+    option_q = oak_state.stomp_state.option_policies.q_weights
+    obs_dim = int(option_q.shape[-1])
+    option_scores = jnp.max(jnp.abs(option_q).reshape(-1, obs_dim), axis=0)
+    combined_scores = base_scores + option_scores
+    specs = subtasks_from_feature_scores(
+        combined_scores,
+        top_k=n_subtasks,
+        threshold=threshold,
+        pseudo_reward_scale=pseudo_reward_scale,
+        max_option_steps=max_option_steps,
+        min_score=min_score,
+    )
+    return tuple(specs)
+
+
+@dataclasses.dataclass(frozen=True)
+class KeyboardChordLearnerConfig:
+    """Bandit-style learner for option-keyboard chord vectors."""
+
+    n_options: int
+    step_size: float = 0.1
+    baseline_decay: float = 0.9
+    l2_penalty: float = 0.0
+    max_norm: float = 10.0
+
+    def __post_init__(self) -> None:
+        if self.n_options <= 0:
+            raise ValueError("n_options must be positive")
+        if self.step_size < 0.0:
+            raise ValueError("step_size must be non-negative")
+        if not 0.0 <= self.baseline_decay < 1.0:
+            raise ValueError("baseline_decay must be in [0, 1)")
+        if self.l2_penalty < 0.0:
+            raise ValueError("l2_penalty must be non-negative")
+        if self.max_norm <= 0.0:
+            raise ValueError("max_norm must be positive")
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dictionary."""
+        payload = dataclasses.asdict(self)
+        payload["type"] = "KeyboardChordLearnerConfig"
+        return payload
+
+    @classmethod
+    def from_config(cls, payload: dict[str, Any]) -> KeyboardChordLearnerConfig:
+        """Reconstruct from :meth:`to_config` output."""
+        data = dict(payload)
+        data.pop("type", None)
+        return cls(**data)
+
+
+@chex.dataclass(frozen=True)
+class KeyboardChordLearnerState:
+    """State for bandit-style chord-vector learning."""
+
+    chord_vector: Float[Array, " n_options"]
+    reward_baseline: Float[Array, ""]
+    step_count: Int[Array, ""]
+
+
+def init_keyboard_chord_learner(
+    config: KeyboardChordLearnerConfig,
+) -> KeyboardChordLearnerState:
+    """Initialize keyboard-chord learner state."""
+    return KeyboardChordLearnerState(
+        chord_vector=jnp.ones(config.n_options, dtype=jnp.float32) / config.n_options,
+        reward_baseline=jnp.array(0.0, dtype=jnp.float32),
+        step_count=jnp.array(0, dtype=jnp.int32),
+    )
+
+
+def update_keyboard_chord_learner(
+    config: KeyboardChordLearnerConfig,
+    state: KeyboardChordLearnerState,
+    selected_chord: Array,
+    reward: Array,
+) -> KeyboardChordLearnerState:
+    """Apply one bandit-style reward update for a selected chord.
+
+    Positive advantage moves the learned chord vector toward the selected
+    chord; negative advantage moves it away.  The reward baseline is an EMA.
+    """
+    chord = jnp.asarray(selected_chord, dtype=jnp.float32).reshape((config.n_options,))
+    chord_norm = chord / (jnp.linalg.norm(chord) + 1.0e-8)
+    reward_arr = jnp.asarray(reward, dtype=jnp.float32)
+    baseline = (
+        config.baseline_decay * state.reward_baseline
+        + (1.0 - config.baseline_decay) * reward_arr
+    )
+    advantage = reward_arr - state.reward_baseline
+    new_vector = (
+        state.chord_vector * (1.0 - config.step_size * config.l2_penalty)
+        + config.step_size * advantage * chord_norm
+    )
+    norm = jnp.linalg.norm(new_vector)
+    scale = jnp.minimum(1.0, jnp.asarray(config.max_norm, dtype=jnp.float32) / (norm + 1.0e-8))
+    return KeyboardChordLearnerState(
+        chord_vector=new_vector * scale,
+        reward_baseline=baseline,
+        step_count=state.step_count + 1,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -599,11 +730,16 @@ class OaKAgent:
 
 
 __all__ = [
+    "KeyboardChordLearnerConfig",
+    "KeyboardChordLearnerState",
     "OaKAgent",
     "OaKArrayResult",
     "OaKConfig",
     "OaKState",
     "OaKUpdateResult",
+    "init_keyboard_chord_learner",
     "keyboard_action",
     "keyboard_q_values",
+    "learned_feature_subtask_specs",
+    "update_keyboard_chord_learner",
 ]

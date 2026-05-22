@@ -14,6 +14,9 @@ from alberta_framework.core.intelligence_amplification import (
     IAConfig,
     IAState,
     IAUpdateResult,
+    RecommendationProtocolConfig,
+    init_recommendation_protocol_state,
+    update_recommendation_protocol,
 )
 from alberta_framework.core.oak import OaKConfig
 from alberta_framework.core.options import STOMPConfig, SubtaskSpec
@@ -397,6 +400,52 @@ def test_cerebellum_weights_change_after_update() -> None:
     assert not bool(
         jnp.all(result.state.cerebellum_state.weights == state.cerebellum_state.weights)
     )
+
+
+# ---------------------------------------------------------------------------
+# Recommendation acceptance / rejection protocol
+# ---------------------------------------------------------------------------
+
+
+def test_recommendation_protocol_config_roundtrip() -> None:
+    cfg = RecommendationProtocolConfig(acceptance_ema_decay=0.5)
+    assert RecommendationProtocolConfig.from_config(cfg.to_config()) == cfg
+
+
+def test_recommendation_protocol_invalid_decay_raises() -> None:
+    with pytest.raises(ValueError, match="acceptance_ema_decay"):
+        RecommendationProtocolConfig(acceptance_ema_decay=1.0)
+
+
+def test_recommendation_protocol_accepts_matching_action() -> None:
+    cfg = RecommendationProtocolConfig(acceptance_ema_decay=0.5)
+    state = init_recommendation_protocol_state()
+    result = update_recommendation_protocol(
+        cfg,
+        state,
+        jnp.array(1, dtype=jnp.int32),
+        jnp.array(1, dtype=jnp.int32),
+    )
+    assert bool(result.accepted)
+    assert int(result.effective_action) == 1
+    assert int(result.state.accepted_count) == 1
+    assert int(result.state.rejected_count) == 0
+    assert float(result.state.acceptance_ema) == pytest.approx(0.5)
+
+
+def test_recommendation_protocol_rejects_different_action() -> None:
+    cfg = RecommendationProtocolConfig(acceptance_ema_decay=0.5)
+    state = init_recommendation_protocol_state()
+    result = update_recommendation_protocol(
+        cfg,
+        state,
+        jnp.array(1, dtype=jnp.int32),
+        jnp.array(0, dtype=jnp.int32),
+    )
+    assert not bool(result.accepted)
+    assert int(result.effective_action) == 0
+    assert int(result.state.accepted_count) == 0
+    assert int(result.state.rejected_count) == 1
 
 
 # ---------------------------------------------------------------------------

@@ -35,9 +35,16 @@ from alberta_framework.core.average_reward import (
     DifferentialSARSAState,
     DifferentialSARSAUpdateResult,
 )
+from alberta_framework.core.behavior_model import (
+    BehaviorModel,
+    BehaviorModelConfig,
+    BehaviorModelState,
+)
 from alberta_framework.core.dreaming import (
+    DreamSelectionConfig,
     RecentObservationBuffer,
     RecentObservationBufferState,
+    score_dream_candidates,
 )
 from alberta_framework.core.world_model import (
     ActionConditionedWorldModel,
@@ -98,7 +105,12 @@ class Step9DreamingConfig:
     dreaming_warmup_steps: int = 100
     dreaming_max_model_error: float = 1.0
     model_error_decay: float = 0.99
+    behavior_model_step_size: float = 0.05
     planning_budget: int = 1
+    dream_rollout_horizon: int = 1
+    dream_candidate_count: int = 1
+    dream_surprise_weight: float = 1.0
+    dream_utility_weight: float = 1.0
     buffer_capacity: int = 64
 
     def __post_init__(self) -> None:
@@ -116,6 +128,12 @@ class Step9DreamingConfig:
             raise ValueError("dreaming_max_model_error must be non-negative")
         if self.buffer_capacity < 1:
             raise ValueError("buffer_capacity must be positive")
+        if self.behavior_model_step_size < 0.0:
+            raise ValueError("behavior_model_step_size must be non-negative")
+        if self.dream_rollout_horizon < 1:
+            raise ValueError("dream_rollout_horizon must be positive")
+        if self.dream_candidate_count < 1:
+            raise ValueError("dream_candidate_count must be positive")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-serializable representation."""
@@ -156,6 +174,7 @@ class Step9DreamingState:
 
     control_state: DifferentialSARSAState
     world_model_state: ActionConditionedWorldModelState
+    behavior_model_state: BehaviorModelState
     buffer_state: RecentObservationBufferState
     step_count: Array
 
@@ -229,15 +248,21 @@ def init_step9_state(
     initial_observation: Array,
 ) -> Step9DreamingState:
     """Initialize and prime the Step 9 state."""
-    control_key, model_key = jr.split(key)
+    control_key, model_key, behavior_key = jr.split(key, 3)
     feature_dim = int(jnp.ravel(initial_observation).shape[0])
     control_state = agent.init(feature_dim, control_key)
     control_state, _ = agent.start(control_state, initial_observation)
+    behavior_model = BehaviorModel(
+        BehaviorModelConfig(
+            n_actions=agent.config.n_actions,
+        )
+    )
     buffer_state = buffer.init()
     buffer_state = buffer.add(buffer_state, initial_observation)
     return Step9DreamingState(
         control_state=control_state,
         world_model_state=model.init(model_key),
+        behavior_model_state=behavior_model.init(feature_dim, behavior_key),
         buffer_state=buffer_state,
         step_count=jnp.array(0, dtype=jnp.int32),
     )
@@ -272,6 +297,17 @@ def step9_update(
     real_control_result = agent.update(state.control_state, reward, next_observation)
     control_after_real = real_control_result.state
     model_state = cast(ActionConditionedWorldModelState, real_model_result.state)
+    behavior_model = BehaviorModel(
+        BehaviorModelConfig(
+            n_actions=config.n_actions,
+            step_size=config.behavior_model_step_size,
+        )
+    )
+    behavior_after_real = behavior_model.update(
+        state.behavior_model_state,
+        state.control_state.last_observation,
+        state.control_state.last_action,
+    ).state
 
     buffer_state = buffer.add(state.buffer_state, next_observation)
 
@@ -283,35 +319,144 @@ def step9_update(
     dream_gate = warmup_ready & error_ok
 
     def dream_step(
-        carry: tuple[DifferentialSARSAState, Array],
+        carry: tuple[DifferentialSARSAState, BehaviorModelState, Array],
         _: Array,
-    ) -> tuple[tuple[DifferentialSARSAState, Array], tuple[Array, Array]]:
-        ctrl_state, key = carry
-        key, anchor_key, action_key = jr.split(key, 3)
+    ) -> tuple[tuple[DifferentialSARSAState, BehaviorModelState, Array], tuple[Array, Array]]:
+        ctrl_state, behavior_state, key = carry
+        key, candidate_key = jr.split(key)
+        candidate_keys = jr.split(candidate_key, config.dream_candidate_count)
 
-        anchor_obs, _ = buffer.sample(buffer_state, anchor_key)
-        action = jr.randint(action_key, (), 0, config.n_actions).astype(jnp.int32)
-        prediction = model.predict(model_state, anchor_obs, action)
+        def candidate_step(candidate_item: tuple[Array, Array]) -> tuple[Array, ...]:
+            index, cand_key = candidate_item
+            del index
+            anchor_key, sample_key = jr.split(cand_key)
+            anchor_obs, _ = buffer.sample(buffer_state, anchor_key)
+            behavior_for_sample = behavior_state.replace(
+                rng_key=sample_key
+            )
+            behavior_sample = behavior_model.sample_action(
+                behavior_for_sample,
+                anchor_obs,
+            )
+            prediction = model.predict(model_state, anchor_obs, behavior_sample.action)
+            transition_magnitude = jnp.mean(
+                (prediction.next_observation - anchor_obs) ** 2
+            )
+            surprise = transition_magnitude + jnp.abs(prediction.reward)
+            utility = jnp.abs(prediction.reward)
+            return (
+                anchor_obs,
+                behavior_sample.action,
+                behavior_sample.action_probability,
+                surprise,
+                utility,
+                prediction.discount,
+                prediction.reward,
+            )
 
-        finite = jnp.all(jnp.isfinite(prediction.next_observation)) & jnp.isfinite(
-            prediction.reward
+        (
+            candidate_anchors,
+            candidate_actions,
+            candidate_probabilities,
+            candidate_surprises,
+            candidate_utilities,
+            candidate_discounts,
+            _candidate_rewards,
+        ) = jax.vmap(candidate_step)(
+            (
+                jnp.arange(config.dream_candidate_count, dtype=jnp.int32),
+                candidate_keys,
+            )
         )
-        accepted = dream_gate & finite
+        selection = score_dream_candidates(
+            candidate_surprises,
+            candidate_utilities,
+            confidences=candidate_probabilities,
+            model_errors=jnp.full(
+                (config.dream_candidate_count,),
+                model_state.model_error_ema,
+                dtype=jnp.float32,
+            ),
+            config=DreamSelectionConfig(
+                max_items=1,
+                surprise_weight=config.dream_surprise_weight,
+                utility_weight=config.dream_utility_weight,
+                confidence_weight=0.0,
+                model_error_weight=1.0,
+                max_model_error=config.dreaming_max_model_error,
+            ),
+        )
+        selected_index = selection.selected_indices[0]
+        anchor_obs = candidate_anchors[selected_index]
+        action = candidate_actions[selected_index]
+        initial_behavior_state = behavior_state.replace(
+            rng_key=key
+        )
 
-        temp_state = ctrl_state.replace(
-            last_observation=anchor_obs,
-            last_action=action,
-            rng_key=key,
+        def rollout_step(
+            rollout_carry: tuple[
+                DifferentialSARSAState,
+                BehaviorModelState,
+                Array,
+                Array,
+            ],
+            _: Array,
+        ) -> tuple[
+            tuple[DifferentialSARSAState, BehaviorModelState, Array, Array],
+            tuple[Array, Array],
+        ]:
+            rollout_ctrl, rollout_behavior, rollout_obs, rollout_action = (
+                rollout_carry
+            )
+            prediction = model.predict(model_state, rollout_obs, rollout_action)
+            temp_state = rollout_ctrl.replace(
+                last_observation=rollout_obs,
+                last_action=rollout_action,
+            )
+            dream_result = agent.update(
+                temp_state,
+                prediction.reward,
+                prediction.next_observation,
+            )
+            next_behavior = behavior_model.sample_action(
+                rollout_behavior,
+                prediction.next_observation,
+            )
+            return (
+                dream_result.state,
+                next_behavior.state,
+                prediction.next_observation,
+                next_behavior.action,
+            ), (
+                dream_result.td_error,
+                prediction.discount,
+            )
+
+        (
+            (rollout_ctrl, rollout_behavior, _rollout_obs, _rollout_action),
+            (rollout_td_errors, rollout_discounts),
+        ) = jax.lax.scan(
+            rollout_step,
+            (ctrl_state, initial_behavior_state, anchor_obs, action),
+            jnp.arange(config.dream_rollout_horizon, dtype=jnp.int32),
         )
-        dream_result = agent.update(
-            temp_state,
-            prediction.reward,
-            prediction.next_observation,
+        rollout_td_signal = jnp.sum(rollout_td_errors)
+        finite = jnp.all(jnp.isfinite(rollout_td_errors)) & jnp.all(
+            jnp.isfinite(rollout_discounts)
         )
-        restored = dream_result.state.replace(
+        selected_discount = candidate_discounts[selected_index]
+        selected_accepted = selection.accepted[selected_index]
+        accepted = (
+            dream_gate
+            & finite
+            & selected_accepted
+            & (selected_discount >= 0.0)
+        )
+
+        restored = rollout_ctrl.replace(
             last_observation=control_after_real.last_observation,
             last_action=control_after_real.last_action,
-            rng_key=dream_result.state.rng_key,
+            rng_key=rollout_ctrl.rng_key,
         )
         next_ctrl = cast(
             DifferentialSARSAState,
@@ -321,20 +466,29 @@ def step9_update(
                 ctrl_state,
             ),
         )
-        return (next_ctrl, key), (
-            jnp.where(accepted, dream_result.td_error, jnp.array(0.0, dtype=jnp.float32)),
+        next_behavior = cast(
+            BehaviorModelState,
+            jax.tree_util.tree_map(
+                lambda new, old: jnp.where(accepted, new, old),
+                rollout_behavior,
+                behavior_state,
+            ),
+        )
+        return (next_ctrl, next_behavior, key), (
+            jnp.where(accepted, rollout_td_signal, jnp.array(0.0, dtype=jnp.float32)),
             accepted,
         )
 
-    (final_ctrl, _), (dream_td_errors, dream_accepted) = jax.lax.scan(
+    (final_ctrl, final_behavior, _), (dream_td_errors, dream_accepted) = jax.lax.scan(
         dream_step,
-        (control_after_real, control_after_real.rng_key),
+        (control_after_real, behavior_after_real, control_after_real.rng_key),
         jnp.arange(config.planning_budget, dtype=jnp.int32),
     )
 
     new_state = Step9DreamingState(
         control_state=final_ctrl,
         world_model_state=model_state,
+        behavior_model_state=final_behavior,
         buffer_state=buffer_state,
         step_count=state.step_count + 1,
     )

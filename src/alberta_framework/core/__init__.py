@@ -179,6 +179,8 @@ from alberta_framework.core.optimizers import (
     optimizer_from_config,
 )
 from alberta_framework.core.prototype_agent import (
+    GRUPerceptionConfig,
+    GRUPerceptionState,
     PrototypeAgent,
     PrototypeAgentConfig,
     PrototypeAgentState,
@@ -456,6 +458,8 @@ __all__ = [
     "LatentWorldModelUpdateResult",
     "run_latent_world_model_learning_loop",
     # PrototypeAgent — all 12 Alberta Plan steps integrated
+    "GRUPerceptionConfig",
+    "GRUPerceptionState",
     "PrototypeAgent",
     "PrototypeAgentConfig",
     "PrototypeAgentState",

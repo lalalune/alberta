@@ -1,9 +1,9 @@
 # Alberta Plan Steps 1–10: Critical Audit
 
-**Date**: 2026-05-21 (updated 2026-05-21)
+**Date**: 2026-05-21 (updated 2026-05-22)
 **Scope**: Systematic comparison of implementation against Sutton et al. (2022) paper requirements.  
 **Method**: Paper review, code audit, test execution (1881 tests collected), benchmark generation.
-**Last update (2026-05-21)**: Step 7 CartPole FA Dyna benchmark: ceiling effect — both linear-model Dyna and real-only achieve reward=1.0/step on all 10 seeds even at 1500 steps; CartPole too easy for linear Q to differentiate planning benefit. CartPole with linear Q converges within ~200 steps regardless of planning augmentation. FA Dyna IS proven on 7-dim Fourier chain (6/10 wins, 0.887 vs 0.785) and MLP bandit (8/10 Q-gap wins). Step 4 exhaustive NLHAC probe: actor_epsilon, actor_td_error_normalizer, no-actor-LN all ruled out — catch gap is genuine research boundary. steps3_5_accepted_completion_gate.py added: accepted_scope_complete=true.
+**Last update (2026-05-22)**: Step 8 one-step world-model gate added and accepted. The seeded benchmark beats a zero predictor on 10/10 seeds with mean final-window MSE `0.000280` vs baseline `0.474793`, relative reduction `0.999410`, and ensemble disagreement collapse from `0.360380` to `0.000023`. Step 4 exhaustive NLHAC probe remains unresolved: actor_epsilon, actor_td_error_normalizer, no-actor-LN all failed to close the catch gap, so Step 4b is still a research boundary.
 
 ---
 
@@ -18,9 +18,9 @@
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym (10/10, +1.36 vs pass-only) | **LOCAL+STOCHASTIC+EXTERNAL: YES / PAPER SUITE: NO** |
 | 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | Tabular: Dyna +41.7%, 8/10. Async DP 8/10 wins. FA trivial envs (6/10, 8/10 Q-gap). CartPole FA: ceiling effect — both agents 1.0/step, planning benefit unmeasurable. | **PARTIAL (tabular proven; FA ceiling effect on CartPole — harder env needed)** |
-| 8 | Prototype-AI I — Complete integrated agent | PrototypeAgent integrates 5/6 sub-components | 50 tests + e2e benchmark: 5/5 seeds reward=1.0, all_finite=true on CartPole | **PARTIAL (5/6 components, benchmark proven, no recurrent state)** |
-| 9 | Planning II — Search control & exploration | Guarded dreaming (partial concept match) | 27 tests + seeded benchmark: 9/10 wins, +0.0117 over naive Dyna | **PARTIAL (benchmark proven, conceptually misaligned with paper)** |
-| 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | STOMP 0.871 vs SARSA 0.382 (6/10, 5474-step speedup) + auto-discovery 10/10 seeds correct | **PARTIAL (STOMP + auto-discovery proven; live loop open)** |
+| 8 | Prototype-AI I — Complete integrated agent | Step 8 one-step world model accepted; PrototypeAgent integrates 5/6 sub-components | Step 8 gate accepted; world-model benchmark 10/10 seeds, 0.999410 relative MSE reduction; PrototypeAgent e2e 5/5 seeds reward=1.0 | **LOCAL WORLD-MODEL YES / PROTOTYPE PARTIAL** |
+| 9 | Planning II — Search control & exploration | Guarded multi-step behavior-model dreaming accepted locally | Step 9 gate accepted; 27 tests; seeded benchmark: 9/10 wins, +0.0117 over naive Dyna | **LOCAL GUARDED DREAMING YES / PAPER SEARCH CONTROL PARTIAL** |
+| 10 | Prototype-AI II — STOMP progression | STOMP accepted locally with auto-discovery, semi-MDP backup, and off-policy option correction | Step 10 gate accepted; STOMP 0.871 vs SARSA 0.382; 5474-step speedup; auto-discovery 10/10 seeds correct | **LOCAL STOMP YES / LIVE LIFECYCLE PARTIAL** |
 
 For the currently accepted project scope, Steps 3-5 have a dedicated aggregate
 gate: `benchmarks/steps3_5_accepted_completion_gate.py`. It reports
@@ -227,29 +227,41 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 **Evidence**: PrototypeAgent has 50 passing tests. `test_prototype_agent.py` covers init, update, world model integration, feature extraction. `feature_to_subtask_specs()` tested in `test_prototype_features.py`.
 
+**World-model completion gate (2026-05-22)**: `benchmarks/step8_solution_gate.py` accepts the local one-step action-conditioned world-model claim. It verifies the production facade, action-conditioned model surface, bounded short-rollout consumer, ensemble-disagreement surface, tests, and seeded benchmark artifact.
+
+**World-model benchmark (2026-05-22)**: `benchmarks/step8_world_model_prediction.py` — 10-seed bounded linear action-conditioned prediction task:
+- Step 8 model beats the zero predictor on **10/10 seeds**
+- Mean final-window model MSE: **0.000280**
+- Mean final-window zero-baseline MSE: **0.474793**
+- Mean relative MSE reduction: **0.999410**
+- Ensemble disagreement drops from **0.360380** to **0.000023**
+- Artifact: `outputs/step8_world_model_prediction/results.json`
+
 **Benchmark (2026-05-21)**: `benchmarks/prototype_end_to_end.py` — 5-seed CartPole-v1 continuing:
 - PrototypeAgent mean final reward: **1.000** (5/5 seeds positive, all_finite=true)
 - Flat SARSA mean final reward: **1.000** (5/5 seeds positive)
 - Full 12-step integration runs 10,000 steps without NaN/Inf on CartPole
 
-**Remaining gaps**: No explicit recursive hidden state (LSTM/RNN). Feature ranking uses Q-weights, not model prediction error (paper envisions model-driven feedback). CartPole is trivially easy — both agents achieve perfect reward, so planning benefits cannot be measured here.
+**Remaining gaps**: The Step 8 one-step world-model scope is accepted. The broader paper Prototype-AI I scope still lacks explicit recursive hidden state (LSTM/RNN), and feature ranking uses Q-weights rather than model prediction error as the paper envisions. CartPole is trivially easy — both agents achieve perfect reward, so integrated planning benefits cannot be measured there.
 
 **Verdict**: The PrototypeAgent IS the paper's Prototype-AI I concept as an integrated agent. 5/6 sub-components implemented. BENCHMARK PROVEN: the integrated agent runs without error, produces finite weights, and matches flat SARSA on CartPole (5/5 seeds, reward=1.0). The `step8.py` label is misleading (it's one sub-component), but the full integration exists in `PrototypeAgent`.
 
 ---
 
-### Step 9: Planning II — PARTIAL ⚠️ (benchmark proven, conceptually misaligned)
+### Step 9: Planning II — LOCAL GUARDED DREAMING ACCEPTED / PAPER PARTIAL ⚠️
 
 **Paper requirement**: Search control and exploration — flexible state update ordering, prioritized sweeping generalized to function approximation, MCTS-style approaches, uncertainty quantification for planning decisions.
 
-**Implemented**: Error-gated dreaming — accepts/rejects model-generated transitions based on running prediction-error EMA, buffer-anchored dream anchors, warmup gating.
+**Implemented**: Guarded multi-step behavior-model dreaming — accepts/rejects model-generated transitions based on running prediction-error EMA, buffer-anchored dream anchors, warmup gating, learned behavior-model rollout actions, and prioritized candidate selection by surprise and utility.
 
 **Conceptual mismatch**: 
 - Paper Step 9 asks: "WHICH states should we back up?" (state update order control)
 - Code Step 9 asks: "Should we USE this imagined transition?" (dream acceptance filtering)
 - These overlap (both are about controlling the planning process) but are fundamentally different algorithms
 
-**What the code IS**: A form of "cautious dreaming" that guards against model-bias. This is closer to a Step 7/8 extension (better world model usage) than the flexible asynchronous sweeping the paper describes.
+**What the code IS**: A form of "cautious dreaming" that guards against model-bias and now includes local search-control machinery over sampled dream candidates. This is closer to a Step 7/8/9 integrated planning surface than the full flexible asynchronous sweeping the paper describes.
+
+**Completion gate (2026-05-22)**: `benchmarks/step9_solution_gate.py` accepts the local guarded-dreaming claim. The gate verifies the production Step 9 facade, guarded-dreaming surface, learned behavior-model multi-step rollout path, prioritized dream-selection path, tests, and seeded guarded-vs-naive benchmark artifact. Artifact: `outputs/step9_solution_gate.json`.
 
 **Seeded benchmark** (2026-05-21, `benchmarks/step9_guarded_dreaming.py`):
 
@@ -261,13 +273,13 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 Environment: 1-state switching bandit (action-reward flip at step 1000). After the flip, `model_error_ema` spikes from ~0 to 0.1 within 1 step (model predicts wrong reward for every action). Guard fires and suspends dreaming. Naive Dyna keeps imagining old `action_1→reward 1.0`, reinforcing the stale policy. Guarded Dyna uses real transitions only, switches policy faster. **9/10 seeds win, +0.0117 mean improvement.**
 
-**Missing**: Prioritized sweeping with function approximation, flexible state selection for backups, uncertainty-based search control, MCTS integration.
+**Missing for full paper scope**: General prioritized sweeping with function approximation, flexible state update ordering beyond sampled dream candidates, broader uncertainty-driven search control, and MCTS-style integration.
 
-**Verdict**: Guarded dreaming is behaviorally proven to protect against model-bias during distribution shift. The conceptual mismatch with the paper (accept/reject vs. which-state-to-update) remains an honest open boundary.
+**Verdict**: The local Step 9 guarded-dreaming completion gate is accepted. Guarded dreaming is behaviorally proven to protect against model-bias during distribution shift, and the implementation now includes behavior-model rollouts and prioritized dream candidate selection. The broader paper gap remains: this is still not a full prioritized-sweeping/MCTS search-control system for arbitrary function-approximation settings.
 
 ---
 
-### Step 10: Prototype-AI II (STOMP) — PARTIAL ⚠️
+### Step 10: Prototype-AI II (STOMP) — LOCAL STOMP ACCEPTED / LIVE LIFECYCLE PARTIAL ⚠️
 
 **Paper requirement**: STOMP progression — highest-ranked features → subtasks → options → option models → planning with options. Continuous utility feedback. Option keyboard. All continual learning from Steps 1-3 integrated.
 
@@ -278,8 +290,11 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - ✅ OptionModelsState — EMA cumulative reward, cumulative discount, linear next-state predictor
 - ✅ STOMPAgent with extended action space {primitives ∪ options}
 - ✅ Option termination at threshold or max_steps
-- ✅ **NEW**: `_differential_semidp_q_update` — at option termination, base Q uses correct semi-MDP Bellman target `Q(s,o) += α*(R_o - avg_r*T_o + γ_o*V(s') - Q(s,o))`
-- ✅ 42 passing tests, config roundtrip, JIT-compatible scan
+- ✅ `_differential_semidp_q_update` — at option termination, base Q uses correct semi-MDP Bellman target `Q(s,o) += α*(R_o - avg_r*T_o + γ_o*V(s') - Q(s,o))`
+- ✅ Clipped intra-option importance sampling (`option_target_epsilon`, `option_importance_clip`) for behavior/target policy mismatch
+- ✅ 45 passing Step 10 tests, config roundtrip, JIT-compatible scan
+
+**Completion gate (2026-05-22)**: `benchmarks/step10_solution_gate.py` accepts the local STOMP progression claim. The gate verifies STOMP mechanics, feature auto-discovery, semi-MDP option-level planning, clipped off-policy intra-option correction, tests, and seeded benchmark artifacts. Artifact: `outputs/step10_solution_gate.json`.
 
 **Benchmark 1 — STOMP vs flat SARSA** (2026-05-21): `benchmarks/step10_stomp_options.py` — 10-seed, 6-state chain:
 - STOMP: 0.871 ± 0.018 vs SARSA: 0.382 ± 0.146. STOMP wins 6/10 seeds; 5474-step speedup (~10×).
@@ -291,12 +306,12 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - **10/10 seeds: discovered specs outperform bad specs** (0.976 vs 0.966 mean reward).
 - `outputs/step10_feature_autodiscovery/results.json`, `passed: true`
 
-**Remaining gaps**:
+**Remaining gaps for full paper/integrated lifecycle scope**:
 1. **Live continuous loop**: Auto-discovery runs once; paper envisions ongoing feature → subtask creation/removal cycle
-2. **Utility feedback loop**: Option utility tracking + curation exists (Step 11) but not wired into Step 10 STOMP as a live update
-3. **Steps 1-3 integration**: IDBD/Autostep meta-learning not wired into STOMP option creation
+2. **Utility feedback loop**: Option utility tracking + curation exists (Step 11) but is not a continuously running Step 10 reassessment loop
+3. **Steps 1-3 integration**: IDBD/Autostep meta-learning not wired into STOMP option creation policies
 
-**Verdict**: STOMP mechanics proven with oracle features; `feature_to_subtask_specs()` auto-discovery now proven correct (10/10 seeds discover right features from Q-weights, 10/10 outperform bad specs). One-shot discovery proven; continuous live loop remains open.
+**Verdict**: The local Step 10 STOMP completion gate is accepted. STOMP mechanics, one-shot feature auto-discovery, semi-MDP option backups, and clipped intra-option off-policy correction are implemented and benchmarked. The full paper lifecycle remains open where it requires continuous feature/subtask reassessment and deeper integration with earlier adaptive representation components.
 
 ---
 
@@ -312,11 +327,11 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - **Step 4**: SARSA dominant on bsuite. AC positive control proven (99.76%, 10/10). Tuned AC (temp=0.5) wins on CartPole (78.2 vs Q 69.9 vs SARSA 67.1). Not dominant across all bsuite environments.
 - **Step 6**: Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym external integration (10/10, +1.356) proven. Gymnasium environments (Jellybean, GARNET) open.
 - **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP proven (20-state chain, 8/10 wins). CartPole FA Dyna executed: ceiling effect — linear model stable, both agents achieve optimal reward=1.0, planning benefit unmeasurable on this trivially-easy task.
-- **Step 10**: STOMP mechanics + auto-discovery (`subtasks_from_feature_scores`) + semi-MDP Bellman backup + benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
+- **Step 10**: Local STOMP scope accepted (2026-05-22): auto-discovery (`subtasks_from_feature_scores`), semi-MDP Bellman backup, clipped intra-option off-policy correction, benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
 
 ### What IS NOT fully proven:
-- **Step 8**: PrototypeAgent implements 5/6 sub-components. BENCHMARK PROVEN (2026-05-21): integrated agent achieves mean reward=1.0 (5/5 seeds) on continuing CartPole with no NaN weights. Missing: explicit LSTM/GRU and model-driven feature ranking.
-- **Step 9**: Guarded dreaming proven (9/10 seeds, +0.0117 vs naive Dyna on switching bandit). Conceptual mismatch with paper (accept/reject vs which-state-to-update) remains an honest open boundary.
+- **Step 8**: One-step world-model local scope accepted (2026-05-22): 10/10 seeded prediction benchmark, 0.999410 relative MSE reduction, ensemble disagreement collapsed to 0.000023. PrototypeAgent still implements 5/6 paper sub-components. Missing for full paper scope: explicit LSTM/GRU and model-driven feature ranking.
+- **Step 9**: Local guarded-dreaming scope accepted (2026-05-22): behavior-model multi-step rollouts, prioritized candidate selection, 9/10 seeded wins, +0.0117 vs naive Dyna. Full paper search-control scope remains open.
 
 ### The key architectural claim to verify:
 The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing. But "primitive" should not be confused with "complete." The paper's Steps 8-9 describe an integrated Prototype-AI system that requires all prior steps to converge. The current code has building blocks but not the integrated system.
@@ -328,11 +343,11 @@ The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing
 ### Step 7 (Priority: Low — tabular proven; CartPole FA ceiling effect documented)
 Tabular Dyna (+41.7%, 8/10 seeds) and async DP (8/10 wins) proven. CartPole FA Dyna executed (2026-05-21, 10 seeds): ceiling effect — both agents achieve optimal reward=1.0, linear world model stable but planning benefit unmeasurable. Remaining gap: run on a harder environment with exploration difficulty (e.g., MountainCar, Acrobot) where neither agent trivially reaches the reward ceiling.
 
-### Step 8 (Priority: Low — benchmark proven)
-PrototypeAgent implements 5/6 sub-components. BENCHMARK PROVEN (2026-05-21): `benchmarks/prototype_end_to_end.py` — integrated agent achieves mean reward=1.0 (5/5 seeds, no NaN) on continuing CartPole. Remaining open: explicit LSTM/GRU state, model-driven feature ranking feedback loop. CartPole is trivially solved so planning benefits can't be measured; a harder environment would differentiate PrototypeAgent from flat SARSA.
+### Step 8 (Priority: Low — one-step model accepted; prototype partial)
+The local world-model scope is now accepted by `benchmarks/step8_solution_gate.py` and `outputs/step8_world_model_prediction/results.json`: 10/10 seeded prediction wins, mean relative MSE reduction `0.999410`, and ensemble disagreement collapse to `0.000023`. PrototypeAgent implements 5/6 paper sub-components and remains benchmark-stable on CartPole. Remaining open for full Prototype-AI I: explicit LSTM/GRU state and model-driven feature ranking feedback loop.
 
-### Step 9 (Priority: Low — benchmark proven)
-Guarded dreaming benchmark proven: 9/10 seeds win over naive Dyna (+0.0117 mean improvement) on a 1-state switching bandit. Conceptual gap vs. paper (search control = which-state-to-update, not accept/reject) is documented. Broader prioritized sweeping with function approximation remains open research.
+### Step 9 (Priority: Low — local guarded dreaming accepted)
+The local guarded-dreaming scope is accepted by `benchmarks/step9_solution_gate.py`: learned behavior-model multi-step rollouts, prioritized candidate selection, 27 tests, and 9/10 seeded wins over naive Dyna (+0.0117 mean improvement) on a 1-state switching bandit. Remaining open for full paper Step 9: broader prioritized sweeping/search-control with function approximation and MCTS-style planning.
 
-### Step 10 (Priority: Low — STOMP + auto-discovery proven)
-STOMP mechanics proven: 0.871 vs SARSA 0.382 (6/10 seeds, 5474-step speedup). Auto-discovery proven: `feature_to_subtask_specs()` correctly discovers features [5,4] from Q-weights in 10/10 seeds, outperforms bad specs in 10/10 seeds. Semi-MDP Bellman backup implemented and tested. Remaining open: continuous live reassessment loop (ongoing option add/remove cycle), utility feedback integration from OaK into STOMP.
+### Step 10 (Priority: Low — local STOMP accepted)
+The local STOMP scope is accepted by `benchmarks/step10_solution_gate.py`: STOMP mechanics, one-shot auto-discovery, semi-MDP Bellman backup, clipped intra-option off-policy correction, 45 Step 10 tests, 0.871 vs SARSA 0.382 on the 6-state chain, and 5474-step speedup. Remaining open for full paper scope: continuous live reassessment loop and deeper utility-driven lifecycle integration.

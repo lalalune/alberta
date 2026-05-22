@@ -1,0 +1,65 @@
+{
+  "schema": "alberta.step11.solution_gate.v1",
+  "accepted_step11_oak_fc_stomp": true,
+  "claim_scope": "oak_curation_feature_construction_keyboard_learning_completion",
+  "evidence": {
+    "implementation_files": {
+      "src/alberta_framework/core/oak.py": true,
+      "src/alberta_framework/steps/step11.py": true,
+      "tests/test_step11_production.py": true,
+      "benchmarks/step11_oak_curation.py": true
+    },
+    "oak_curation_keyboard_surface": true,
+    "learned_feature_construction_surface": true,
+    "keyboard_chord_learning_surface": true,
+    "tests_present": true,
+    "seeded_oak_curation_benchmark": {
+      "path": "/Users/shawwalters/alberta-framework/outputs/step11_oak/results.json",
+      "exists": true,
+      "passed": true,
+      "summary": {
+        "valid_oak_final_avg_reward": {
+          "passed": true,
+          "n_seeds": 10,
+          "n_passed": 10,
+          "mean_final_avg_reward": 1.0072615802288056,
+          "threshold": 0.7,
+          "per_seed": [
+            1.024969458580017,
+            0.9883070588111877,
+            1.002558946609497,
+            1.0027204751968384,
+            0.9997985363006592,
+            1.0068224668502808,
+            1.0597476959228516,
+            0.9997736811637878,
+            0.9885479211807251,
+            0.9993695616722107
+          ]
+        },
+        "post_curation_recovery": {
+          "passed": true,
+          "n_seeds": 10,
+          "n_passed": 8,
+          "mean_final_avg_reward": 0.9350009202957154,
+          "mean_replaced_option_utility_at_curate": 0.0,
+          "threshold": 0.7,
+          "curate_at_step": 2000,
+          "per_seed": [
+            1.0062733888626099,
+            1.0237772464752197,
+            1.046937346458435,
+            0.5286708474159241,
+            0.5380196571350098,
+            1.1409612894058228,
+            1.074184775352478,
+            0.9757005572319031,
+            1.0002846717834473,
+            1.0151994228363037
+          ]
+        }
+      }
+    }
+  },
+  "remaining_research_boundaries": []
+}

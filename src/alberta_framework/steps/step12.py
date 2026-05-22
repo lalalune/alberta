@@ -43,6 +43,11 @@ from alberta_framework.core.intelligence_amplification import (
     IAConfig,
     IAState,
     IAUpdateResult,
+    RecommendationProtocolConfig,
+    RecommendationProtocolResult,
+    RecommendationProtocolState,
+    init_recommendation_protocol_state,
+    update_recommendation_protocol,
 )
 from alberta_framework.core.oak import OaKConfig
 from alberta_framework.core.options import STOMPConfig, SubtaskSpec
@@ -303,11 +308,16 @@ def run_step12_smoke(
 
 
 __all__ = [
+    "RecommendationProtocolConfig",
+    "RecommendationProtocolResult",
+    "RecommendationProtocolState",
     "Step12IAConfig",
     "Step12SmokeResult",
     "init_step12_state",
+    "init_recommendation_protocol_state",
     "make_step12_ia_agent",
     "run_step12_scan",
     "run_step12_smoke",
     "step12_update",
+    "update_recommendation_protocol",
 ]

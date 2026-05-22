@@ -481,12 +481,14 @@ from alberta_framework.steps.step6 import (
     step6_update,
 )
 from alberta_framework.steps.step8 import (
+    Step8EnsemblePrediction,
     Step8SmokeResult,
     Step8WorldModelConfig,
     init_step8_state,
     make_step8_world_model,
     run_step8_scan,
     run_step8_smoke,
+    step8_ensemble_predict,
     step8_update,
 )
 
@@ -1010,10 +1012,12 @@ __all__ = [
     "step6_update",
     "Step8SmokeResult",
     "Step8WorldModelConfig",
+    "Step8EnsemblePrediction",
     "init_step8_state",
     "make_step8_world_model",
     "run_step8_scan",
     "run_step8_smoke",
+    "step8_ensemble_predict",
     "step8_update",
     # Learners - TD Learning
     "TDLinearLearner",

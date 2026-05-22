@@ -234,6 +234,7 @@ class STOMPUpdateResult:
     executing_option: Int[Array, ""]
     option_terminated: Array
     pseudo_reward: Float[Array, ""]
+    option_importance_ratio: Float[Array, ""]
 
 
 @chex.dataclass(frozen=True)
@@ -247,6 +248,7 @@ class STOMPArrayResult:
     executing_options: Int[Array, " num_steps"]
     option_terminations: Array
     pseudo_rewards: Float[Array, " num_steps"]
+    option_importance_ratios: Float[Array, " num_steps"]
 
 
 # ---------------------------------------------------------------------------
@@ -322,6 +324,45 @@ def _select_action_epsilon_greedy_from_q(
     explore = jr.uniform(key) < jnp.asarray(epsilon, dtype=jnp.float32)
     action = jnp.where(explore, random_action, greedy)
     return action, key
+
+
+def _epsilon_greedy_action_probabilities(q_values: Array, epsilon: Array) -> Array:
+    """Return epsilon-greedy probabilities with uniform tie handling."""
+    q = jnp.asarray(q_values, dtype=jnp.float32)
+    n_actions = q.shape[0]
+    eps = jnp.asarray(epsilon, dtype=jnp.float32)
+    max_q = jnp.max(q)
+    greedy_mask = jnp.isclose(q, max_q, atol=1e-6, rtol=0.0).astype(jnp.float32)
+    n_greedy = jnp.maximum(jnp.sum(greedy_mask), jnp.array(1.0, dtype=jnp.float32))
+    return eps / n_actions + (1.0 - eps) * greedy_mask / n_greedy
+
+
+def _clipped_epsilon_greedy_importance_ratio(
+    q_weights: Array,
+    observation: Array,
+    action: Array,
+    *,
+    behavior_epsilon: float,
+    target_epsilon: float,
+    clip: float,
+) -> Array:
+    """Return clipped target/behavior probability ratio for one action."""
+    q_values = _q_values_for_obs(q_weights, observation)
+    behavior = _epsilon_greedy_action_probabilities(
+        q_values,
+        jnp.asarray(behavior_epsilon, dtype=jnp.float32),
+    )
+    target = _epsilon_greedy_action_probabilities(
+        q_values,
+        jnp.asarray(target_epsilon, dtype=jnp.float32),
+    )
+    selected_behavior = behavior[action]
+    selected_target = target[action]
+    ratio = selected_target / jnp.maximum(
+        selected_behavior,
+        jnp.asarray(1.0e-6, dtype=jnp.float32),
+    )
+    return jnp.minimum(ratio, jnp.asarray(clip, dtype=jnp.float32))
 
 
 def _differential_q_update(
@@ -464,6 +505,7 @@ def _update_intra_option_policy(
     avg_reward_step_size: float,
     trace_decay: float,
     n_primitive_actions: int,
+    importance_ratio: Array,
 ) -> tuple[IntraOptionPoliciesState, Array]:
     """Update the intra-option Q-function for one option."""
     q_i = option_policies.q_weights[option_idx]
@@ -478,11 +520,12 @@ def _update_intra_option_policy(
     alpha = jnp.asarray(step_size, dtype=jnp.float32)
     beta = jnp.asarray(avg_reward_step_size, dtype=jnp.float32)
     lam = jnp.asarray(trace_decay, dtype=jnp.float32) * terminal_discount
+    rho = jnp.asarray(importance_ratio, dtype=jnp.float32)
 
     action_mask = jax.nn.one_hot(last_intra_action, n_primitive_actions, dtype=jnp.float32)
-    new_traces_i = lam * traces_i + action_mask[:, None] * last_obs[None, :]
+    new_traces_i = rho * (lam * traces_i + action_mask[:, None] * last_obs[None, :])
     new_q_i = q_i + alpha * td_error * new_traces_i
-    new_avg_r_i = avg_r_i + beta * td_error
+    new_avg_r_i = avg_r_i + beta * rho * td_error
 
     n_opts = option_policies.average_rewards.shape[0]
     option_mask = jnp.arange(n_opts, dtype=jnp.int32) == option_idx
@@ -539,6 +582,8 @@ class STOMPConfig:
     option_model_step_size: float = 0.1
     epsilon_base: float = 0.1
     epsilon_option: float = 0.1
+    option_target_epsilon: float | None = None
+    option_importance_clip: float = 10.0
 
     def __post_init__(self) -> None:
         """Validate configuration."""
@@ -552,6 +597,12 @@ class STOMPConfig:
                     f"SubtaskSpec.feature_index={spec.feature_index} >= "
                     f"observation_dim={self.observation_dim}"
                 )
+        if self.option_target_epsilon is not None and not (
+            0.0 <= self.option_target_epsilon <= 1.0
+        ):
+            raise ValueError("option_target_epsilon must be in [0, 1] when provided")
+        if self.option_importance_clip <= 0.0:
+            raise ValueError("option_importance_clip must be positive")
 
     @property
     def n_options(self) -> int:
@@ -584,6 +635,8 @@ class STOMPConfig:
             "option_model_step_size": self.option_model_step_size,
             "epsilon_base": self.epsilon_base,
             "epsilon_option": self.epsilon_option,
+            "option_target_epsilon": self.option_target_epsilon,
+            "option_importance_clip": self.option_importance_clip,
         }
 
     @classmethod
@@ -746,6 +799,19 @@ class STOMPAgent:
 
         # Compute pseudo-reward for the currently-executing (or notional) option
         pseudo_r = compute_pseudo_reward(spec, option_idx, obs)
+        target_epsilon = (
+            cfg.epsilon_option
+            if cfg.option_target_epsilon is None
+            else cfg.option_target_epsilon
+        )
+        option_importance_ratio = _clipped_epsilon_greedy_importance_ratio(
+            state.option_policies.q_weights[option_idx],
+            state.base_last_obs,
+            state.option_last_intra_action,
+            behavior_epsilon=cfg.epsilon_option,
+            target_epsilon=target_epsilon,
+            clip=cfg.option_importance_clip,
+        )
 
         # Option termination check
         new_option_steps = state.option_steps + 1
@@ -764,6 +830,7 @@ class STOMPAgent:
             avg_reward_step_size=cfg.option_avg_reward_step_size,
             trace_decay=cfg.option_trace_decay,
             n_primitive_actions=cfg.n_primitive_actions,
+            importance_ratio=option_importance_ratio,
         )
 
         # Accumulate option trajectory stats
@@ -939,6 +1006,7 @@ class STOMPAgent:
             executing_option=new_executing_option,
             option_terminated=is_executing & option_terminates,
             pseudo_reward=jnp.where(is_executing, pseudo_r, jnp.array(0.0, dtype=jnp.float32)),
+            option_importance_ratio=option_importance_ratio,
         )
 
     def scan(
@@ -962,6 +1030,7 @@ class STOMPAgent:
                 result.executing_option,
                 result.option_terminated,
                 result.pseudo_reward,
+                result.option_importance_ratio,
             )
 
         final_state, (
@@ -971,6 +1040,7 @@ class STOMPAgent:
             executing_options,
             option_terminations,
             pseudo_rewards,
+            option_importance_ratios,
         ) = jax.lax.scan(step_fn, state, (env_rewards, next_observations))
         return STOMPArrayResult(
             state=final_state,
@@ -980,6 +1050,7 @@ class STOMPAgent:
             executing_options=executing_options,
             option_terminations=option_terminations,
             pseudo_rewards=pseudo_rewards,
+            option_importance_ratios=option_importance_ratios,
         )
 
 

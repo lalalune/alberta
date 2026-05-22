@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-05-22
+
+### Added
+
+- **GRU recursive perception for PrototypeAgent (Step 8a)** — fixed-weight echo-state
+  GRU augments raw observations with learned hidden state before passing to all
+  downstream components (OaK, Horde, world model). Glorot-uniform weight init,
+  zero hidden init, pure-functional `_gru_step`. Controlled via
+  `GRUPerceptionConfig(observation_dim, hidden_dim)` in `PrototypeAgentConfig`.
+  12 new tests cover config validation, weight shapes, hidden dynamics, and
+  augmented-obs routing. (`src/alberta_framework/core/prototype_agent.py`,
+  `src/alberta_framework/core/__init__.py`)
+
+- **Step 9 prioritized dreaming** — multi-step imagined rollouts with scored
+  candidate selection. `score_dream_candidates` picks the most surprising/useful
+  anchor state from `dream_candidate_count` random candidates; rollouts proceed
+  for `dream_rollout_horizon` steps under the behavior model. BehaviorModel now
+  tracked in `Step9DreamingState` and updated every real step.
+  (`src/alberta_framework/steps/step9.py`)
+
+### Tests
+
+- 1900 tests pass (up from 1881).
+
 ## [0.25.0] - 2026-05-21
 
 ### Added

@@ -8,12 +8,16 @@ import jax.random as jr
 import pytest
 
 from alberta_framework.core.oak import (
+    KeyboardChordLearnerConfig,
     OaKAgent,
     OaKArrayResult,
     OaKConfig,
     OaKState,
+    init_keyboard_chord_learner,
     keyboard_action,
     keyboard_q_values,
+    learned_feature_subtask_specs,
+    update_keyboard_chord_learner,
 )
 from alberta_framework.core.options import STOMPConfig, SubtaskSpec
 from alberta_framework.steps.step11 import (
@@ -403,6 +407,82 @@ def test_keyboard_action_epsilon_one_is_random() -> None:
         )
         actions.add(int(a))
     assert len(actions) > 1
+
+
+# ---------------------------------------------------------------------------
+# Learned feature construction and keyboard learning
+# ---------------------------------------------------------------------------
+
+
+def test_learned_feature_subtask_specs_ranks_weighted_features() -> None:
+    agent, state = _setup(_make_step11_cfg(obs_dim=4), seed=12)
+    head_weights = tuple(
+        w.at[0, 2].set(3.0) if i == 0 else w
+        for i, w in enumerate(state.stomp_state.base_learner_state.head_params.weights)
+    )
+    option_q = state.stomp_state.option_policies.q_weights.at[0, 1, 3].set(2.0)
+    state = state.replace(
+        stomp_state=state.stomp_state.replace(
+            base_learner_state=state.stomp_state.base_learner_state.replace(
+                head_params=state.stomp_state.base_learner_state.head_params.replace(
+                    weights=head_weights
+                )
+            ),
+            option_policies=state.stomp_state.option_policies.replace(
+                q_weights=option_q
+            ),
+        )
+    )
+    specs = learned_feature_subtask_specs(state, n_subtasks=2, threshold=0.7)
+    assert [spec.feature_index for spec in specs] == [2, 3]
+    assert all(spec.threshold == pytest.approx(0.7) for spec in specs)
+
+
+def test_keyboard_chord_learner_roundtrip() -> None:
+    cfg = KeyboardChordLearnerConfig(
+        n_options=3,
+        step_size=0.2,
+        baseline_decay=0.5,
+        l2_penalty=0.01,
+        max_norm=2.0,
+    )
+    assert KeyboardChordLearnerConfig.from_config(cfg.to_config()) == cfg
+
+
+def test_keyboard_chord_learner_positive_reward_moves_toward_chord() -> None:
+    cfg = KeyboardChordLearnerConfig(
+        n_options=2,
+        step_size=0.5,
+        baseline_decay=0.5,
+    )
+    state = init_keyboard_chord_learner(cfg)
+    selected = jnp.array([1.0, 0.0], dtype=jnp.float32)
+    before = float(jnp.dot(state.chord_vector, selected))
+    updated = update_keyboard_chord_learner(
+        cfg,
+        state,
+        selected,
+        jnp.array(1.0, dtype=jnp.float32),
+    )
+    after = float(jnp.dot(updated.chord_vector, selected))
+    assert after > before
+    assert int(updated.step_count) == 1
+
+
+def test_keyboard_chord_learner_max_norm_bounds_vector() -> None:
+    cfg = KeyboardChordLearnerConfig(
+        n_options=2,
+        step_size=10.0,
+        max_norm=0.75,
+    )
+    state = init_keyboard_chord_learner(cfg)
+    updated = update_keyboard_chord_learner(
+        cfg,
+        state,
+        jnp.array([1.0, 1.0], dtype=jnp.float32),
+        jnp.array(10.0, dtype=jnp.float32),
+    )
+    assert float(jnp.linalg.norm(updated.chord_vector)) <= 0.750001
 
 
 # ---------------------------------------------------------------------------

@@ -71,6 +71,11 @@ class Step10STOMPConfig:
         option_model_step_size: Step-size for next-state delta predictor.
         epsilon_base: Exploration rate for extended action selection.
         epsilon_option: Exploration rate for intra-option action selection.
+        option_target_epsilon: Optional target-policy epsilon for clipped
+            intra-option importance sampling. ``None`` matches
+            ``epsilon_option`` and recovers on-policy updates.
+        option_importance_clip: Maximum per-decision target/behavior ratio for
+            intra-option updates.
     """
 
     subtask_specs: tuple[SubtaskSpec, ...] = ()
@@ -87,6 +92,8 @@ class Step10STOMPConfig:
     option_model_step_size: float = 0.1
     epsilon_base: float = 0.1
     epsilon_option: float = 0.1
+    option_target_epsilon: float | None = None
+    option_importance_clip: float = 10.0
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serializable representation."""
@@ -106,6 +113,8 @@ class Step10STOMPConfig:
             "option_model_step_size": self.option_model_step_size,
             "epsilon_base": self.epsilon_base,
             "epsilon_option": self.epsilon_option,
+            "option_target_epsilon": self.option_target_epsilon,
+            "option_importance_clip": self.option_importance_clip,
         }
         return payload
 
@@ -135,6 +144,8 @@ class Step10STOMPConfig:
             option_model_step_size=self.option_model_step_size,
             epsilon_base=self.epsilon_base,
             epsilon_option=self.epsilon_option,
+            option_target_epsilon=self.option_target_epsilon,
+            option_importance_clip=self.option_importance_clip,
         )
 
 

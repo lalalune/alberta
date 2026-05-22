@@ -103,12 +103,16 @@ def test_config_roundtrip_preserves_hyperparams() -> None:
         base_step_size=0.01,
         epsilon_base=0.2,
         option_gamma=0.95,
+        option_target_epsilon=0.0,
+        option_importance_clip=2.0,
     )
     restored = Step10STOMPConfig.from_config(cfg.to_config())
     assert restored.base_step_size == cfg.base_step_size
     assert restored.epsilon_base == cfg.epsilon_base
     assert restored.option_gamma == cfg.option_gamma
     assert restored.n_primitive_actions == cfg.n_primitive_actions
+    assert restored.option_target_epsilon == cfg.option_target_epsilon
+    assert restored.option_importance_clip == cfg.option_importance_clip
 
 
 def test_config_type_tag_stripped_on_roundtrip() -> None:
@@ -139,6 +143,24 @@ def test_config_feature_index_out_of_bounds_raises() -> None:
 def test_config_no_subtasks_raises() -> None:
     cfg = Step10STOMPConfig(subtask_specs=())
     with pytest.raises(ValueError):
+        make_step10_stomp_agent(cfg)
+
+
+def test_config_invalid_option_target_epsilon_raises() -> None:
+    cfg = Step10STOMPConfig(
+        subtask_specs=(_SPEC1,),
+        option_target_epsilon=1.1,
+    )
+    with pytest.raises(ValueError, match="option_target_epsilon"):
+        make_step10_stomp_agent(cfg)
+
+
+def test_config_invalid_option_importance_clip_raises() -> None:
+    cfg = Step10STOMPConfig(
+        subtask_specs=(_SPEC1,),
+        option_importance_clip=0.0,
+    )
+    with pytest.raises(ValueError, match="option_importance_clip"):
         make_step10_stomp_agent(cfg)
 
 
@@ -224,6 +246,36 @@ def test_step10_update_executing_option_in_range() -> None:
     result = step10_update(agent, state, jnp.array(0.0), jnp.zeros(4))
     exec_opt = int(result.executing_option)
     assert exec_opt >= -1
+
+
+def test_step10_off_policy_intra_option_importance_ratio_is_clipped() -> None:
+    spec = SubtaskSpec(feature_index=0, threshold=99.0, max_option_steps=4)
+    cfg = Step10STOMPConfig(
+        subtask_specs=(spec,),
+        observation_dim=2,
+        n_primitive_actions=2,
+        epsilon_option=0.5,
+        option_target_epsilon=0.0,
+        option_importance_clip=1.25,
+    )
+    agent, state = _setup(cfg, seed=21)
+    q_weights = state.option_policies.q_weights.at[0, 1, 0].set(1.0)
+    state = state.replace(
+        base_last_obs=jnp.array([1.0, 0.0], dtype=jnp.float32),
+        executing_option=jnp.array(0, dtype=jnp.int32),
+        option_last_intra_action=jnp.array(1, dtype=jnp.int32),
+        option_policies=state.option_policies.replace(q_weights=q_weights),
+    )
+    result = step10_update(
+        agent,
+        state,
+        jnp.array(0.0, dtype=jnp.float32),
+        jnp.array([0.0, 0.0], dtype=jnp.float32),
+    )
+    chex.assert_trees_all_close(
+        result.option_importance_ratio,
+        jnp.array(1.25, dtype=jnp.float32),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +371,7 @@ def test_run_step10_scan_output_shapes() -> None:
     chex.assert_shape(result.executing_options, (n_steps,))
     chex.assert_shape(result.pseudo_rewards, (n_steps,))
     chex.assert_shape(result.option_terminations, (n_steps,))
+    chex.assert_shape(result.option_importance_ratios, (n_steps,))
 
 
 def test_run_step10_scan_final_step_count() -> None:

@@ -116,6 +116,123 @@ def feature_to_subtask_specs(
 
 
 # ---------------------------------------------------------------------------
+# GRU Perception (Step 8 sub-component a — recursive state update)
+# ---------------------------------------------------------------------------
+
+
+@dataclasses.dataclass(frozen=True)
+class GRUPerceptionConfig:
+    """Configuration for the fixed-weight GRU perception layer.
+
+    A minimal echo-state GRU that provides the recursive state-update
+    (perception) sub-component required by Alberta Plan Step 8.  Weights are
+    sampled once at :meth:`PrototypeAgent.init` and remain fixed; the hidden
+    state is updated at every step.  The downstream Q-function (OaK) learns to
+    use the temporal context encoded in ``hidden``.
+
+    Args:
+        observation_dim: Raw observation dimensionality (GRU input).
+        hidden_dim: GRU hidden-state dimensionality (GRU output).
+
+    Note:
+        When this config is present, the effective observation dimensionality
+        seen by OaK, the Horde, the world model, and IA is
+        ``observation_dim + hidden_dim``.  Set ``oak.observation_dim``
+        (and ``world_model.observation_dim`` when applicable) accordingly.
+    """
+
+    observation_dim: int
+    hidden_dim: int = 32
+
+    def augmented_dim(self) -> int:
+        """Return ``observation_dim + hidden_dim``."""
+        return self.observation_dim + self.hidden_dim
+
+    def to_config(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dictionary."""
+        return {
+            "type": "GRUPerceptionConfig",
+            "observation_dim": self.observation_dim,
+            "hidden_dim": self.hidden_dim,
+        }
+
+    @classmethod
+    def from_config(cls, payload: dict[str, Any]) -> GRUPerceptionConfig:
+        """Reconstruct from :meth:`to_config` output."""
+        d = dict(payload)
+        d.pop("type", None)
+        return cls(**d)
+
+
+@chex.dataclass(frozen=True)
+class GRUPerceptionState:
+    """State for the fixed-weight GRU perception layer.
+
+    Weight matrices are initialised once and never updated; ``hidden`` is the
+    only mutable component and is replaced at every step.
+
+    Attributes:
+        W_z, U_z, b_z: Update-gate input/recurrent weights and bias.
+        W_r, U_r, b_r: Reset-gate input/recurrent weights and bias.
+        W_h, U_h, b_h: Candidate-hidden input/recurrent weights and bias.
+        hidden: Running GRU hidden state ``h_t``.
+    """
+
+    W_z: Float[Array, "hidden_dim obs_dim"]
+    U_z: Float[Array, "hidden_dim hidden_dim"]
+    b_z: Float[Array, " hidden_dim"]
+    W_r: Float[Array, "hidden_dim obs_dim"]
+    U_r: Float[Array, "hidden_dim hidden_dim"]
+    b_r: Float[Array, " hidden_dim"]
+    W_h: Float[Array, "hidden_dim obs_dim"]
+    U_h: Float[Array, "hidden_dim hidden_dim"]
+    b_h: Float[Array, " hidden_dim"]
+    hidden: Float[Array, " hidden_dim"]
+
+
+def _glorot_uniform(key: Array, shape: tuple[int, int]) -> Array:
+    fan_in, fan_out = shape[-1], shape[0]
+    limit = jnp.sqrt(6.0 / (fan_in + fan_out))
+    return jr.uniform(key, shape, dtype=jnp.float32, minval=-limit, maxval=limit)
+
+
+def _init_gru_state(cfg: GRUPerceptionConfig, key: Array) -> GRUPerceptionState:
+    """Glorot-uniform weight init + zero hidden state."""
+    keys = jr.split(key, 6)
+    d_obs, d_h = cfg.observation_dim, cfg.hidden_dim
+    return GRUPerceptionState(
+        W_z=_glorot_uniform(keys[0], (d_h, d_obs)),
+        U_z=_glorot_uniform(keys[1], (d_h, d_h)),
+        b_z=jnp.zeros((d_h,), dtype=jnp.float32),
+        W_r=_glorot_uniform(keys[2], (d_h, d_obs)),
+        U_r=_glorot_uniform(keys[3], (d_h, d_h)),
+        b_r=jnp.zeros((d_h,), dtype=jnp.float32),
+        W_h=_glorot_uniform(keys[4], (d_h, d_obs)),
+        U_h=_glorot_uniform(keys[5], (d_h, d_h)),
+        b_h=jnp.zeros((d_h,), dtype=jnp.float32),
+        hidden=jnp.zeros((d_h,), dtype=jnp.float32),
+    )
+
+
+def _gru_step(
+    gru: GRUPerceptionState,
+    obs: Float[Array, " obs_dim"],
+) -> tuple[GRUPerceptionState, Float[Array, " augmented_dim"]]:
+    """One GRU step: update hidden state and return augmented observation.
+
+    Returns the *new* GRU state and the concatenation
+    ``[obs, new_hidden]`` as the augmented observation.
+    """
+    h = gru.hidden
+    z = jax.nn.sigmoid(gru.W_z @ obs + gru.U_z @ h + gru.b_z)
+    r = jax.nn.sigmoid(gru.W_r @ obs + gru.U_r @ h + gru.b_r)
+    h_tilde = jnp.tanh(gru.W_h @ obs + gru.U_h @ (r * h) + gru.b_h)
+    new_h = (1.0 - z) * h + z * h_tilde
+    new_gru = cast(GRUPerceptionState, gru.replace(hidden=new_h))
+    return new_gru, jnp.concatenate([obs, new_h], axis=0)
+
+
+# ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
@@ -163,6 +280,7 @@ class PrototypeAgentConfig:
     horde_hidden_sizes: tuple[int, ...] = (64, 64)
     horde_step_size: float = 0.1
     ia: IAConfig | None = None
+    gru_perception: GRUPerceptionConfig | None = None
 
     def __post_init__(self) -> None:
         if self.buffer_capacity <= 0:
@@ -175,6 +293,14 @@ class PrototypeAgentConfig:
             raise ValueError(
                 "n_dreams_per_step > 0 requires world_model to be configured"
             )
+        if self.gru_perception is not None:
+            aug = self.gru_perception.augmented_dim()
+            if self.oak.observation_dim != aug:
+                raise ValueError(
+                    f"When gru_perception is set, oak.observation_dim must equal "
+                    f"gru_perception.observation_dim + gru_perception.hidden_dim "
+                    f"= {aug}, got {self.oak.observation_dim}"
+                )
         if self.ia is not None:
             ia_obs = self.ia.cortex.observation_dim
             oak_obs = self.oak.observation_dim
@@ -202,6 +328,8 @@ class PrototypeAgentConfig:
             payload["horde_spec"] = self.horde_spec.to_config()
         if self.ia is not None:
             payload["ia"] = self.ia.to_config()
+        if self.gru_perception is not None:
+            payload["gru_perception"] = self.gru_perception.to_config()
         return payload
 
     @classmethod
@@ -223,6 +351,10 @@ class PrototypeAgentConfig:
         horde_spec = _HordeSpec.from_config(horde_raw) if horde_raw is not None else None
         ia_raw = data.pop("ia", None)
         ia = IAConfig.from_config(ia_raw) if ia_raw is not None else None
+        gru_raw = data.pop("gru_perception", None)
+        gru_perception = (
+            GRUPerceptionConfig.from_config(gru_raw) if gru_raw is not None else None
+        )
 
         hidden = tuple(int(x) for x in data.pop("horde_hidden_sizes", [64, 64]))
         return cls(
@@ -235,6 +367,7 @@ class PrototypeAgentConfig:
             horde_hidden_sizes=hidden,
             horde_step_size=float(data.pop("horde_step_size", 0.1)),
             ia=ia,
+            gru_perception=gru_perception,
         )
 
 
@@ -259,6 +392,7 @@ class PrototypeAgentState:
     buffer_state: Any  # RecentObservationBufferState | None
     horde_state: Any  # MultiHeadMLPState | None
     ia_state: Any  # IAState | None
+    gru_state: Any  # GRUPerceptionState | None
     step_count: Int[Array, ""]
 
 
@@ -374,7 +508,7 @@ class PrototypeAgent:
         Returns:
             Fresh :class:`PrototypeAgentState`.
         """
-        key, oak_key, wm_key, horde_key, ia_key = jr.split(key, 5)
+        key, oak_key, wm_key, horde_key, ia_key, gru_key = jr.split(key, 6)
         oak_state = self._oak.init(oak_key)
 
         wm_state: Any = None
@@ -391,12 +525,17 @@ class PrototypeAgent:
         if self._ia is not None:
             ia_state = self._ia.init(ia_key)
 
+        gru_state: Any = None
+        if self._config.gru_perception is not None:
+            gru_state = _init_gru_state(self._config.gru_perception, gru_key)
+
         return PrototypeAgentState(
             oak_state=oak_state,
             world_model_state=wm_state,
             buffer_state=buf_state,
             horde_state=horde_state,
             ia_state=ia_state,
+            gru_state=gru_state,
             step_count=jnp.array(0, dtype=jnp.int32),
         )
 
@@ -416,13 +555,18 @@ class PrototypeAgent:
         Returns:
             State with OaK (and optionally IA) primed.
         """
-        new_oak = self._oak.start(state.oak_state, initial_observation)
+        raw_obs = jnp.asarray(initial_observation, dtype=jnp.float32)
+        new_gru_state = state.gru_state
+        obs_for_oak = raw_obs
+        if state.gru_state is not None:
+            new_gru_state, obs_for_oak = _gru_step(state.gru_state, raw_obs)
+        new_oak = self._oak.start(state.oak_state, obs_for_oak)
         new_ia = state.ia_state
         if self._ia is not None and state.ia_state is not None:
-            new_ia = self._ia.start(state.ia_state, initial_observation)
+            new_ia = self._ia.start(state.ia_state, obs_for_oak)
         return cast(
             PrototypeAgentState,
-            state.replace(oak_state=new_oak, ia_state=new_ia),
+            state.replace(oak_state=new_oak, ia_state=new_ia, gru_state=new_gru_state),
         )
 
     def act(
@@ -533,14 +677,20 @@ class PrototypeAgent:
             :class:`PrototypeUpdateResult` with updated state, selected action,
             and per-component diagnostics.
         """
-        obs = jnp.asarray(next_observation, dtype=jnp.float32)
+        raw_obs = jnp.asarray(next_observation, dtype=jnp.float32)
         rew = jnp.asarray(reward, dtype=jnp.float32)
+
+        # -- Step 8a: GRU recursive state update (perception) -----------------
+        new_gru_state = state.gru_state
+        obs = raw_obs
+        if state.gru_state is not None:
+            new_gru_state, obs = _gru_step(state.gru_state, raw_obs)
 
         # Snapshot last obs/action before OaK update
         last_obs = state.oak_state.stomp_state.base_last_obs
         last_action = state.oak_state.stomp_state.base_last_action
 
-        # -- Step 8: world model update (real transition) ---------------------
+        # -- Step 8b: world model update (real transition) --------------------
         new_wm_state = state.world_model_state
         new_buf_state = state.buffer_state
         wm_error: Any = None
@@ -612,6 +762,7 @@ class PrototypeAgent:
             buffer_state=new_buf_state,
             horde_state=new_horde_state,
             ia_state=new_ia_state,
+            gru_state=new_gru_state,
             step_count=state.step_count + 1,
         )
 
@@ -724,6 +875,7 @@ class PrototypeAgent:
             horde_hidden_sizes=self._config.horde_hidden_sizes,
             horde_step_size=self._config.horde_step_size,
             ia=self._config.ia,
+            gru_perception=self._config.gru_perception,
         )
         new_agent = PrototypeAgent(new_config)
         # Transfer all non-OaK sub-states unchanged

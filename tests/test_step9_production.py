@@ -32,6 +32,11 @@ def test_step9_config_roundtrip() -> None:
         model_step_size=0.05,
         model_sparsity=0.0,
         planning_budget=2,
+        behavior_model_step_size=0.02,
+        dream_rollout_horizon=3,
+        dream_candidate_count=4,
+        dream_surprise_weight=0.5,
+        dream_utility_weight=1.5,
         buffer_capacity=16,
     )
     assert Step9DreamingConfig.from_dict(cfg.to_dict()) == cfg
@@ -65,6 +70,21 @@ def test_step9_config_zero_buffer_capacity_raises() -> None:
         Step9DreamingConfig(buffer_capacity=0)
 
 
+def test_step9_config_negative_behavior_step_size_raises() -> None:
+    with pytest.raises(ValueError, match="behavior_model_step_size"):
+        Step9DreamingConfig(behavior_model_step_size=-0.1)
+
+
+def test_step9_config_zero_dream_rollout_horizon_raises() -> None:
+    with pytest.raises(ValueError, match="dream_rollout_horizon"):
+        Step9DreamingConfig(dream_rollout_horizon=0)
+
+
+def test_step9_config_zero_dream_candidate_count_raises() -> None:
+    with pytest.raises(ValueError, match="dream_candidate_count"):
+        Step9DreamingConfig(dream_candidate_count=0)
+
+
 # ---------------------------------------------------------------------------
 # Factory and init tests
 # ---------------------------------------------------------------------------
@@ -96,6 +116,7 @@ def test_step9_init_state_fields() -> None:
     assert isinstance(state, Step9DreamingState)
     assert int(state.step_count) == 0
     assert int(state.world_model_state.step_count) == 0
+    assert int(state.behavior_model_state.step_count) == 0
     assert int(state.buffer_state.size) >= 1
 
 
@@ -128,6 +149,7 @@ def test_step9_single_update_increments_counters() -> None:
     )
     assert int(result.state.step_count) == 1
     assert int(result.state.world_model_state.step_count) == 1
+    assert int(result.state.behavior_model_state.step_count) == 1
     chex.assert_shape(result.dream_td_errors, (2,))
     chex.assert_shape(result.dream_accepted, (2,))
 
@@ -208,6 +230,81 @@ def test_step9_dreams_rejected_when_error_too_high() -> None:
     assert not bool(jnp.any(result.dream_accepted)), (
         "Dreams should be rejected when error exceeds threshold"
     )
+
+
+def test_step9_multi_step_behavior_model_dreaming_path() -> None:
+    cfg = Step9DreamingConfig(
+        observation_dim=2,
+        n_actions=2,
+        model_hidden_sizes=(),
+        model_sparsity=0.0,
+        planning_budget=2,
+        dreaming_warmup_steps=0,
+        dreaming_max_model_error=1e30,
+        behavior_model_step_size=0.1,
+        dream_rollout_horizon=3,
+        dream_candidate_count=3,
+    )
+    agent, model, buffer = make_step9_components(cfg)
+    state = init_step9_state(
+        agent,
+        model,
+        buffer,
+        key=jr.key(41),
+        initial_observation=jnp.zeros(2),
+    )
+    result = step9_update(
+        cfg,
+        agent,
+        model,
+        buffer,
+        state,
+        jnp.array(0.25, dtype=jnp.float32),
+        jnp.array([0.2, -0.1], dtype=jnp.float32),
+    )
+    chex.assert_shape(result.dream_td_errors, (2,))
+    chex.assert_shape(result.dream_accepted, (2,))
+    chex.assert_tree_all_finite(result.dream_td_errors)
+    assert int(result.state.behavior_model_state.step_count) == 1
+    assert bool(jnp.any(result.dream_accepted))
+
+
+def test_step9_prioritized_candidate_selection_path() -> None:
+    cfg = Step9DreamingConfig(
+        observation_dim=2,
+        n_actions=2,
+        model_hidden_sizes=(),
+        model_sparsity=0.0,
+        planning_budget=1,
+        dreaming_warmup_steps=0,
+        dreaming_max_model_error=1e30,
+        dream_candidate_count=5,
+        dream_surprise_weight=2.0,
+        dream_utility_weight=0.5,
+    )
+    agent, model, buffer = make_step9_components(cfg)
+    state = init_step9_state(
+        agent,
+        model,
+        buffer,
+        key=jr.key(42),
+        initial_observation=jnp.array([0.1, -0.1], dtype=jnp.float32),
+    )
+    result = step9_update(
+        cfg,
+        agent,
+        model,
+        buffer,
+        state,
+        jnp.array(0.5, dtype=jnp.float32),
+        jnp.array([0.3, 0.4], dtype=jnp.float32),
+    )
+    chex.assert_shape(result.dream_td_errors, (1,))
+    chex.assert_shape(result.dream_accepted, (1,))
+    chex.assert_tree_all_finite(result.dream_td_errors)
+    chex.assert_tree_all_finite(result.real_control_result.td_error)
+    chex.assert_tree_all_finite(result.real_model_result.prediction_error)
+    assert bool(result.dream_accepted[0])
 
 
 # ---------------------------------------------------------------------------

@@ -138,26 +138,28 @@ Artifacts:
 - [x] `OneStepWorldModel`: reward + next-observation prediction from `concat(obs, action_one_hot)`
 - [x] Observation bounds tracking for imagination clipping
 - [x] Production facade `steps.step8` with config serialization and smoke tests
-- [ ] Multi-step world model or latent dynamics extension (research boundary)
-- [ ] Ensemble uncertainty signal for dream gating (research boundary)
-- [ ] Seeded benchmark: world-model prediction error curves on continuing gymnasium tasks
+- [x] Bounded multi-step rollout consumer for action-conditioned world models — `DreamRolloutConfig`, `ActionConditionedDreamWorld`, and `dream_rollout`
+- [x] Ensemble uncertainty signal — `step8_ensemble_predict` reports reward, next-observation, and total disagreement
+- [x] Seeded benchmark: `benchmarks/step8_world_model_prediction.py` proves online reward/next-observation prediction and ensemble-disagreement collapse over 10 seeds
+- [x] Step 8 solution gate — `benchmarks/step8_solution_gate.py`
 
-## Step 9 — Guarded Dreaming (Primitive Implemented)
+## Step 9 — Guarded Dreaming (Completion Gate Accepted)
 
 - [x] `Step9DreamingConfig`: unified config for control + world model + dreaming knobs
-- [x] `Step9DreamingState`: combined control + world-model + observation-buffer state
-- [x] `step9_update`: real update → world model update → buffer add → guarded dream scan
+- [x] `Step9DreamingState`: combined control + world-model + behavior-model + observation-buffer state
+- [x] `step9_update`: real update → world model update → behavior-model update → buffer add → prioritized guarded dream scan
 - [x] Error gate: dreams accepted only when `model_error_ema <= dreaming_max_model_error`
 - [x] `RecentObservationBuffer`: ring buffer for real-state dream anchors
 - [x] Warmup gate: dreams blocked until `step_count >= dreaming_warmup_steps`
 - [x] Zero-budget path (scan over empty arange) is JIT-compatible
-- [x] `run_step9_scan` / `run_step9_smoke` with config roundtrip and 22 tests
+- [x] `run_step9_scan` / `run_step9_smoke` with config roundtrip and 27 tests
 - [x] Production facade `steps.step9`; exported from `steps/__init__.py`
-- [ ] Multi-step rollout dreaming (horizon > 1) with a learned behavior model
-- [ ] Prioritized dream selection (surprise × utility from `score_dream_candidates`)
+- [x] Multi-step rollout dreaming (horizon > 1) with a learned behavior model
+- [x] Prioritized dream selection (surprise × utility from `score_dream_candidates`)
 - [x] Seeded benchmark evidence: guarded dreaming vs Step 7 one-step Dyna on continuing tasks — `benchmarks/step9_guarded_dreaming.py` proven: 9/10 seeds win over naive Dyna, +0.0117 Phase 2 improvement on 1-state switching bandit
+- [x] Step 9 solution gate — `benchmarks/step9_solution_gate.py`
 
-## Step 10 — STOMP Progression (Primitive Implemented)
+## Step 10 — STOMP Progression (Completion Gate Accepted)
 
 - [x] `SubtaskSpec` / `STOMPSpecArrays`: feature-reaching subtask definitions and JAX arrays
 - [x] `IntraOptionPoliciesState`, `OptionModelsState`, `STOMPState`: batched state for N options
@@ -169,14 +171,15 @@ Artifacts:
 - [x] `STOMPConfig` / `Step10STOMPConfig`: `to_config()` / `from_config()` roundtrip
 - [x] Production facade `steps.step10`: `make_step10_stomp_agent`, `init_step10_state`,
       `step10_update`, `run_step10_scan`, `run_step10_smoke`
-- [x] 36 tests: config validation, roundtrip, factory, init, termination, max-step, scan shapes,
+- [x] 45 tests: config validation, roundtrip, factory, init, termination, max-step, scan shapes,
       two-subtask runs, smoke, 200-step fineness
 - [x] Option discovery: `feature_to_subtask_specs()` and `subtasks_from_feature_scores()` auto-discover subtasks from Q-weight importance — `benchmarks/step10_feature_autodiscovery.py` proven: 10/10 seeds discover correct features [5,4] from Q-weights
 - [x] Semi-MDP planning with option models for multi-step base Q backups — `_differential_semidp_q_update` in `core/options.py`; verified in 42 tests and step10_stomp_options benchmark
-- [ ] Off-policy intra-option learning with importance-sampling corrections
+- [x] Off-policy intra-option learning with clipped importance-sampling corrections
 - [x] Seeded benchmark evidence: options vs flat Step 6 on continuing tasks with sub-goals — `benchmarks/step10_stomp_options.py` proves STOMP accelerates control on 6-state chain vs flat DifferentialSARSA
+- [x] Step 10 solution gate — `benchmarks/step10_solution_gate.py`
 
-## Step 11 — OaK (FC-STOMP) (Primitive Implemented)
+## Step 11 — OaK (FC-STOMP) (Completion Gate Accepted)
 
 - [x] `OaKConfig`: wraps `STOMPConfig`, adds `utility_ema_decay` and `curation_threshold`
 - [x] `OaKState`: extends `STOMPState` with `utility_ema`, `execution_counts`, `cumulative_pseudo_rewards`
@@ -185,10 +188,11 @@ Artifacts:
 - [x] `keyboard_q_values` / `keyboard_action`: L1-normalised blended Q-values
 - [x] `Step11OaKConfig` / `Step11SmokeResult` production facade
 - [x] `core/oak.py` building on `core/options.py`
-- [x] 32 tests: config roundtrip, factory, init, utility EMA, scan shapes, curation, keyboard, smoke, 200-step fineness
-- [ ] Learned feature construction (auto-generated subtask features)
-- [ ] Keyboard chord vector learning (meta-gradient or bandit-style)
+- [x] 41 tests: config roundtrip, factory, init, utility EMA, scan shapes, curation, keyboard, learned feature construction, keyboard chord learning, smoke, 200-step fineness
+- [x] Learned feature construction (auto-generated subtask features)
+- [x] Keyboard chord vector learning (bandit-style)
 - [x] Seeded benchmark evidence that curation maintains option quality over long horizons — `benchmarks/step11_oak_curation.py`; post-curation recovery 0.935 on 8/10 seeds
+- [x] Step 11 solution gate — `benchmarks/step11_solution_gate.py`
 
 ## Step 12 — Prototype-IA (Primitive Implemented)
 

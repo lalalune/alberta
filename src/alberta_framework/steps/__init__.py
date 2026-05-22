@@ -99,12 +99,14 @@ from alberta_framework.steps.step7 import (
     step7_update,
 )
 from alberta_framework.steps.step8 import (
+    Step8EnsemblePrediction,
     Step8SmokeResult,
     Step8WorldModelConfig,
     init_step8_state,
     make_step8_world_model,
     run_step8_scan,
     run_step8_smoke,
+    step8_ensemble_predict,
     step8_update,
 )
 from alberta_framework.steps.step9 import (
@@ -226,10 +228,12 @@ __all__ = [
     "step7_update",
     "Step8SmokeResult",
     "Step8WorldModelConfig",
+    "Step8EnsemblePrediction",
     "init_step8_state",
     "make_step8_world_model",
     "run_step8_scan",
     "run_step8_smoke",
+    "step8_ensemble_predict",
     "step8_update",
     "Step9ArrayResult",
     "Step9DreamingConfig",
