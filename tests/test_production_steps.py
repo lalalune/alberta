@@ -233,6 +233,14 @@ def test_documented_cli_scripts_are_packaged() -> None:
 def test_evidence_gate_reports_present_artifacts(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    step1_dir = Path(__file__).resolve().parents[1] / "outputs" / "step1_canonical"
+    required = [
+        step1_dir / "multi_baseline_results.json",
+        step1_dir / "normalization_ablation_results.json",
+        step1_dir / "robustness_study_results.json",
+    ]
+    if not all(p.exists() for p in required):
+        pytest.skip("Step 1 canonical outputs not present — run Step 1 experiments first.")
     status = evidence_gate_main(["--step", "1"])
     output = capsys.readouterr().out
     assert status == 0

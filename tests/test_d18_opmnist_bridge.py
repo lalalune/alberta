@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any
 
 import numpy as np
 import pytest
+from conftest import load_script
 
-MODULE_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
@@ -22,14 +21,7 @@ MODULE_PATH = (
 
 
 def load_bridge_module() -> ModuleType:
-    """Load the bridge despite spaces in the examples path."""
-    spec = importlib.util.spec_from_file_location("d18_opmnist_bridge_test", MODULE_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "d18_opmnist_bridge_test")
 
 
 class FixedPredictionLearner:

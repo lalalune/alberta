@@ -2,54 +2,38 @@
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from dataclasses import replace
 from pathlib import Path
 from types import ModuleType
 
 import numpy as np
+from conftest import load_script
+
+_D15_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "new_directions"
+    / "d15_groupwise_basis_lms.py"
+)
+_D18_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "new_directions"
+    / "d18_simple_universal_resource_basis.py"
+)
 
 
 def load_d15_module() -> ModuleType:
-    """Load the D15 groupwise basis module from the examples tree."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "new_directions"
-        / "d15_groupwise_basis_lms.py"
-    )
-    spec = importlib.util.spec_from_file_location("d15_groupwise_basis_lms", path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_D15_SCRIPT_PATH, "d15_groupwise_basis_lms")
 
 
 def load_d18_module() -> ModuleType:
-    """Load the D18 universal learner module from the examples tree."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "new_directions"
-        / "d18_simple_universal_resource_basis.py"
-    )
-    spec = importlib.util.spec_from_file_location(
-        "d18_simple_universal_resource_basis",
-        path,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_D18_SCRIPT_PATH, "d18_simple_universal_resource_basis")
 
 
 def test_simplex_decay_uses_raw_decay_target() -> None:

@@ -2,23 +2,19 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
+from conftest import load_script
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXPORT_PATH = REPO_ROOT / "benchmarks/security_gym_oracle_experience_export.py"
+_EXPORT_PATH = REPO_ROOT / "benchmarks" / "security_gym_oracle_experience_export.py"
 
 
-def load_export_module() -> Any:
-    """Load the export script by path."""
-    spec = importlib.util.spec_from_file_location("oracle_export", EXPORT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def load_export_module() -> ModuleType:
+    return load_script(_EXPORT_PATH, "oracle_export")
 
 
 def test_export_oracle_experience_writes_jsonl_and_manifest(

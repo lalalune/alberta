@@ -87,21 +87,11 @@ def test_single_seed_opmnist_artifact_closes_published_scale_protocol() -> None:
 
 
 def test_latest_best_opmnist_artifact_is_not_a_step2_solution_claim() -> None:
-    module_path = (
-        REPO_ROOT / "benchmarks" / "step2_associative_opmnist_confirmation.py"
-    )
-    import importlib.util
-    import sys
-
-    spec = importlib.util.spec_from_file_location(
+    from conftest import load_script
+    module = load_script(
+        REPO_ROOT / "benchmarks" / "step2_associative_opmnist_confirmation.py",
         "step2_associative_opmnist_confirmation_artifact_audit",
-        module_path,
     )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
 
     status = module.canonical_opmnist_artifact_status(load_published_opmnist_results())
 

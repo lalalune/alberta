@@ -2,31 +2,24 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from types import ModuleType
 
 import numpy as np
 import pytest
+from conftest import load_script
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_new_direction_pilots.py"
+)
 
 
 def load_pilots_module() -> ModuleType:
-    """Load the Step 2 pilot script from its examples path."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_new_direction_pilots.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_new_direction_pilots", path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_new_direction_pilots")
 
 
 def test_hedge_curve_tracks_persistent_low_loss_expert() -> None:

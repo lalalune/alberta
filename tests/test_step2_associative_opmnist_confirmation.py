@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
-import sys
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+from conftest import load_script
 
-SCRIPT_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks"
     / "step2_associative_opmnist_confirmation.py"
@@ -18,17 +17,7 @@ SCRIPT_PATH = (
 
 
 def load_module() -> ModuleType:
-    """Load the benchmark module by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_associative_opmnist_confirmation",
-        SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_associative_opmnist_confirmation")
 
 
 def test_scale_presets_distinguish_smoke_partial_and_full() -> None:

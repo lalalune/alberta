@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
-from typing import Any
+from types import ModuleType
+
+from conftest import load_script
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GATE_PATH = REPO_ROOT / "benchmarks/alberta_plan_remaining_todo_gate.py"
+_GATE_PATH = REPO_ROOT / "benchmarks" / "alberta_plan_remaining_todo_gate.py"
 
 
-def load_gate_module() -> Any:
-    """Load the remaining-TODO gate module by path."""
-    spec = importlib.util.spec_from_file_location("remaining_todo_gate", GATE_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def load_gate_module() -> ModuleType:
+    return load_script(_GATE_PATH, "remaining_todo_gate")
 
 
 def write_fake_project(root: Path, todo_text: str) -> None:

@@ -2,33 +2,23 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
+from types import ModuleType
 
 import numpy as np
+from conftest import load_script
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_context_disentanglement.py"
+)
 
 
-def load_experiment_module():
-    """Load the Step 2 experiment module from its path with spaces."""
-    repo_root = Path(__file__).resolve().parents[1]
-    src_path = repo_root / "src"
-    if str(src_path) not in sys.path:
-        sys.path.insert(0, str(src_path))
-    module_path = (
-        repo_root
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_context_disentanglement.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_context_disentanglement", module_path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+def load_experiment_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step2_context_disentanglement")
 
 
 def test_context_indexed_probe_solves_context_conflict():

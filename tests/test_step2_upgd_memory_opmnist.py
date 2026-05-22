@@ -2,109 +2,62 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import pickle
-import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import numpy as np
+from conftest import load_script
 
-SCRIPT_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
     / "Step2"
     / "step2_upgd_memory_opmnist.py"
 )
-GATE_SCRIPT_PATH = (
+_GATE_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks"
     / "step2_opmnist_solution_gate.py"
 )
-PLAN_SCRIPT_PATH = (
+_PLAN_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks"
     / "step2_opmnist_full_run_plan.py"
 )
-MERGE_SCRIPT_PATH = (
+_MERGE_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks"
     / "step2_opmnist_merge_seed_results.py"
 )
-PIPELINE_SCRIPT_PATH = (
+_PIPELINE_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks"
     / "step2_opmnist_solution_pipeline.py"
 )
 
 
-def load_module() -> Any:
-    """Load the example module by path because the directory contains spaces."""
-    spec = importlib.util.spec_from_file_location("step2_upgd_memory_opmnist", SCRIPT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_upgd_memory_opmnist"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step2_upgd_memory_opmnist")
 
 
-def load_gate_module() -> Any:
-    """Load the OPMNIST solution gate module by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_opmnist_solution_gate",
-        GATE_SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_opmnist_solution_gate"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_gate_module() -> ModuleType:
+    return load_script(_GATE_SCRIPT_PATH, "step2_opmnist_solution_gate")
 
 
-def load_plan_module() -> Any:
-    """Load the OPMNIST full-run planner module by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_opmnist_full_run_plan",
-        PLAN_SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_opmnist_full_run_plan"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_plan_module() -> ModuleType:
+    return load_script(_PLAN_SCRIPT_PATH, "step2_opmnist_full_run_plan")
 
 
-def load_merge_module() -> Any:
-    """Load the OPMNIST seed-result merge module by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_opmnist_merge_seed_results",
-        MERGE_SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_opmnist_merge_seed_results"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_merge_module() -> ModuleType:
+    return load_script(_MERGE_SCRIPT_PATH, "step2_opmnist_merge_seed_results")
 
 
-def load_pipeline_module() -> Any:
-    """Load the OPMNIST solution pipeline module by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_opmnist_solution_pipeline",
-        PIPELINE_SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_opmnist_solution_pipeline"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_pipeline_module() -> ModuleType:
+    return load_script(_PIPELINE_SCRIPT_PATH, "step2_opmnist_solution_pipeline")
 
 
 def test_accumulator_keeps_final_window_tail() -> None:

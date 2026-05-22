@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import numpy as np
+from conftest import load_script
 
-SCRIPT_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
@@ -18,16 +18,8 @@ SCRIPT_PATH = (
 )
 
 
-def _load_module() -> Any:
-    spec = importlib.util.spec_from_file_location(
-        "step3_feature_discovery_eval",
-        SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def _load_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step3_feature_discovery_eval")
 
 
 def test_repeat_by_horizon_orders_targets_by_target_then_gamma() -> None:

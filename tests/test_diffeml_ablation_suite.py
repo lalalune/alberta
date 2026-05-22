@@ -2,32 +2,21 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
+from conftest import load_script
 
-def load_suite_module() -> Any:
-    """Import the ablation suite from its path with spaces."""
-    repo_root = Path(__file__).resolve().parents[1]
-    module_path = (
-        repo_root
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_diffeml_ablation_suite.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_diffeml_ablation_suite", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("could not load DiffEML ablation suite module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_diffeml_ablation_suite.py"
+)
 
-
-SUITE = load_suite_module()
+SUITE: ModuleType = load_script(_SCRIPT_PATH, "step2_diffeml_ablation_suite")
 
 
 def test_ablation_specs_cover_fixed_comparisons() -> None:

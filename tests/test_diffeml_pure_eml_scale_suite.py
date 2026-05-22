@@ -2,55 +2,31 @@
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import numpy as np
 import pytest
+from conftest import load_script
 
+_SUITE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_diffeml_pure_eml_scale_suite.py"
+)
+_IMAGE_DEMO_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_diffeml_image_demo.py"
+)
 
-def load_suite_module() -> Any:
-    """Import the pure EML suite from its path with spaces."""
-    repo_root = Path(__file__).resolve().parents[1]
-    module_path = (
-        repo_root
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_diffeml_pure_eml_scale_suite.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_diffeml_pure_eml_scale_suite", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("could not load DiffEML pure EML scale suite module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-def load_image_demo_cli_module() -> Any:
-    """Import the image demo CLI from its path with spaces."""
-    repo_root = Path(__file__).resolve().parents[1]
-    module_path = (
-        repo_root
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_diffeml_image_demo.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_diffeml_image_demo_cli", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("could not load DiffEML image demo CLI module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-SUITE = load_suite_module()
-IMAGE_DEMO_CLI = load_image_demo_cli_module()
+SUITE: ModuleType = load_script(_SUITE_PATH, "step2_diffeml_pure_eml_scale_suite")
+IMAGE_DEMO_CLI: ModuleType = load_script(_IMAGE_DEMO_PATH, "step2_diffeml_image_demo_cli")
 
 
 def test_full_boolean_specs_cover_every_two_input_gate() -> None:

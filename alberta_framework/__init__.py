@@ -1142,3 +1142,10 @@ if _pipeline_available:
         "run_pipeline_smoke",
     ]
 
+# Compatibility shim for callers that imported the old nested benchmark package
+# before benchmarks were consolidated at the repository root.
+import importlib as _importlib
+import sys as _sys
+
+benchmarks = _importlib.import_module("benchmarks")
+_sys.modules.setdefault("alberta_framework.benchmarks", benchmarks)

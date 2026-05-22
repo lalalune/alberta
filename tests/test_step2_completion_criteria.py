@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import copy
-import importlib.util
 import json
 import re
-import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
+from conftest import load_script
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CRITERIA_PATH = REPO_ROOT / "docs" / "research" / "step2_completion_criteria.md"
-SCRIPT_PATH = REPO_ROOT / "benchmarks" / "step2_associative_opmnist_confirmation.py"
+_SCRIPT_PATH = REPO_ROOT / "benchmarks" / "step2_associative_opmnist_confirmation.py"
 
 
 def load_criteria() -> dict[str, Any]:
@@ -25,17 +25,7 @@ def load_criteria() -> dict[str, Any]:
 
 
 def load_opmnist_module() -> ModuleType:
-    """Load the guarded OPMNIST runner by path."""
-    spec = importlib.util.spec_from_file_location(
-        "step2_associative_opmnist_confirmation_completion",
-        SCRIPT_PATH,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_associative_opmnist_confirmation_completion")
 
 
 def claim_supported(theorem_gate: dict[str, Any], claim: str) -> bool:

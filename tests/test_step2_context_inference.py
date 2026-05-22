@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import numpy as np
+from conftest import load_script
 
-SCRIPT_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
@@ -18,19 +17,8 @@ SCRIPT_PATH = (
 )
 
 
-def load_script_module() -> Any:
-    """Load the experiment module from its path with spaces."""
-    repo_root = Path(__file__).resolve().parents[1]
-    src_path = repo_root / "src"
-    if str(src_path) not in sys.path:
-        sys.path.insert(0, str(src_path))
-    spec = importlib.util.spec_from_file_location("step2_context_inference", SCRIPT_PATH)
-    assert spec is not None
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+def load_script_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step2_context_inference")
 
 
 def test_phase_inferred_matches_oracle_when_phase_is_aligned() -> None:

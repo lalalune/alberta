@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
+from types import ModuleType
 
 import jax.numpy as jnp
 import jax.random as jr
 import numpy as np
+from conftest import load_script
 
-SCRIPT_PATH = (
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
@@ -18,13 +19,8 @@ SCRIPT_PATH = (
 )
 
 
-def load_script_module():
-    spec = importlib.util.spec_from_file_location("step2_expert_mixture", SCRIPT_PATH)
-    assert spec is not None
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+def load_script_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step2_expert_mixture")
 
 
 def test_expert_mixture_stream_metrics_are_finite_and_weighted():
