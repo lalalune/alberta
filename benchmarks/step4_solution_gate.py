@@ -561,6 +561,131 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "did not improve the NLHAC catch boundary"
         ),
     }
+    nlhac_no_actor_ln_path = (
+        root / "outputs/bsuite/nlhac_no_actor_ln_catch3_500/report.md"
+    )
+    nlhac_no_actor_ln_exists = nlhac_no_actor_ln_path.exists()
+    nlhac_no_actor_ln_rows = (
+        parse_markdown_summary_table(read_text(nlhac_no_actor_ln_path))
+        if nlhac_no_actor_ln_exists
+        else {}
+    )
+    nlhac_no_actor_ln_values = nlhac_no_actor_ln_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    # Table columns after n are: SARSA mean/wins, base NLHAC mean/wins,
+    # then no-actor-layer-norm NLHAC mean/wins.
+    nlhac_no_actor_ln_mean = (
+        nlhac_no_actor_ln_values[5]
+        if len(nlhac_no_actor_ln_values) >= 6
+        else None
+    )
+    nlhac_no_actor_ln_sarsa_mean = (
+        nlhac_no_actor_ln_values[1]
+        if len(nlhac_no_actor_ln_values) >= 2
+        else None
+    )
+    evidence["nonlinear_horde_actor_critic_no_actor_layer_norm_probe"] = {
+        "path": str(nlhac_no_actor_ln_path),
+        "exists": nlhac_no_actor_ln_exists,
+        "summary": nlhac_no_actor_ln_rows.get("catch", {}),
+        "no_actor_layer_norm_mean_improvement_vs_q": nlhac_no_actor_ln_mean,
+        "sarsa_mean_improvement_vs_q": nlhac_no_actor_ln_sarsa_mean,
+        "passed": nlhac_no_actor_ln_exists,
+        "promotion_vs_q_passed": bool(
+            nlhac_no_actor_ln_mean is not None and nlhac_no_actor_ln_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            nlhac_no_actor_ln_mean is not None
+            and nlhac_no_actor_ln_sarsa_mean is not None
+            and nlhac_no_actor_ln_mean > nlhac_no_actor_ln_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 pilot disabling actor layer norm regressed the "
+            "NLHAC catch boundary"
+        ),
+    }
+    nlhac_eps05_path = root / "outputs/bsuite/nlhac_eps05_catch3_500/report.md"
+    nlhac_eps05_exists = nlhac_eps05_path.exists()
+    nlhac_eps05_rows = (
+        parse_markdown_summary_table(read_text(nlhac_eps05_path))
+        if nlhac_eps05_exists
+        else {}
+    )
+    nlhac_eps05_values = nlhac_eps05_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    # Table columns after n are: SARSA mean/wins, base NLHAC mean/wins,
+    # then epsilon-mixed NLHAC mean/wins.
+    nlhac_eps05_mean = (
+        nlhac_eps05_values[5] if len(nlhac_eps05_values) >= 6 else None
+    )
+    nlhac_eps05_sarsa_mean = (
+        nlhac_eps05_values[1] if len(nlhac_eps05_values) >= 2 else None
+    )
+    evidence["nonlinear_horde_actor_critic_epsilon_mixture_probe"] = {
+        "path": str(nlhac_eps05_path),
+        "exists": nlhac_eps05_exists,
+        "summary": nlhac_eps05_rows.get("catch", {}),
+        "epsilon_mixture_mean_improvement_vs_q": nlhac_eps05_mean,
+        "sarsa_mean_improvement_vs_q": nlhac_eps05_sarsa_mean,
+        "passed": nlhac_eps05_exists,
+        "promotion_vs_q_passed": bool(
+            nlhac_eps05_mean is not None and nlhac_eps05_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            nlhac_eps05_mean is not None
+            and nlhac_eps05_sarsa_mean is not None
+            and nlhac_eps05_mean > nlhac_eps05_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 pilot with a consistent 0.05 uniform actor policy "
+            "mixture regressed the NLHAC catch boundary"
+        ),
+    }
+    nlhac_tdnorm_path = root / "outputs/bsuite/nlhac_tdnorm_catch3_500/report.md"
+    nlhac_tdnorm_exists = nlhac_tdnorm_path.exists()
+    nlhac_tdnorm_rows = (
+        parse_markdown_summary_table(read_text(nlhac_tdnorm_path))
+        if nlhac_tdnorm_exists
+        else {}
+    )
+    nlhac_tdnorm_values = nlhac_tdnorm_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    # Table columns after n are: SARSA mean/wins, base NLHAC mean/wins,
+    # then TD-normalized NLHAC mean/wins.
+    nlhac_tdnorm_mean = (
+        nlhac_tdnorm_values[5] if len(nlhac_tdnorm_values) >= 6 else None
+    )
+    nlhac_tdnorm_sarsa_mean = (
+        nlhac_tdnorm_values[1] if len(nlhac_tdnorm_values) >= 2 else None
+    )
+    nlhac_tdnorm_base_mean = (
+        nlhac_tdnorm_values[3] if len(nlhac_tdnorm_values) >= 4 else None
+    )
+    evidence["nonlinear_horde_actor_critic_td_normalizer_probe"] = {
+        "path": str(nlhac_tdnorm_path),
+        "exists": nlhac_tdnorm_exists,
+        "summary": nlhac_tdnorm_rows.get("catch", {}),
+        "td_normalized_mean_improvement_vs_q": nlhac_tdnorm_mean,
+        "base_gradclip_mean_improvement_vs_q": nlhac_tdnorm_base_mean,
+        "sarsa_mean_improvement_vs_q": nlhac_tdnorm_sarsa_mean,
+        "passed": nlhac_tdnorm_exists,
+        "promotion_vs_q_passed": bool(
+            nlhac_tdnorm_mean is not None and nlhac_tdnorm_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            nlhac_tdnorm_mean is not None
+            and nlhac_tdnorm_sarsa_mean is not None
+            and nlhac_tdnorm_mean > nlhac_tdnorm_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 pilot with actor-only TD-error normalization "
+            "was positive against Q but weaker than baseline gradclip NLHAC "
+            "and SARSA"
+        ),
+    }
     nlhac_variant_search_path = (
         root / "outputs/bsuite/nlhac_gradclip_variant_catch5_1000/report.md"
     )

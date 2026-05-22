@@ -7,6 +7,13 @@ augmented with a neural ActionConditionedWorldModel and Dyna planning
 to the Dyna planning loop rather than the model architecture.
 
 Pass criterion: Dyna wins on ≥6/10 seeds (mean final-window reward higher).
+
+Performance note: both `step6_update` and `step7_update` define closures
+internally.  If called from a Python for-loop without an outer `jax.jit`,
+JAX re-traces (and potentially re-compiles) on every step.  We create the
+agent/model objects once at module level and wrap the update functions with
+`jax.jit(static_argnums=...)` so XLA compiles a single kernel per function
+that is reused for all 50,000+ inner-loop calls.
 """
 
 from __future__ import annotations
@@ -16,6 +23,7 @@ import time
 from pathlib import Path
 
 import gymnasium as gym
+import jax
 import jax.numpy as jnp
 import jax.random as jr
 import numpy as np
@@ -66,6 +74,18 @@ _DYNA_CFG = Step7DynaConfig(
     planning_strategy="random",
 )
 
+# ─── Module-level agent / model objects ───────────────────────────────────────
+# Created once so JIT-compiled kernels can be reused across all seeds.
+
+_SARSA_AGENT = make_step6_differential_sarsa_agent(_CONTROL_CFG)
+_DYNA_AGENT, _WORLD_MODEL = make_step7_components(_DYNA_CFG)
+
+# JIT-compile with static_argnums so JAX traces once for all subsequent calls.
+# step6_update(agent, state, reward, next_features) — agent is static arg 0
+_jit_step6_update = jax.jit(step6_update, static_argnums=(0,))
+# step7_update(config, agent, model, state, reward, next_obs) — first 3 are static
+_jit_step7_update = jax.jit(step7_update, static_argnums=(0, 1, 2))
+
 
 # ─── Environment wrapper ───────────────────────────────────────────────────────
 
@@ -94,15 +114,15 @@ def run_real_only(seed: int) -> float:
     obs_np = env.reset(seed)
     obs = jnp.array(obs_np)
 
-    agent = make_step6_differential_sarsa_agent(_CONTROL_CFG)
-    state = init_step6_state(agent, feature_dim=OBS_DIM, key=jr.key(seed), initial_features=obs)
+    state = init_step6_state(_SARSA_AGENT, feature_dim=OBS_DIM, key=jr.key(seed),
+                             initial_features=obs)
 
     rewards = np.zeros(N_STEPS, dtype=np.float32)
     for t in range(N_STEPS):
         action = int(state.last_action)
         next_obs_np, reward = env.step(action)
         next_obs = jnp.array(next_obs_np)
-        result = step6_update(agent, state, jnp.float32(reward), next_obs)
+        result = _jit_step6_update(_SARSA_AGENT, state, jnp.float32(reward), next_obs)
         state = result.state
         rewards[t] = reward
 
@@ -115,16 +135,16 @@ def run_dyna(seed: int) -> float:
     obs_np = env.reset(seed)
     obs = jnp.array(obs_np)
 
-    dyna_agent, world_model = make_step7_components(_DYNA_CFG)
-    state = init_step7_state(dyna_agent, world_model, key=jr.key(seed), initial_observation=obs)
+    state = init_step7_state(_DYNA_AGENT, _WORLD_MODEL, key=jr.key(seed),
+                             initial_observation=obs)
 
     rewards = np.zeros(N_STEPS, dtype=np.float32)
     for t in range(N_STEPS):
         action = int(state.control_state.last_action)
         next_obs_np, reward = env.step(action)
         next_obs = jnp.array(next_obs_np)
-        result = step7_update(_DYNA_CFG, dyna_agent, world_model, state,
-                              jnp.float32(reward), next_obs)
+        result = _jit_step7_update(_DYNA_CFG, _DYNA_AGENT, _WORLD_MODEL, state,
+                                   jnp.float32(reward), next_obs)
         state = result.state
         rewards[t] = reward
 

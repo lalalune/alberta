@@ -622,18 +622,44 @@ class TestNonlinearHordeActorCriticConfig:
                 self._simple_critic(),
             )
 
+    def test_actor_epsilon_bounds(self) -> None:
+        with pytest.raises(ValueError, match="actor_epsilon"):
+            NonlinearHordeActorCriticAgent(
+                NonlinearHordeActorCriticConfig(
+                    n_actions=2,
+                    hidden_sizes=(16,),
+                    actor_epsilon=1.0,
+                ),
+                self._simple_critic(),
+            )
+
+    def test_actor_td_error_normalizer_decay_bounds(self) -> None:
+        with pytest.raises(ValueError, match="actor_td_error_normalizer_decay"):
+            NonlinearHordeActorCriticAgent(
+                NonlinearHordeActorCriticConfig(
+                    n_actions=2,
+                    hidden_sizes=(16,),
+                    actor_td_error_normalizer_decay=1.0,
+                ),
+                self._simple_critic(),
+            )
+
     def test_config_roundtrip(self) -> None:
         cfg = NonlinearHordeActorCriticConfig(
             n_actions=4,
             hidden_sizes=(64, 32),
             temperature=0.3,
             actor_gradient_clip_norm=0.25,
+            actor_epsilon=0.05,
+            actor_td_error_normalizer_decay=0.99,
         )
         restored = NonlinearHordeActorCriticConfig.from_config(cfg.to_config())
         assert restored.n_actions == 4
         assert restored.hidden_sizes == (64, 32)
         assert restored.temperature == pytest.approx(0.3)
         assert restored.actor_gradient_clip_norm == pytest.approx(0.25)
+        assert restored.actor_epsilon == pytest.approx(0.05)
+        assert restored.actor_td_error_normalizer_decay == pytest.approx(0.99)
 
 
 class TestNonlinearHordeActorCriticInit:
@@ -682,6 +708,29 @@ class TestNonlinearHordeActorCriticUpdate:
         state = _init_nlhac(agent)
         result = agent.update(state, jnp.array(1.0), jnp.ones(OBS_DIM))
         assert jnp.isfinite(result.td_error)
+
+    def test_actor_td_error_normalizer_updates(self) -> None:
+        critic = HordeLearner(
+            create_horde_spec(
+                [GVFSpec(  # type: ignore[call-arg]
+                    name="v", demon_type=DemonType.PREDICTION,
+                    gamma=0.99, lamda=0.0, cumulant_index=0,
+                )]
+            ),
+            hidden_sizes=(32,),
+            step_size=0.03,
+        )
+        cfg = NonlinearHordeActorCriticConfig(
+            n_actions=N_ACTIONS,
+            hidden_sizes=(32,),
+            actor_td_error_normalizer_decay=0.9,
+        )
+        agent = NonlinearHordeActorCriticAgent(cfg, critic)
+        state = agent.init(OBS_DIM, jr.key(3))
+        obs = jr.normal(jr.key(4), (OBS_DIM,))
+        state, _, _ = agent.start(state, obs)
+        result = agent.update(state, jnp.array(1.0), obs)
+        assert float(result.state.actor_td_error_normalizer) > 0.0
 
     def test_policy_sums_to_one(self) -> None:
         agent = _make_nlhac_agent()

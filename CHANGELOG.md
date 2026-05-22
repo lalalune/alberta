@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0] - 2026-05-21
+
+### Added
+
+- **CartPole FA Dyna benchmark** (Step 7) — 10-seed 5000-step comparison of
+  linear-model Dyna vs real-only DifferentialSARSA on CartPole-v1 continuing.
+  Result: ceiling effect — both agents achieve optimal reward=1.000 on all 10
+  seeds; linear world model is stable (no degradation) but CartPole is too easy
+  to reveal planning benefit. Faster benchmark (JIT-wrapped update functions,
+  module-level agent objects) runs in 26 s vs the original 135+ min.
+  (`benchmarks/step7_cartpole_dyna.py`, `outputs/step7_cartpole_dyna/`)
+
+- **`NonlinearQHordeActorCriticAgent`** — action-value Horde critic with
+  expected-SARSA targets, one control head per action; exported from the
+  package. 10-seed variant search shows best variant ties Q at +0.0 improvement
+  vs SARSA's +12.0 on catch — action-value critic substitution ruled out as
+  Step 4 closure.
+
+- **Step 4 probe suite** — adaptive-ObGD NLHAC at 500 and 1000 steps (both
+  regress catch: -1.4 / -6.0 vs Q while SARSA is +6.6 / +13.4); wider (64,64)
+  actor/critic NLHAC (catch -2.0 vs SARSA +9.33); rules out three more
+  approaches to close the AC-vs-SARSA catch gap.
+
+- **`rlsecd_external_audit.py`** — reproducible script checking availability
+  of external `rlsecd` / `chronos-sec` sibling repos; result embedded in
+  Step 3 solution gate.
+
+### Fixed
+
+- **Step 7 CartPole benchmark JIT regression** — original `step7_cartpole_dyna.py`
+  created new agent/model Python objects per seed, forcing JAX to re-trace the
+  planning scan body on every step; rewritten to use module-level agent/model
+  objects and explicit `jax.jit(static_argnums=...)` wrappers.
+
 ## [0.24.0] - 2026-05-21
 
 ### Added

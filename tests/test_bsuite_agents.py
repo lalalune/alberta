@@ -464,6 +464,56 @@ class TestAgentFactories:
 
         assert agent._agent.config.actor_gradient_clip_norm == 0.5
 
+    def test_nlhac_actor_layer_norm_can_be_disabled(self) -> None:
+        """NLHAC adapter exposes the core actor layer-norm switch."""
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_use_layer_norm=False,
+        )
+
+        assert agent._agent.config.use_layer_norm is False
+
+    def test_nlhac_actor_epsilon_passes_to_core_config(self) -> None:
+        """NLHAC adapter exposes the core actor policy-mixture floor."""
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_epsilon=0.05,
+        )
+
+        assert agent._agent.config.actor_epsilon == pytest.approx(0.05)
+
+    def test_nlhac_actor_td_error_normalizer_passes_to_core_config(self) -> None:
+        """NLHAC adapter exposes actor-only TD-error normalization."""
+        from benchmarks.bsuite.agents import nlhac
+
+        obs_spec = specs.Array(shape=(10,), dtype=np.float32, name="obs")
+        action_spec = specs.DiscreteArray(num_values=3, name="action")
+        agent = nlhac.default_agent(
+            obs_spec,
+            action_spec,
+            hidden_sizes=(16,),
+            actor_hidden_sizes=(16,),
+            actor_td_error_normalizer_decay=0.99,
+        )
+
+        assert agent._agent.config.actor_td_error_normalizer_decay == pytest.approx(
+            0.99
+        )
+
     def test_nlhac_adaptive_bounder_configures_critic_and_actor(self) -> None:
         """NLHAC adapter exposes adaptive ObGD for critic and actor bounds."""
         from alberta_framework import AdaptiveObGDBounding

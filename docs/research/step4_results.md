@@ -390,6 +390,24 @@ Findings:
   `-2.0` regret versus Q, while base `nlhac_gradclip` was `-0.67` and SARSA
   was `+9.33`. Extra nonlinear capacity alone therefore does not explain or
   close the catch boundary.
+- The bsuite NLHAC adapter now exposes the actor layer-norm switch already
+  present in the core agent. A 3-seed catch/0 pilot with actor layer norm
+  disabled (`outputs/bsuite/nlhac_no_actor_ln_catch3_500/report.md`) regressed
+  sharply: no-actor-LN NLHAC was `-14.0` versus Q, while base `nlhac_gradclip`
+  was `+1.33` and SARSA was `+2.0` on the same slice. The catch gap is not
+  solved by removing actor normalization.
+- The core NLHAC actor now supports a consistent uniform policy-mixture floor
+  for both action selection and `log pi` gradients. A 3-seed catch/0 pilot with
+  `actor_epsilon=0.05` (`outputs/bsuite/nlhac_eps05_catch3_500/report.md`)
+  also regressed: epsilon-mixed NLHAC was `-8.0` versus Q, while SARSA was
+  `+3.33`. The boundary is not explained by insufficient softmax exploration
+  at this scale.
+- The core NLHAC actor also supports actor-only TD-error normalization by a
+  running absolute-error EMA. A 3-seed catch/0 pilot
+  (`outputs/bsuite/nlhac_tdnorm_catch3_500/report.md`) was positive versus Q
+  (`+0.67`) but weaker than base `nlhac_gradclip` (`+4.0`) and SARSA
+  (`+5.33`). Normalizing the actor advantage does not close the promotion
+  gap.
 
 ### Verdict
 

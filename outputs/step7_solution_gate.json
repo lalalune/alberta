@@ -1,5 +1,5 @@
 {
-  "schema": "alberta.step7.solution_gate.v1",
+  "schema": "alberta.step7.solution_gate.v2",
   "accepted_step7_dyna_planning_primitive": true,
   "claim_scope": "bounded_dyna_average_reward_control_local_completion",
   "evidence": {
@@ -111,10 +111,29 @@
         "mean_dyna_max_memory_utility": 0.9794380486011505,
         "passed": true
       }
+    },
+    "cartpole_fa_dyna_benchmark": {
+      "path": "outputs/step7_cartpole_dyna/results.json",
+      "run_date": "2026-05-21",
+      "n_seeds": 10,
+      "n_steps": 5000,
+      "eval_window": 1000,
+      "planning_steps": 4,
+      "world_model_hidden_sizes": [],
+      "environment": "CartPole-v1 continuing",
+      "passed": false,
+      "aggregate": {
+        "mean_real_only_final_window_reward": 1.0,
+        "mean_dyna_final_window_reward": 1.0,
+        "mean_diff": 0.0,
+        "dyna_win_count": 0,
+        "n_seeds": 10
+      },
+      "interpretation": "CartPole ceiling effect: both linear Dyna and real-only DifferentialSARSA achieve optimal reward (1.0/step) on all 10 seeds by the final 1000-step eval window. The linear world model does NOT harm performance (no degradation). The planning benefit cannot be measured here because there is no headroom for improvement. A harder environment with meaningful exploration difficulty would be required to differentiate Dyna vs real-only."
     }
   },
   "remaining_research_boundaries": [
-    "Nonlinear world model tested only on trivial 1-state / 6-state tabular environments; no CartPole or bsuite evidence",
+    "CartPole FA Dyna shows ceiling effect (both agents optimal at 1.0) — linear world model stable but planning benefit not measurable on CartPole; harder environment with exploration difficulty needed",
     "Off-policy correction for imagined transitions not benchmarked",
     "Multi-step and trajectory-level planning (Dyna-2, TreeQN) not implemented"
   ]

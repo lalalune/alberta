@@ -812,6 +812,7 @@ def _nlhac_log_prob(
     leaky_relu_slope: float,
     use_layer_norm: bool,
     temperature: float,
+    actor_epsilon: float,
 ) -> Array:
     """Log pi(action | obs) for an MLP softmax policy.
 
@@ -825,7 +826,10 @@ def _nlhac_log_prob(
         trunk_weights, trunk_biases, obs, leaky_relu_slope, use_layer_norm
     )
     logits = head_w @ hidden + head_b
-    return jax.nn.log_softmax(logits / temperature)[action]
+    probs = jax.nn.softmax(logits / temperature)
+    n_actions = probs.shape[0]
+    mixed_probs = (1.0 - actor_epsilon) * probs + actor_epsilon / n_actions
+    return jnp.log(jnp.maximum(mixed_probs[action], 1e-8))
 
 
 _nlhac_grad = jax.grad(_nlhac_log_prob, argnums=0)
@@ -867,6 +871,12 @@ class NonlinearHordeActorCriticConfig:
         actor_sparsity: Sparse-init fraction for actor weights.
         leaky_relu_slope: LeakyReLU negative slope.
         use_layer_norm: Whether to apply parameterless layer norm.
+        actor_epsilon: Uniform policy-mixture floor used for both action
+            selection and policy-gradient log-probability. ``0.0`` recovers
+            the pure softmax actor.
+        actor_td_error_normalizer_decay: Optional EMA decay for normalizing
+            the actor-only TD error by its recent absolute magnitude. The
+            critic update and reported TD error are unchanged.
         actor_td_error_clip: Optional absolute clip applied only to the actor's
             policy-gradient TD error.
         actor_gradient_clip_norm: Optional global-norm clip applied to the
@@ -881,6 +891,8 @@ class NonlinearHordeActorCriticConfig:
     actor_sparsity: float = 0.9
     leaky_relu_slope: float = 0.01
     use_layer_norm: bool = True
+    actor_epsilon: float = 0.0
+    actor_td_error_normalizer_decay: float | None = None
     actor_td_error_clip: float | None = None
     actor_gradient_clip_norm: float | None = None
 
@@ -912,6 +924,8 @@ class NonlinearHordeActorCriticState:
         actor_trunk_opt_states: Interleaved Autostep states ``(w0_opt, b0_opt, …)``.
         actor_head_opt_w: Optimizer state for ``actor_head_w``.
         actor_head_opt_b: Optimizer state for ``actor_head_b``.
+        actor_td_error_normalizer: EMA scale for actor-only TD-error
+            normalization.
         critic_state: Underlying Horde learner state.
         last_observation: Previous observation for the next update call.
         last_action: Previous action index.
@@ -928,6 +942,7 @@ class NonlinearHordeActorCriticState:
     actor_trunk_opt_states: tuple[AutostepParamState, ...]
     actor_head_opt_w: AutostepParamState
     actor_head_opt_b: AutostepParamState
+    actor_td_error_normalizer: Float[Array, ""]
     critic_state: MultiHeadMLPState
     last_observation: Float[Array, " feature_dim"]
     last_action: Int[Array, ""]
@@ -992,6 +1007,15 @@ class NonlinearHordeActorCriticAgent:
             raise ValueError("n_actions must be positive")
         if config.temperature <= 0:
             raise ValueError("temperature must be positive")
+        if not 0.0 <= config.actor_epsilon < 1.0:
+            raise ValueError("actor_epsilon must be in [0, 1)")
+        if (
+            config.actor_td_error_normalizer_decay is not None
+            and not 0.0 <= config.actor_td_error_normalizer_decay < 1.0
+        ):
+            raise ValueError(
+                "actor_td_error_normalizer_decay must be in [0, 1)"
+            )
         if config.actor_td_error_clip is not None and config.actor_td_error_clip <= 0:
             raise ValueError("actor_td_error_clip must be positive when provided")
         if (
@@ -1112,6 +1136,7 @@ class NonlinearHordeActorCriticAgent:
             actor_trunk_opt_states=tuple(trunk_opt_states),
             actor_head_opt_w=self._actor_optimizer.init_for_shape(actor_head_w.shape),
             actor_head_opt_b=self._actor_optimizer.init_for_shape(actor_head_b.shape),
+            actor_td_error_normalizer=jnp.array(0.0, dtype=jnp.float32),
             critic_state=self._critic.init(feature_dim, critic_key),
             last_observation=jnp.zeros((feature_dim,), dtype=jnp.float32),
             last_action=jnp.array(-1, dtype=jnp.int32),
@@ -1135,7 +1160,11 @@ class NonlinearHordeActorCriticAgent:
             cfg.use_layer_norm,
         )
         logits = state.actor_head_w @ hidden + state.actor_head_b
-        return jax.nn.softmax(logits / cfg.temperature)
+        probs = jax.nn.softmax(logits / cfg.temperature)
+        return (
+            (1.0 - cfg.actor_epsilon) * probs
+            + cfg.actor_epsilon / cfg.n_actions
+        )
 
     @functools.partial(jax.jit, static_argnums=(0,))
     def value(
@@ -1238,6 +1267,18 @@ class NonlinearHordeActorCriticAgent:
             if cfg.actor_td_error_clip is None
             else jnp.clip(td_error, -cfg.actor_td_error_clip, cfg.actor_td_error_clip)
         )
+        actor_td_error_normalizer = state.actor_td_error_normalizer
+        if cfg.actor_td_error_normalizer_decay is not None:
+            decay = jnp.asarray(
+                cfg.actor_td_error_normalizer_decay, dtype=jnp.float32
+            )
+            actor_td_error_normalizer = (
+                decay * actor_td_error_normalizer
+                + (1.0 - decay) * jnp.abs(actor_td_error)
+            )
+            actor_td_error = actor_td_error / jnp.maximum(
+                actor_td_error_normalizer, 1e-3
+            )
 
         # Policy gradient via jax.grad through the full MLP forward pass
         actor_params = (
@@ -1253,6 +1294,7 @@ class NonlinearHordeActorCriticAgent:
             cfg.leaky_relu_slope,
             cfg.use_layer_norm,
             cfg.temperature,
+            cfg.actor_epsilon,
         )
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = grads
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = (
@@ -1358,6 +1400,7 @@ class NonlinearHordeActorCriticAgent:
             actor_trunk_opt_states=tuple(new_trunk_opt_states),
             actor_head_opt_w=new_head_opt_w,
             actor_head_opt_b=new_head_opt_b,
+            actor_td_error_normalizer=actor_td_error_normalizer,
             critic_state=critic_result.state,
             step_count=state.step_count + 1,
         )
@@ -1629,6 +1672,7 @@ class NonlinearQHordeActorCriticAgent:
             actor_trunk_opt_states=tuple(trunk_opt_states),
             actor_head_opt_w=self._actor_optimizer.init_for_shape(actor_head_w.shape),
             actor_head_opt_b=self._actor_optimizer.init_for_shape(actor_head_b.shape),
+            actor_td_error_normalizer=jnp.array(0.0, dtype=jnp.float32),
             critic_state=self._critic.init(feature_dim, critic_key),
             last_observation=jnp.zeros((feature_dim,), dtype=jnp.float32),
             last_action=jnp.array(-1, dtype=jnp.int32),
@@ -1747,6 +1791,7 @@ class NonlinearQHordeActorCriticAgent:
             cfg.leaky_relu_slope,
             cfg.use_layer_norm,
             cfg.temperature,
+            0.0,
         )
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = grads
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = (

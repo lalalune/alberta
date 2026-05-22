@@ -3,7 +3,7 @@
 **Date**: 2026-05-21 (updated 2026-05-21)
 **Scope**: Systematic comparison of implementation against Sutton et al. (2022) paper requirements.  
 **Method**: Paper review, code audit, test execution (1609 passing, 3 skipped), benchmark generation.
-**Last update**: Step 9 guarded dreaming benchmark proven (2026-05-21): 9/10 seeds win over naive Dyna, +0.0117 mean Phase 2 improvement on 1-state switching bandit. Step 6 stochastic RiverSwim (10/10, 0.907) + security-gym downstream integration (10/10 seeds, +1.356 vs pass-only). Step 4 NL-HAC with gradient clipping: 12/20 wins (60%) vs autostep Q-baseline, CartPole 7/10 wins (beats SARSA's 6/10 on CartPole; catch gap persists). Step 8 PrototypeAgent end-to-end benchmark proven (2026-05-21): 5/5 seeds reward=1.0, no NaN weights. Step 7 async DP: 8/10 wins. Step 10 STOMP: 5474-step speedup (6/10 seeds, 0.871 vs 0.382) + auto-discovery 10/10 seeds.
+**Last update**: Step 7 CartPole FA Dyna benchmark run (2026-05-21): ceiling effect — both linear-model Dyna and real-only achieve reward=1.0/step on all 10 seeds; planning benefit not measurable on this trivially-easy task. Step 9 guarded dreaming benchmark proven: 9/10 seeds win over naive Dyna, +0.0117. Step 6 stochastic RiverSwim (10/10, 0.907) + security-gym (10/10, +1.356). Step 4 NL-HAC gradclip: 12/20 wins (60%). Step 8 PrototypeAgent e2e: 5/5 seeds reward=1.0, no NaN. Step 10: STOMP 5474-step speedup (6/10) + auto-discovery 10/10.
 
 ---
 
@@ -17,10 +17,22 @@
 | 4 | Control I — Continual actor-critic control | SARSA complete; AC tuned wins CartPole | Positive ctrl 10/10 seeds (0.9976). Tuned AC 78.2 > Q 69.9 > SARSA 67.1 on CartPole | **PARTIAL (SARSA proven, AC working)** |
 | 5 | Prediction II — Average-reward GVF | DifferentialTD + Horde + GTD | 7-category solution gate; all categories pass | **YES** |
 | 6 | Control II — Continuing control benchmarks | DifferentialSARSA | Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym (10/10, +1.36 vs pass-only) | **LOCAL+STOCHASTIC+EXTERNAL: YES / PAPER SUITE: NO** |
-| 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | Tabular: Dyna +41.7%, 8/10. Async DP 8/10 wins. Nonlinear MLP world model proven on trivial envs (6/10, 8/10 Q-gap). CartPole-scale FA open. | **PARTIAL (tabular+FA-trivial proven, CartPole-scale FA open)** |
+| 7 | Planning I — Average-reward planning | One-step Dyna + prioritized sweeping | Tabular: Dyna +41.7%, 8/10. Async DP 8/10 wins. FA trivial envs (6/10, 8/10 Q-gap). CartPole FA: ceiling effect — both agents 1.0/step, planning benefit unmeasurable. | **PARTIAL (tabular proven; FA ceiling effect on CartPole — harder env needed)** |
 | 8 | Prototype-AI I — Complete integrated agent | PrototypeAgent integrates 5/6 sub-components | 50 tests + e2e benchmark: 5/5 seeds reward=1.0, all_finite=true on CartPole | **PARTIAL (5/6 components, benchmark proven, no recurrent state)** |
 | 9 | Planning II — Search control & exploration | Guarded dreaming (partial concept match) | 27 tests + seeded benchmark: 9/10 wins, +0.0117 over naive Dyna | **PARTIAL (benchmark proven, conceptually misaligned with paper)** |
 | 10 | Prototype-AI II — STOMP progression | STOMP + auto-discovery + semi-MDP backup | STOMP 0.871 vs SARSA 0.382 (6/10, 5474-step speedup) + auto-discovery 10/10 seeds correct | **PARTIAL (STOMP + auto-discovery proven; live loop open)** |
+
+For the currently accepted project scope, Steps 3-5 have a dedicated aggregate
+gate: `benchmarks/steps3_5_accepted_completion_gate.py`. It reports
+`accepted_scope_complete=true` when all of the following are true:
+
+- Step 3: given-feature GVF/Horde local completion is accepted.
+- Step 4: Step 4a SARSA local control completion is accepted.
+- Step 5: local average-reward research scope is fully solved.
+
+This aggregate gate deliberately does not claim the broader Step 3 external
+`rlsecd`/`chronos-sec` daemon closure or Step 4b actor-critic promotion over
+SARSA.
 
 ---
 
@@ -182,13 +194,14 @@ Solution gate: `solved_step5_full_research_scope: true`.
 
 **Benchmark 4 — Production JAX nonlinear Dyna (10 seeds):** MLP world model (hidden_size=8) on 1-state bandit via production facade. Dyna mean reward: 1.0 vs real-only: 0.920 (+0.080), 8/10 Q-gap wins, passed=True. `outputs/step7_production_nonlinear_dyna/results.json`
 
-**Remaining gaps**:
-1. Nonlinear model tested only on trivial 1-state / 6-state environments; no CartPole or bsuite evidence
-2. Stochastic environment: deterministic model is inaccurate against stochastic transitions
-3. Off-policy correction for imagined transitions
-4. Multi-step planning (Dyna-2, TreeQN) not implemented
+**Benchmark 5 — CartPole FA Dyna (10 seeds, 2026-05-21):** Linear world model (`hidden_sizes=()`, `predict_delta=True`) Dyna vs real-only on CartPole-v1 continuing, 5000 steps per seed. Result: **ceiling effect** — both linear-model Dyna and real-only DifferentialSARSA achieve reward=1.0/step on all 10 seeds (final 1000-step eval window). Dyna wins: 0/10, mean diff: +0.000. The linear world model does NOT degrade performance. Planning benefit is unmeasurable because CartPole is trivially solvable in 5000 steps: there is no headroom for improvement. `outputs/step7_cartpole_dyna/results.json`
 
-**Verdict**: Both tabular Dyna AND nonlinear model-based Dyna are now proven. The nonlinear evidence is on trivial environments; CartPole/bsuite-scale nonlinear planning remains open.
+**Remaining gaps**:
+1. CartPole FA Dyna: ceiling effect prevents benefit measurement — harder environment with exploration difficulty needed (e.g., MountainCar, Acrobot, or a sparse-reward task)
+2. Off-policy correction for imagined transitions not benchmarked
+3. Multi-step planning (Dyna-2, TreeQN) not implemented
+
+**Verdict**: Tabular Dyna proven (+41.7% cumulative reward, 8/10 seeds). Nonlinear FA proven on trivial environments (6/10 wins, 8/10 Q-gap wins). CartPole FA Dyna executed but shows ceiling effect — the linear model is stable (no degradation), but CartPole is too easy to reveal planning benefit. Harder environment needed to close this boundary.
 
 ---
 
@@ -298,7 +311,7 @@ Environment: 1-state switching bandit (action-reward flip at step 1000). After t
 - **Step 3**: 13/13 evidence categories pass including nonlinear shared GTD, off-policy, stress tests. Feature discovery from scratch (TD/GVF constructing new features) remains open.
 - **Step 4**: SARSA dominant on bsuite. AC positive control proven (99.76%, 10/10). Tuned AC (temp=0.5) wins on CartPole (78.2 vs Q 69.9 vs SARSA 67.1). Not dominant across all bsuite environments.
 - **Step 6**: Deterministic chain (10/10, 0.9938) + stochastic RiverSwim (10/10, 0.907) + security-gym external integration (10/10, +1.356) proven. Gymnasium environments (Jellybean, GARNET) open.
-- **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP (prioritized sweeping) also proven on 20-state chain (8/10 wins, 0.7368 vs 0.7302). Function approximation planning open.
+- **Step 7**: Tabular Dyna proven (6-state chain, 41.7% more cumulative reward, 8/10 seeds). Async DP proven (20-state chain, 8/10 wins). CartPole FA Dyna executed: ceiling effect — linear model stable, both agents achieve optimal reward=1.0, planning benefit unmeasurable on this trivially-easy task.
 - **Step 10**: STOMP mechanics + auto-discovery (`subtasks_from_feature_scores`) + semi-MDP Bellman backup + benchmark proven (STOMP 0.871 vs SARSA 0.382, 5474-step speedup). Live training loop and utility-driven lifecycle open.
 
 ### What IS NOT fully proven:
@@ -312,8 +325,8 @@ The CLAUDE.md and ROADMAP claim "Steps 8-10: primitive." This is honest phrasing
 
 ## Recommendations for Genuine Completion
 
-### Step 7 (Priority: Low — tabular proven, FA open)
-Tabular Dyna and async DP both benchmarked. Remaining gap: run on CartPole/bsuite with ContinuingWrapper for function-approximation planning evidence.
+### Step 7 (Priority: Low — tabular proven; CartPole FA ceiling effect documented)
+Tabular Dyna (+41.7%, 8/10 seeds) and async DP (8/10 wins) proven. CartPole FA Dyna executed (2026-05-21, 10 seeds): ceiling effect — both agents achieve optimal reward=1.0, linear world model stable but planning benefit unmeasurable. Remaining gap: run on a harder environment with exploration difficulty (e.g., MountainCar, Acrobot) where neither agent trivially reaches the reward ceiling.
 
 ### Step 8 (Priority: Low — benchmark proven)
 PrototypeAgent implements 5/6 sub-components. BENCHMARK PROVEN (2026-05-21): `benchmarks/prototype_end_to_end.py` — integrated agent achieves mean reward=1.0 (5/5 seeds, no NaN) on continuing CartPole. Remaining open: explicit LSTM/GRU state, model-driven feature ranking feedback loop. CartPole is trivially solved so planning benefits can't be measured; a harder environment would differentiate PrototypeAgent from flat SARSA.
