@@ -132,4 +132,3 @@ logs/
 *.pdf
 !docs/*.png
 !docs/*.pdf
-outputs/

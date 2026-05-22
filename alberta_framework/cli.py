@@ -20,7 +20,7 @@ from alberta_framework.steps.step2 import (
     run_step2_smoke,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _print_json(payload: dict[str, object]) -> None:
