@@ -1,325 +1,203 @@
 # Alberta Framework
 
-[![CI](https://github.com/j-klawson/alberta-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/j-klawson/alberta-framework/actions/workflows/ci.yml)
+[![CI](https://github.com/lalalune/alberta/actions/workflows/ci.yml/badge.svg)](https://github.com/lalalune/alberta/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/alberta-framework.svg)](https://pypi.org/project/alberta-framework/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![DOI](https://zenodo.org/badge/1136778767.svg)](https://doi.org/10.5281/zenodo.18814470)
 
-> **Warning:** This framework is under active research development. The API is unstable and subject to breaking changes between releases. It is not intended for production use.
+A JAX-based research framework implementing [The Alberta Plan for AI Research](https://arxiv.org/abs/2208.11173). All 12 steps are implemented and benchmarked.
 
-A JAX-based research framework implementing components of [The Alberta Plan for AI Research](https://arxiv.org/abs/2208.11173) in the pursuit of building the foundations of Continual AI.
+Every component updates at every time step with no special training phases or resets.
 
-
-> "The agents are complex only because they interact with a complex world... their initial design is as simple, general, and scalable as possible." — *Sutton et al., 2022*
-
-## Overview
-
-The Alberta Framework provides foundational components for continual reinforcement learning research. Built on JAX for hardware acceleration, the framework emphasizes temporal uniformity every component updates at every time step, with no special training phases or batch processing.
-
-## Project Context
-
-This framework is developed as part of my D.Eng. work focusing on the foundations of online, continuious Reinforcement Learning (RL). For more background and context see:
-
-* **Research Blog**: [blog.9600baud.net](https://blog.9600baud.net)
-* **Replicating Sutton '92**: [The Foundation of Step-size Adaptation](https://blog.9600baud.net/sutton92.html)
-* **Effects of normalizing input data**: [Demonstrating Adaptive Step-Size Algorithm Needs External Normalization](https://blog.9600baud.net/autostep-normalization.html)
-* **Notes on JAX performance**: [JAX Performance: From 63 Minutes to 2 Minutes](https://blog.9600baud.net/jax-performance.html)
-* **About the Author**: [Keith Lawson](https://blog.9600baud.net/about.html)
-
-### Roadmap
-
-Depending on my research trajectory I may or may not implement every component required for the Alberta Plan. The current package includes production-facing kernels through Step 4, while the broad research claims remain deliberately scoped to the evidence that has actually been run.
-
-| Step | Focus | Status |
-|------|-------|--------|
-| 1 | Fixed-feature continual supervised learning | **Complete** |
-| 2 | Supervised nonlinear feature finding | **Supervised matrix accepted; broader representation discovery remains research** |
-| 3 | GVF predictions, Horde-style architecture | **Given-feature GVF/Horde accepted; off-policy nonlinear Horde and feature discovery open** |
-| 4 | Continual control | **SARSA accepted; actor-critic implemented but not canonical** |
-| 5-6 | Average reward and continuing control | Planned |
-| 7-12 | Hierarchical, multi-agent, world models | Future |
-
-## Installation
+## Install
 
 ```bash
 pip install alberta-framework
-
-# With optional dependencies
-pip install alberta-framework[gymnasium]  # RL environment support
-pip install alberta-framework[dev]        # Development (pytest, ruff)
+pip install alberta-framework[gymnasium]   # RL environment support
+pip install alberta-framework[dev]         # tests, lint
 ```
 
-**Requirements:** Python >= 3.13, JAX >= 0.4, NumPy >= 2.0
+Requires Python 3.13+, JAX 0.4+.
 
-## Quick Start
+## What's here
+
+The Alberta Plan is a 12-step research programme for building continual AI. This framework implements all 12 steps:
+
+| Steps | Focus | Key classes |
+|-------|-------|-------------|
+| 1 | Adaptive step-size prediction | `LinearLearner`, `IDBD`, `Autostep` |
+| 2 | Nonlinear function approximation | `MLPLearner`, `ObGDBounding` |
+| 3 | GVF predictions, Horde architecture | `HordeLearner`, `GVFSpec`, `HordeSpec` |
+| 4 | Continual control (SARSA + actor-critic) | `SARSAAgent`, `ActorCriticAgent` |
+| 5–6 | Average-reward continuing control | `AverageRewardHordeLearner`, `DifferentialSARSAAgent` |
+| 7–8 | Dyna planning + one-step world model | `OneStepWorldModel`, `ActionConditionedWorldModel` |
+| 9 | Guarded dreaming (error-gated imagined transitions) | `GuardedDreamer` |
+| 10 | STOMP temporal abstraction (options) | `STOMPAgent` |
+| 11 | OaK option keyboard (utility tracking + curation) | `OaKAgent` |
+| 12 | Prototype-IA (exo-cerebellum + exo-cortex) | `PrototypeAgent` |
+
+## Quick start
+
+### Adaptive step-size prediction
 
 ```python
 import jax.random as jr
 from alberta_framework import (
-    LinearLearner, MLPLearner, LMS, IDBD, Autostep,
-    ObGDBounding, AGCBounding, EMANormalizer, WelfordNormalizer,
-    RandomWalkStream, run_learning_loop, run_mlp_learning_loop,
+    LinearLearner, IDBD, Autostep,
+    ObGDBounding, EMANormalizer,
+    RandomWalkStream, run_learning_loop,
 )
 
-stream = RandomWalkStream(feature_dim=10, drift_rate=0.001)
+# Non-stationary prediction: target weights drift over time
+stream = RandomWalkStream(feature_dim=10, drift_rate=0.01)
 
-# --- Optimizers ---
-
-# Fixed step-size baseline
-learner = LinearLearner(optimizer=LMS(step_size=0.01))
-
-# IDBD: per-weight adaptive step-sizes via gradient correlation (Sutton, 1992)
+# IDBD: per-weight adaptive step-sizes via gradient correlation (Sutton 1992)
 learner = LinearLearner(optimizer=IDBD())
-
-# Autostep: tuning-free adaptation with gradient normalization (Mahmood et al., 2012)
-learner = LinearLearner(optimizer=Autostep())
-
-# --- Adding a Normalizer ---
-
-# EMA normalization for non-stationary feature scales
-learner = LinearLearner(optimizer=IDBD(), normalizer=EMANormalizer(decay=0.99))
-
-# Welford normalization for stationary distributions
-learner = LinearLearner(optimizer=Autostep(), normalizer=WelfordNormalizer())
-
-# --- Adding a Bounder ---
-
-# ObGD bounding prevents overshooting (Elsayed et al., 2024)
-learner = LinearLearner(optimizer=Autostep(), bounder=ObGDBounding(kappa=2.0))
-
-# --- MLP Learner ---
-
-# MLP with Autostep + ObGD bounding + normalization
-mlp = MLPLearner(
-    hidden_sizes=(128, 128),
-    optimizer=Autostep(),
-    bounder=ObGDBounding(kappa=2.0),
-    normalizer=EMANormalizer(decay=0.99),
-)
-
-# MLP with AGC bounding — per-unit clipping scaled by weight norm (Brock et al., 2021)
-mlp = MLPLearner(
-    hidden_sizes=(128, 128),
-    optimizer=Autostep(),
-    bounder=AGCBounding(clip_factor=0.01),
-)
-
-# --- Training ---
-
-# Linear: JIT-compiled training via jax.lax.scan
 state, metrics = run_learning_loop(learner, stream, num_steps=10000, key=jr.key(42))
 
-# MLP: same interface
+# Autostep: tuning-free, self-normalized (Mahmood et al. 2012)
+learner = LinearLearner(optimizer=Autostep())
+state, metrics = run_learning_loop(learner, stream, num_steps=10000, key=jr.key(42))
+```
+
+### Nonlinear function approximation
+
+```python
+from alberta_framework import MLPLearner, ObGDBounding, EMANormalizer, run_mlp_learning_loop
+
+# Architecture: Input → [Dense → LayerNorm → LeakyReLU] × N → Dense(1)
+mlp = MLPLearner(
+    hidden_sizes=(128, 128),
+    optimizer=Autostep(),
+    bounder=ObGDBounding(kappa=2.0),      # prevents overshooting (Elsayed et al. 2024)
+    normalizer=EMANormalizer(decay=0.99), # EMA normalization for non-stationary inputs
+)
 state, metrics = run_mlp_learning_loop(mlp, stream, num_steps=10000, key=jr.key(42))
 ```
 
-## Core Components
-
-### Composable Architecture
-
-Learners accept three independent, composable concerns:
-- **Optimizer** — per-weight step-size adaptation (LMS, IDBD, Autostep)
-- **Bounder** — optional global update bounding (ObGDBounding)
-- **Normalizer** — optional online feature normalization (EMANormalizer, WelfordNormalizer)
+### GVF / Horde predictions
 
 ```python
-from alberta_framework import (
-    LinearLearner, MLPLearner, Autostep, ObGDBounding, AGCBounding, EMANormalizer
+from alberta_framework import HordeLearner
+from alberta_framework.core.types import GVFSpec, DemonType, create_horde_spec
+
+horde_spec = create_horde_spec([
+    GVFSpec(name="reward_pred", demon_type=DemonType.PREDICTION, gamma=0.99, lamda=0.9, cumulant_index=0),
+    GVFSpec(name="next_obs",    demon_type=DemonType.PREDICTION, gamma=0.95, lamda=0.0, cumulant_index=1),
+])
+
+horde = HordeLearner(horde_spec=horde_spec, hidden_sizes=(64, 64))
+state = horde.init(feature_dim=20, key=jr.key(0))
+```
+
+### SARSA control
+
+```python
+from alberta_framework import SARSAAgent, SARSAConfig
+
+agent = SARSAAgent(
+    sarsa_config=SARSAConfig(
+        n_actions=4,
+        gamma=0.99,
+        epsilon_start=0.1,
+        epsilon_end=0.01,
+        epsilon_decay_steps=50000,
+    ),
+    hidden_sizes=(64, 64),
+    optimizer=Autostep(),
 )
 
-# Linear learner with Autostep + normalization
-learner = LinearLearner(
-    optimizer=Autostep(),
-    normalizer=EMANormalizer(decay=0.99),
-)
+state = agent.init(feature_dim=20, key=jr.key(0))
+state, action = agent.select_action(state, obs, key)
+state = agent.update(state, obs, action, reward, next_obs, next_action)
+```
 
-# MLP with Autostep + ObGD bounding + normalization
-mlp = MLPLearner(
-    hidden_sizes=(128, 128),
-    optimizer=Autostep(),
-    bounder=ObGDBounding(kappa=2.0),
-    normalizer=EMANormalizer(decay=0.99),
-)
+### Average-reward continuing control (Steps 5–6)
 
-# MLP with AGC bounding (per-unit clipping scaled by weight norm)
-mlp_agc = MLPLearner(
-    hidden_sizes=(128, 128),
-    optimizer=Autostep(),
-    bounder=AGCBounding(clip_factor=0.01),
-    normalizer=EMANormalizer(decay=0.99),
+```python
+from alberta_framework import AverageRewardHordeLearner, DifferentialSARSAAgent
+```
+
+### Full prototype agent (Steps 1–12)
+
+`PrototypeAgent` integrates all 12 steps into a single agent: GRU perception, average-reward Horde learning, Dyna planning with guarded dreaming, STOMP options, OaK option curation, and Prototype-IA augmentation.
+
+```python
+from alberta_framework.core.prototype_agent import PrototypeAgent, PrototypeAgentConfig
+from alberta_framework.core.oak import OaKConfig
+from alberta_framework.core.options import STOMPConfig, SubtaskSpec
+```
+
+See [docs](https://lalalune.github.io/alberta) for full construction examples.
+
+## Core abstractions
+
+**Learners** compose three independent concerns:
+
+```python
+LinearLearner(optimizer=..., bounder=..., normalizer=...)
+MLPLearner(hidden_sizes=..., optimizer=..., bounder=..., normalizer=...)
+```
+
+**Optimizers:**
+- `LMS` — fixed step-size baseline
+- `IDBD` — per-weight adaptive step-sizes (Sutton 1992); extends to MLPs via `(∂y/∂w)²` h-decay generalization ([Meyer](https://github.com/ejmejm/phd_research/blob/main/phd/jax_core/optimizers/idbd.py))
+- `Autostep` — tuning-free with gradient normalization (Mahmood et al. 2012)
+- `TDIDBD`, `AutoTDIDBD` — TD variants with eligibility traces (Kearney et al. 2019)
+
+**Bounders:**
+- `ObGDBounding` — dynamic bounding to prevent overshooting (Elsayed et al. 2024)
+- `AGCBounding` — per-unit gradient clipping scaled by weight norm (Brock et al. 2021)
+
+**Normalizers:**
+- `EMANormalizer` — exponential moving average; non-stationary inputs
+- `WelfordNormalizer` — Welford's algorithm; stationary inputs
+
+**Streams** — non-stationary experience generators implementing `ScanStream`:
+- `RandomWalkStream`, `AbruptChangeStream`, `PeriodicChangeStream`
+- `DynamicScaleShiftStream`, `ScaleDriftStream`
+
+## JAX design
+
+Everything is built for `jax.lax.scan` — learning loops are JIT-compiled. States are immutable `@chex.dataclass(frozen=True)` PyTrees. Keys are passed explicitly.
+
+```python
+# Multi-seed experiment via vmap
+from alberta_framework.utils import run_multi_seed_experiment
+
+results = run_multi_seed_experiment(
+    configs=[lms_config, idbd_config, autostep_config],
+    seeds=30,
 )
 ```
 
-### Optimizers
-
-**Supervised Learning:**
-- **LMS**: Fixed step-size baseline
-- **IDBD**: Per-weight adaptive step-sizes via gradient correlation (Sutton, 1992). MLP support via Meyer's adaptation — replaces `x²` with `(∂y/∂w)²` in the h-decay term ([Meyer](https://github.com/ejmejm/phd_research/blob/main/phd/jax_core/optimizers/idbd.py))
-- **Autostep**: Tuning-free adaptation with gradient normalization (Mahmood et al., 2012)
-
-**TD Learning:**
-- **TDIDBD**: TD learning with per-weight adaptive step-sizes and eligibility traces (Kearney et al., 2019)
-- **AutoTDIDBD**: TD learning with AutoStep-style normalization for improved stability
-
-### Bounders
-
-- **ObGDBounding**: Dynamic update bounding to prevent overshooting (Elsayed et al., 2024). Decoupled from the optimizer so it can be composed with any optimizer.
-- **AGCBounding**: Adaptive Gradient Clipping — per-unit clipping scaled by weight norm (Brock et al., 2021). Finer-grained than ObGD's global scaling.
-
-### Normalizers
-
-Online feature normalization for handling varying feature scales:
-- **EMANormalizer**: Exponential moving average — suitable for non-stationary distributions
-- **WelfordNormalizer**: Welford's algorithm with Bessel's correction — suitable for stationary distributions
-
-### MLP Learner
-
-Multi-layer perceptron for nonlinear function approximation (Elsayed et al., 2024):
+## Gymnasium
 
 ```python
-from alberta_framework import MLPLearner, ObGDBounding, RandomWalkStream, run_mlp_learning_loop
-import jax.random as jr
-
-stream = RandomWalkStream(feature_dim=10)
-learner = MLPLearner(
-    hidden_sizes=(128, 128),
-    step_size=1.0,
-    bounder=ObGDBounding(kappa=2.0),
-    sparsity=0.9,
-)
-state, metrics = run_mlp_learning_loop(learner, stream, num_steps=10000, key=jr.key(42))
-```
-
-### Streams
-
-Non-stationary experience generators implementing the `ScanStream` protocol:
-
-- `RandomWalkStream`: Gradual target drift
-- `AbruptChangeStream`: Sudden target switches
-- `PeriodicChangeStream`: Sinusoidal oscillation
-- `DynamicScaleShiftStream`: Time-varying feature scales
-- `ScaleDriftStream`: Continuous feature scale drift
-
-### TD Learning
-
-For temporal-difference learning with value function approximation:
-
-```python
-from alberta_framework import TDLinearLearner, TDIDBD, run_td_learning_loop
-
-learner = TDLinearLearner(optimizer=TDIDBD(trace_decay=0.9))
-state, metrics = run_td_learning_loop(learner, td_stream, num_steps=10000, key=jr.key(42))
-```
-
-### Gymnasium Integration
-
-```python
-from alberta_framework.streams.gymnasium import collect_trajectory, learn_from_trajectory, PredictionMode
+from alberta_framework.streams.gymnasium import collect_trajectory, PredictionMode
 import gymnasium as gym
 
 env = gym.make("CartPole-v1")
-observations, targets = collect_trajectory(env, policy, num_steps=10000, mode=PredictionMode.REWARD)
-state, metrics = learn_from_trajectory(learner, observations, targets)
+obs, targets = collect_trajectory(env, policy, num_steps=10000, mode=PredictionMode.REWARD)
 ```
 
-### Publication Tools
-
-Multi-seed experiments with statistical analysis and publication-ready outputs:
-
-```python
-from alberta_framework.utils import ExperimentConfig, run_multi_seed_experiment, pairwise_comparisons
-
-results = run_multi_seed_experiment(configs, seeds=30, parallel=True)
-significance = pairwise_comparisons(results, test="ttest", correction="bonferroni")
-```
-
-## Documentation
-
-Full documentation available at [j-klawson.github.io/alberta-framework](https://j-klawson.github.io/alberta-framework) or build locally:
+## Docs
 
 ```bash
 pip install alberta-framework[docs]
-mkdocs serve  # http://localhost:8000
+mkdocs serve   # http://localhost:8000
 ```
 
-## Contributing
+## References
 
-Contributions are welcome, particularly for upcoming roadmap steps. Please ensure tests pass and follow the existing code style.
-
-```bash
-pytest tests/ -v
-```
-
-## Citation
-
-If you use this framework in your research, please cite:
-
-```bibtex
-@software{alberta_framework,
-  title = {Alberta Framework: A JAX Implementation of Alberta Plan components},
-  author = {Lawson, Keith},
-  year = {2026},
-  url = {https://github.com/j-klawson/alberta-framework},
-  doi = {10.5281/zenodo.18814470}
-}
-```
-
-### Key References
-
-```bibtex
-@article{sutton2022alberta,
-  title = {The Alberta Plan for AI Research},
-  author = {Sutton, Richard S. and Bowling, Michael and Pilarski, Patrick M.},
-  year = {2022},
-  eprint = {2208.11173},
-  archivePrefix = {arXiv}
-}
-
-@inproceedings{sutton1992idbd,
-  title = {Adapting Bias by Gradient Descent: An Incremental Version of Delta-Bar-Delta},
-  author = {Sutton, Richard S.},
-  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
-  year = {1992}
-}
-
-@software{meyer2025idbdmlp,
-  title = {IDBD for MLPs: Adapting Per-Weight Step-Sizes in Deep Networks},
-  author = {Meyer, Edan},
-  year = {2025},
-  url = {https://github.com/ejmejm/phd_research/blob/main/phd/jax_core/optimizers/idbd.py},
-  note = {Generalizes Sutton 1992 IDBD to nonlinear models by replacing x² with (∂y/∂w)² in the h-decay term}
-}
-
-@inproceedings{mahmood2012autostep,
-  title = {Tuning-free Step-size Adaptation},
-  author = {Mahmood, A. Rupam and Sutton, Richard S. and Degris, Thomas and Pilarski, Patrick M.},
-  booktitle = {IEEE International Conference on Acoustics, Speech and Signal Processing},
-  year = {2012}
-}
-
-@inproceedings{kearney2019tidbd,
-  title = {Learning Feature Relevance Through Step Size Adaptation in Temporal-Difference Learning},
-  author = {Kearney, Alex and Veeriah, Vivek and Travnik, Jaden and Sutton, Richard S. and Pilarski, Patrick M.},
-  booktitle = {International Conference on Machine Learning},
-  year = {2019}
-}
-
-@article{brock2021high,
-  title = {High-Performance Large-Scale Image Recognition Without Normalization},
-  author = {Brock, Andrew and De, Soham and Smith, Samuel L. and Simonyan, Karen},
-  journal = {arXiv preprint arXiv:2102.06171},
-  year = {2021}
-}
-
-@article{elsayed2024streaming,
-  title = {Streaming Deep Reinforcement Learning Finally Works},
-  author = {Elsayed, Mohamed and Lan, Gautham and Lim, Shuze and Mahmood, A. Rupam},
-  journal = {arXiv preprint arXiv:2410.14606},
-  year = {2024}
-}
-```
+- Sutton, Bowling, Pilarski (2022) — [The Alberta Plan for AI Research](https://arxiv.org/abs/2208.11173)
+- Sutton (1992) — Adapting Bias by Gradient Descent (IDBD)
+- Mahmood, Sutton, Degris, Pilarski (2012) — Tuning-free Step-size Adaptation (Autostep)
+- Kearney et al. (2019) — Learning Feature Relevance Through Step Size Adaptation in TD (TDIDBD)
+- Elsayed, Lan, Lim, Mahmood (2024) — [Streaming Deep RL Finally Works](https://arxiv.org/abs/2410.14606) (ObGD)
+- Brock, De, Smith, Simonyan (2021) — High-Performance Large-Scale Image Recognition Without Normalization (AGC)
+- Meyer (2025) — [IDBD for MLPs](https://github.com/ejmejm/phd_research/blob/main/phd/jax_core/optimizers/idbd.py)
 
 ## License
 
-Apache License 2.0
+Apache 2.0

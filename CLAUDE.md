@@ -18,35 +18,25 @@ Implements the Alberta Plan for AI Research, progressing through increasingly co
 - Quote version specifiers: `pip install 'package>=1.0,<2.0'`
 - GPU/JAX: `pip install -e '.[gpu]'`
 
-## Package Structure
+## Repo Layout
 ```
-alberta_framework/
-├── core/
-│   ├── types.py            # TimeStep, LearnerState, optimizer states, MLP types, TD types, lifecycle utilities
-│   ├── optimizers.py       # LMS, IDBD, Autostep, ObGD, TDIDBD, AutoTDIDBD; Bounder ABC, ObGDBounding, AGCBounding
-│   ├── normalizers.py      # Normalizer ABC, EMANormalizer, WelfordNormalizer
-│   ├── initializers.py     # sparse_init (LeCun + sparsity)
-│   ├── learners.py         # LinearLearner, MLPLearner, TDLinearLearner, learning loops
-│   ├── multi_head_learner.py  # MultiHeadMLPLearner, multi-head learning loops
-│   ├── horde.py             # HordeLearner, GVF demons, Horde learning loops
-│   ├── sarsa.py             # SARSAAgent, SARSA control via Horde, learning loops
-│   └── diagnostics.py      # FeatureRelevance, compute_feature_relevance, compute_feature_sensitivity
-├── streams/
-│   ├── base.py             # ScanStream protocol
-│   ├── synthetic.py        # RandomWalkStream, AbruptChangeStream, CyclicStream, PeriodicChangeStream, ScaledStreamWrapper, DynamicScaleShiftStream, ScaleDriftStream
-│   └── gymnasium.py        # collect_trajectory, learn_from_trajectory, GymnasiumStream
-└── utils/
-    ├── metrics.py           # compute_tracking_error, compare_learners
-    ├── experiments.py       # ExperimentConfig, run_multi_seed_experiment, AggregatedResults
-    ├── statistics.py        # Statistical tests, CI, effect sizes
-    ├── visualization.py     # Publication plots
-    ├── export.py            # CSV, JSON, LaTeX, Markdown export
-    └── timing.py            # Timer context manager, format_duration
+alberta_framework/      # Python package (installed via pip install -e .)
+├── core/               # Algorithms: optimizers, learners, horde, sarsa, world models, …
+├── steps/              # Alberta Plan step modules (step1.py – step12.py)
+├── streams/            # Data streams: synthetic, gymnasium, pavlovian, …
+└── utils/              # Experiment helpers, metrics, export, timing
 
-benchmarks/bsuite/          # bsuite RL diagnostics (consumer of framework, not core)
-    agents/                  # AlbertaAgent, autostep_dqn, lms_dqn, adam_dqn
-    wrappers.py              # ContinuingWrapper: episodic -> continuing
-    configs.py, run_single.py, run_sweep.py, analysis.py
+benchmarks/             # Evaluation scripts (not installed); imports from alberta_framework
+├── bsuite/             # bsuite RL diagnostics — agents/, run_single.py, run_sweep.py
+└── step*_solution_gate.py  # Per-step pass/fail gates
+
+examples/               # Runnable demos and research scripts
+└── "The Alberta Plan"/ # Step-organised experiment scripts
+
+scripts/                # Sweep launchers and one-off shell/Python scripts
+
+outputs/                # Local run artefacts (gitignored except *_solution_gate.json)
+tests/                  # pytest suite
 ```
 
 ## Key Commands
