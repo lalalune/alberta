@@ -1,7 +1,7 @@
 {
   "boundary": "security-gym is locally available, but required rlsecd/chronos-sec daemon repositories and rollout logs are not available to this framework checkout",
   "claim_scope": "external_active_defense_daemon_availability",
-  "generated_at": "2026-05-22T17:30:28.142389+00:00",
+  "generated_at": "2026-05-22T17:40:05.777837+00:00",
   "github_exact": {
     "shawwalters/chronos-sec": {
       "available": false,
