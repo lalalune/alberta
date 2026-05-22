@@ -1,0 +1,1601 @@
+{
+  "config": {
+    "benchmarks": [
+      "permuted_mnist_like"
+    ],
+    "steps": 600,
+    "n_seeds": 3,
+    "seed": 0,
+    "final_window": 150,
+    "mnist_source": "openml",
+    "allow_openml_download": true,
+    "allow_torchvision_download": false,
+    "mnist_split": "stratified",
+    "openml_data_home": "outputs/step2_canonical/openml_external_cache",
+    "torchvision_data_home": null,
+    "openml_n_retries": 2,
+    "openml_retry_delay": 1.0,
+    "train_fraction": 0.7,
+    "max_train_examples": 1000,
+    "max_test_examples": 300,
+    "n_permutations": 3,
+    "task_block_size": 200,
+    "sample_with_replacement": false,
+    "task_sampling": "random",
+    "include_identity_permutation": false,
+    "max_test_permutation_views": null,
+    "mnist_published_scale": false,
+    "scr_preset": "compact",
+    "long_scr": false,
+    "regression_bits": 20,
+    "regression_slow_bits": 5,
+    "regression_flip_interval": 50,
+    "regression_target_hidden": 100,
+    "regression_beta": 0.7,
+    "regression_noise_std": 0.01,
+    "expert_names": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64",
+      "upgd_low_noise",
+      "dynamic_sparse"
+    ],
+    "mlp_comparator_methods": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64"
+    ],
+    "step_size": 0.03,
+    "sparsity": 0.5,
+    "perturbation_sigma": 0.0001,
+    "perturbation_warmup_steps": 0,
+    "perturbation_ramp_steps": 0,
+    "dynamic_hidden_size": 64,
+    "dynamic_utility_decay": 0.99,
+    "dynamic_rewire_interval": 240,
+    "dynamic_unit_replacement_rate": 0.05,
+    "hedge_eta": 1.0,
+    "hedge_discount": 0.995,
+    "router_policy": "convex",
+    "router_decay": 0.02,
+    "guard_tolerance": 0.0,
+    "digits_deployment_objective": "mse",
+    "online_retention_mse_guard": true,
+    "online_retention_min_lifetime_class_fraction": 0.7,
+    "online_retention_max_recent_class_fraction": 0.5,
+    "retention_router": "none",
+    "retention_upgd_deployment_weight": 1.0,
+    "retention_min_lifetime_class_fraction": 0.8,
+    "retention_max_recent_class_fraction": 0.4,
+    "output_dir": "outputs/step2_canonical/openml_external_published_3seed_small",
+    "result_prefix": "published_stressors_openml_3seed_small"
+  },
+  "datasets": {
+    "permuted_mnist_like": {
+      "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+      "source_kind": "openml_mnist_784",
+      "is_true_mnist": true,
+      "description": "OpenML MNIST 28x28 handwritten digits.",
+      "n_total": 70000,
+      "n_train": 1000,
+      "n_test": 300,
+      "feature_dim": 784,
+      "n_classes": 10,
+      "train_fraction": 0.7,
+      "split": "stratified",
+      "split_seed": 2,
+      "max_train_examples": 1000,
+      "max_test_examples": 300,
+      "openml_data_home": "outputs/step2_canonical/openml_external_cache",
+      "is_full_mnist_split": false,
+      "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+      "benchmark": "permuted_mnist_like",
+      "protocol": "compact_online_permuted_pixels",
+      "steps": 600,
+      "sequence_seed": 10002,
+      "n_permutations": 3,
+      "task_block_size": 200,
+      "sample_with_replacement": false,
+      "task_sampling": "random",
+      "include_identity_permutation": false,
+      "permutations_are_random_pixel_orders": true,
+      "task_id_provided_to_learner": false,
+      "single_pass_examples_within_task": false,
+      "test_permutation_views": 3,
+      "test_views_cover_all_permutations": true,
+      "full_mnist_task_blocks": false,
+      "matches_dohare_opmnist_core_protocol": false,
+      "matches_dohare_opmnist_published_task_count": false,
+      "task_ids_observed": [
+        0,
+        1,
+        2
+      ],
+      "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true."
+    }
+  },
+  "records": [
+    {
+      "dataset_name": "permuted_mnist_like",
+      "seed": 0,
+      "dataset": {
+        "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+        "source_kind": "openml_mnist_784",
+        "is_true_mnist": true,
+        "description": "OpenML MNIST 28x28 handwritten digits.",
+        "n_total": 70000,
+        "n_train": 1000,
+        "n_test": 300,
+        "feature_dim": 784,
+        "n_classes": 10,
+        "train_fraction": 0.7,
+        "split": "stratified",
+        "split_seed": 0,
+        "max_train_examples": 1000,
+        "max_test_examples": 300,
+        "openml_data_home": "outputs/step2_canonical/openml_external_cache",
+        "is_full_mnist_split": false,
+        "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+        "benchmark": "permuted_mnist_like",
+        "protocol": "compact_online_permuted_pixels",
+        "steps": 600,
+        "sequence_seed": 10000,
+        "n_permutations": 3,
+        "task_block_size": 200,
+        "sample_with_replacement": false,
+        "task_sampling": "random",
+        "include_identity_permutation": false,
+        "permutations_are_random_pixel_orders": true,
+        "task_id_provided_to_learner": false,
+        "single_pass_examples_within_task": false,
+        "test_permutation_views": 3,
+        "test_views_cover_all_permutations": true,
+        "full_mnist_task_blocks": false,
+        "matches_dohare_opmnist_core_protocol": false,
+        "matches_dohare_opmnist_published_task_count": false,
+        "task_ids_observed": [
+          0,
+          1,
+          2
+        ],
+        "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.07769764214754105,
+          "final_window_mse": 0.0723319947719574,
+          "online_mean_accuracy": 0.4266666666666667,
+          "final_window_accuracy": 0.49333333333333335,
+          "mean_mlp_h64_weight": 0.21987782418727875,
+          "final_mlp_h64_weight": 0.1887834519147873,
+          "mean_mlp_h128_weight": 0.24642232060432434,
+          "final_mlp_h128_weight": 0.21594388782978058,
+          "mean_mlp_h64_64_weight": 0.11754734069108963,
+          "final_mlp_h64_64_weight": 0.06566222757101059,
+          "mean_upgd_low_noise_weight": 0.3907492160797119,
+          "final_upgd_low_noise_weight": 0.4834022521972656,
+          "mean_dynamic_sparse_weight": 0.0254033412784338,
+          "final_dynamic_sparse_weight": 0.04620815068483353,
+          "mean_mlp_guard_mlp_h64_weight": 0.3793921172618866,
+          "final_mlp_guard_mlp_h64_weight": 0.40133410692214966,
+          "mean_mlp_guard_mlp_h128_weight": 0.4231209456920624,
+          "final_mlp_guard_mlp_h128_weight": 0.45907461643218994,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.19748695194721222,
+          "final_mlp_guard_mlp_h64_64_weight": 0.139591246843338,
+          "mean_accuracy_mlp_h64_weight": 0.15473532676696777,
+          "final_accuracy_mlp_h64_weight": 0.02362683229148388,
+          "mean_accuracy_mlp_h128_weight": 0.8236426711082458,
+          "final_accuracy_mlp_h128_weight": 0.9753598570823669,
+          "mean_accuracy_mlp_h64_64_weight": 0.005015236791223288,
+          "final_accuracy_mlp_h64_64_weight": 7.235170187414042e-07,
+          "mean_accuracy_upgd_low_noise_weight": 0.00907109770923853,
+          "final_accuracy_upgd_low_noise_weight": 0.0009949238738045096,
+          "mean_accuracy_dynamic_sparse_weight": 0.007535605225712061,
+          "final_accuracy_dynamic_sparse_weight": 1.765196066116914e-05,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0,
+          "test_mse": 0.06857988486687343,
+          "test_accuracy": 0.5366666913032532,
+          "deployment_mlp_h64_weight": 0.1887834519147873,
+          "deployment_mlp_h128_weight": 0.21594388782978058,
+          "deployment_mlp_h64_64_weight": 0.06566222757101059,
+          "deployment_upgd_low_noise_weight": 0.4834022521972656,
+          "deployment_dynamic_sparse_weight": 0.04620815068483353,
+          "retention_hazard": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.09823399782180786,
+          "final_window_mse": 0.0896923691034317,
+          "online_mean_accuracy": 0.35833333333333334,
+          "final_window_accuracy": 0.4266666666666667,
+          "test_mse": 0.09400794158379237,
+          "test_accuracy": 0.33666666348775226
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.09738510847091675,
+          "final_window_mse": 0.09002390503883362,
+          "online_mean_accuracy": 0.38666666666666666,
+          "final_window_accuracy": 0.4,
+          "test_mse": 0.0905712420741717,
+          "test_accuracy": 0.43888889749844867
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.10335949808359146,
+          "final_window_mse": 0.09526567906141281,
+          "online_mean_accuracy": 0.30833333333333335,
+          "final_window_accuracy": 0.36666666666666664,
+          "test_mse": 0.09696037322282791,
+          "test_accuracy": 0.3122222274541855
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.0936959832906723,
+          "final_window_mse": 0.08541694283485413,
+          "online_mean_accuracy": 0.335,
+          "final_window_accuracy": 0.38666666666666666,
+          "test_mse": 0.07844081024328868,
+          "test_accuracy": 0.448888897895813
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.11176583915948868,
+          "final_window_mse": 0.09414773434400558,
+          "online_mean_accuracy": 0.30833333333333335,
+          "final_window_accuracy": 0.36666666666666664,
+          "test_mse": 0.08516444265842438,
+          "test_accuracy": 0.46888889869054157
+        }
+      },
+      "retention_router": {
+        "retention_hazard": false,
+        "lifetime_class_count": 10,
+        "recent_class_count": 10,
+        "lifetime_class_fraction": 1.0,
+        "recent_class_fraction": 1.0,
+        "recent_fraction_of_lifetime": 1.0,
+        "router": "none",
+        "deployment_source": "tracking",
+        "tracking_mlp_h64_weight": 0.1887834519147873,
+        "tracking_mlp_h128_weight": 0.21594388782978058,
+        "tracking_mlp_h64_64_weight": 0.06566222757101059,
+        "tracking_upgd_low_noise_weight": 0.4834022521972656,
+        "tracking_dynamic_sparse_weight": 0.04620815068483353,
+        "deployment_mlp_h64_weight": 0.1887834519147873,
+        "deployment_mlp_h128_weight": 0.21594388782978058,
+        "deployment_mlp_h64_64_weight": 0.06566222757101059,
+        "deployment_upgd_low_noise_weight": 0.4834022521972656,
+        "deployment_dynamic_sparse_weight": 0.04620815068483353
+      }
+    },
+    {
+      "dataset_name": "permuted_mnist_like",
+      "seed": 1,
+      "dataset": {
+        "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+        "source_kind": "openml_mnist_784",
+        "is_true_mnist": true,
+        "description": "OpenML MNIST 28x28 handwritten digits.",
+        "n_total": 70000,
+        "n_train": 1000,
+        "n_test": 300,
+        "feature_dim": 784,
+        "n_classes": 10,
+        "train_fraction": 0.7,
+        "split": "stratified",
+        "split_seed": 1,
+        "max_train_examples": 1000,
+        "max_test_examples": 300,
+        "openml_data_home": "outputs/step2_canonical/openml_external_cache",
+        "is_full_mnist_split": false,
+        "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+        "benchmark": "permuted_mnist_like",
+        "protocol": "compact_online_permuted_pixels",
+        "steps": 600,
+        "sequence_seed": 10001,
+        "n_permutations": 3,
+        "task_block_size": 200,
+        "sample_with_replacement": false,
+        "task_sampling": "random",
+        "include_identity_permutation": false,
+        "permutations_are_random_pixel_orders": true,
+        "task_id_provided_to_learner": false,
+        "single_pass_examples_within_task": false,
+        "test_permutation_views": 3,
+        "test_views_cover_all_permutations": true,
+        "full_mnist_task_blocks": false,
+        "matches_dohare_opmnist_core_protocol": false,
+        "matches_dohare_opmnist_published_task_count": false,
+        "task_ids_observed": [
+          0,
+          1,
+          2
+        ],
+        "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.07663494348526001,
+          "final_window_mse": 0.07135236263275146,
+          "online_mean_accuracy": 0.44333333333333336,
+          "final_window_accuracy": 0.48,
+          "mean_mlp_h64_weight": 0.2991236746311188,
+          "final_mlp_h64_weight": 0.23052054643630981,
+          "mean_mlp_h128_weight": 0.287282258272171,
+          "final_mlp_h128_weight": 0.36497417092323303,
+          "mean_mlp_h64_64_weight": 0.14516586065292358,
+          "final_mlp_h64_64_weight": 0.09058557450771332,
+          "mean_upgd_low_noise_weight": 0.2148868292570114,
+          "final_upgd_low_noise_weight": 0.2003408819437027,
+          "mean_dynamic_sparse_weight": 0.053541380912065506,
+          "final_dynamic_sparse_weight": 0.11357884854078293,
+          "mean_mlp_guard_mlp_h64_weight": 0.4107794761657715,
+          "final_mlp_guard_mlp_h64_weight": 0.33599647879600525,
+          "mean_mlp_guard_mlp_h128_weight": 0.39061227440834045,
+          "final_mlp_guard_mlp_h128_weight": 0.5319700837135315,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.19860827922821045,
+          "final_mlp_guard_mlp_h64_64_weight": 0.13203346729278564,
+          "mean_accuracy_mlp_h64_weight": 0.25878122448921204,
+          "final_accuracy_mlp_h64_weight": 0.00016499997582286596,
+          "mean_accuracy_mlp_h128_weight": 0.6839186549186707,
+          "final_accuracy_mlp_h128_weight": 0.9998340606689453,
+          "mean_accuracy_mlp_h64_64_weight": 0.007885357365012169,
+          "final_accuracy_mlp_h64_64_weight": 7.29889926276428e-09,
+          "mean_accuracy_upgd_low_noise_weight": 0.02064863219857216,
+          "final_accuracy_upgd_low_noise_weight": 1.0788180349052823e-09,
+          "mean_accuracy_dynamic_sparse_weight": 0.028766082599759102,
+          "final_accuracy_dynamic_sparse_weight": 9.40088682455098e-07,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0,
+          "test_mse": 0.07070256024599075,
+          "test_accuracy": 0.547777791817983,
+          "deployment_mlp_h64_weight": 0.23052054643630981,
+          "deployment_mlp_h128_weight": 0.36497417092323303,
+          "deployment_mlp_h64_64_weight": 0.09058557450771332,
+          "deployment_upgd_low_noise_weight": 0.2003408819437027,
+          "deployment_dynamic_sparse_weight": 0.11357884854078293,
+          "retention_hazard": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.09555231779813766,
+          "final_window_mse": 0.08957384526729584,
+          "online_mean_accuracy": 0.38333333333333336,
+          "final_window_accuracy": 0.4,
+          "test_mse": 0.08770988881587982,
+          "test_accuracy": 0.40444445610046387
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.0950724259018898,
+          "final_window_mse": 0.08499761670827866,
+          "online_mean_accuracy": 0.41,
+          "final_window_accuracy": 0.46,
+          "test_mse": 0.08947779983282089,
+          "test_accuracy": 0.4766666690508525
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.10090849548578262,
+          "final_window_mse": 0.0937003418803215,
+          "online_mean_accuracy": 0.31833333333333336,
+          "final_window_accuracy": 0.35333333333333333,
+          "test_mse": 0.11017820239067078,
+          "test_accuracy": 0.23777777949968973
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.09758041054010391,
+          "final_window_mse": 0.08829738944768906,
+          "online_mean_accuracy": 0.3233333333333333,
+          "final_window_accuracy": 0.32666666666666666,
+          "test_mse": 0.08339514831701915,
+          "test_accuracy": 0.40555556615193683
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.10571619868278503,
+          "final_window_mse": 0.08640430122613907,
+          "online_mean_accuracy": 0.335,
+          "final_window_accuracy": 0.4066666666666667,
+          "test_mse": 0.08650212238232295,
+          "test_accuracy": 0.41333333651224774
+        }
+      },
+      "retention_router": {
+        "retention_hazard": false,
+        "lifetime_class_count": 10,
+        "recent_class_count": 10,
+        "lifetime_class_fraction": 1.0,
+        "recent_class_fraction": 1.0,
+        "recent_fraction_of_lifetime": 1.0,
+        "router": "none",
+        "deployment_source": "tracking",
+        "tracking_mlp_h64_weight": 0.23052054643630981,
+        "tracking_mlp_h128_weight": 0.36497417092323303,
+        "tracking_mlp_h64_64_weight": 0.09058557450771332,
+        "tracking_upgd_low_noise_weight": 0.2003408819437027,
+        "tracking_dynamic_sparse_weight": 0.11357884854078293,
+        "deployment_mlp_h64_weight": 0.23052054643630981,
+        "deployment_mlp_h128_weight": 0.36497417092323303,
+        "deployment_mlp_h64_64_weight": 0.09058557450771332,
+        "deployment_upgd_low_noise_weight": 0.2003408819437027,
+        "deployment_dynamic_sparse_weight": 0.11357884854078293
+      }
+    },
+    {
+      "dataset_name": "permuted_mnist_like",
+      "seed": 2,
+      "dataset": {
+        "dataset": "sklearn.datasets.fetch_openml('mnist_784', version=1)",
+        "source_kind": "openml_mnist_784",
+        "is_true_mnist": true,
+        "description": "OpenML MNIST 28x28 handwritten digits.",
+        "n_total": 70000,
+        "n_train": 1000,
+        "n_test": 300,
+        "feature_dim": 784,
+        "n_classes": 10,
+        "train_fraction": 0.7,
+        "split": "stratified",
+        "split_seed": 2,
+        "max_train_examples": 1000,
+        "max_test_examples": 300,
+        "openml_data_home": "outputs/step2_canonical/openml_external_cache",
+        "is_full_mnist_split": false,
+        "limitations": "True OpenML MNIST. This is a full source split only when is_full_mnist_split=true; the online protocol still depends on task_block_size, task_sampling, and n_permutations.",
+        "benchmark": "permuted_mnist_like",
+        "protocol": "compact_online_permuted_pixels",
+        "steps": 600,
+        "sequence_seed": 10002,
+        "n_permutations": 3,
+        "task_block_size": 200,
+        "sample_with_replacement": false,
+        "task_sampling": "random",
+        "include_identity_permutation": false,
+        "permutations_are_random_pixel_orders": true,
+        "task_id_provided_to_learner": false,
+        "single_pass_examples_within_task": false,
+        "test_permutation_views": 3,
+        "test_views_cover_all_permutations": true,
+        "full_mnist_task_blocks": false,
+        "matches_dohare_opmnist_core_protocol": false,
+        "matches_dohare_opmnist_published_task_count": false,
+        "task_ids_observed": [
+          0,
+          1,
+          2
+        ],
+        "published_protocol_delta": "Dohare et al. used true MNIST, randomized pixel permutations, 60,000 examples per task, 800 tasks in the main OPMNIST protocol, a single pass through each task in random order, no mini-batches, and no task-switch indication. This runner is only a published-scale OPMNIST run when matches_dohare_opmnist_core_protocol and matches_dohare_opmnist_published_task_count are both true."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.07754600048065186,
+          "final_window_mse": 0.0714046061038971,
+          "online_mean_accuracy": 0.425,
+          "final_window_accuracy": 0.49333333333333335,
+          "mean_mlp_h64_weight": 0.20570935308933258,
+          "final_mlp_h64_weight": 0.2631279230117798,
+          "mean_mlp_h128_weight": 0.24168162047863007,
+          "final_mlp_h128_weight": 0.23071104288101196,
+          "mean_mlp_h64_64_weight": 0.14847424626350403,
+          "final_mlp_h64_64_weight": 0.09636913239955902,
+          "mean_upgd_low_noise_weight": 0.37820112705230713,
+          "final_upgd_low_noise_weight": 0.3929673433303833,
+          "mean_dynamic_sparse_weight": 0.025933651253581047,
+          "final_dynamic_sparse_weight": 0.01682453230023384,
+          "mean_mlp_guard_mlp_h64_weight": 0.34943002462387085,
+          "final_mlp_guard_mlp_h64_weight": 0.44582217931747437,
+          "mean_mlp_guard_mlp_h128_weight": 0.4055083394050598,
+          "final_mlp_guard_mlp_h128_weight": 0.3908979594707489,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.24506159126758575,
+          "final_mlp_guard_mlp_h64_64_weight": 0.16327978670597076,
+          "mean_accuracy_mlp_h64_weight": 0.38817480206489563,
+          "final_accuracy_mlp_h64_weight": 0.013197006657719612,
+          "mean_accuracy_mlp_h128_weight": 0.5482324957847595,
+          "final_accuracy_mlp_h128_weight": 0.9868005514144897,
+          "mean_accuracy_mlp_h64_64_weight": 0.007477793842554092,
+          "final_accuracy_mlp_h64_64_weight": 5.888917797847171e-08,
+          "mean_accuracy_upgd_low_noise_weight": 0.049218665808439255,
+          "final_accuracy_upgd_low_noise_weight": 2.3806906028767116e-06,
+          "mean_accuracy_dynamic_sparse_weight": 0.0068962774239480495,
+          "final_accuracy_dynamic_sparse_weight": 1.4403061854295629e-08,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0,
+          "test_mse": 0.06865374619762103,
+          "test_accuracy": 0.5677777727444967,
+          "deployment_mlp_h64_weight": 0.2631279230117798,
+          "deployment_mlp_h128_weight": 0.23071104288101196,
+          "deployment_mlp_h64_64_weight": 0.09636913239955902,
+          "deployment_upgd_low_noise_weight": 0.3929673433303833,
+          "deployment_dynamic_sparse_weight": 0.01682453230023384,
+          "retention_hazard": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.09769288450479507,
+          "final_window_mse": 0.08555130660533905,
+          "online_mean_accuracy": 0.39,
+          "final_window_accuracy": 0.4266666666666667,
+          "test_mse": 0.09538999944925308,
+          "test_accuracy": 0.3866666704416275
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.09715814888477325,
+          "final_window_mse": 0.08573003113269806,
+          "online_mean_accuracy": 0.4,
+          "final_window_accuracy": 0.46,
+          "test_mse": 0.08685847123463948,
+          "test_accuracy": 0.47555555899937946
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.10117807984352112,
+          "final_window_mse": 0.09090808779001236,
+          "online_mean_accuracy": 0.30833333333333335,
+          "final_window_accuracy": 0.38666666666666666,
+          "test_mse": 0.10006819417079289,
+          "test_accuracy": 0.3477777789036433
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.09399034827947617,
+          "final_window_mse": 0.08586841821670532,
+          "online_mean_accuracy": 0.3383333333333333,
+          "final_window_accuracy": 0.37333333333333335,
+          "test_mse": 0.07550691564877827,
+          "test_accuracy": 0.4888888994852702
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.11327597498893738,
+          "final_window_mse": 0.09874824434518814,
+          "online_mean_accuracy": 0.2966666666666667,
+          "final_window_accuracy": 0.38666666666666666,
+          "test_mse": 0.08525113264719646,
+          "test_accuracy": 0.43666668732961017
+        }
+      },
+      "retention_router": {
+        "retention_hazard": false,
+        "lifetime_class_count": 10,
+        "recent_class_count": 10,
+        "lifetime_class_fraction": 1.0,
+        "recent_class_fraction": 1.0,
+        "recent_fraction_of_lifetime": 1.0,
+        "router": "none",
+        "deployment_source": "tracking",
+        "tracking_mlp_h64_weight": 0.2631279230117798,
+        "tracking_mlp_h128_weight": 0.23071104288101196,
+        "tracking_mlp_h64_64_weight": 0.09636913239955902,
+        "tracking_upgd_low_noise_weight": 0.3929673433303833,
+        "tracking_dynamic_sparse_weight": 0.01682453230023384,
+        "deployment_mlp_h64_weight": 0.2631279230117798,
+        "deployment_mlp_h128_weight": 0.23071104288101196,
+        "deployment_mlp_h64_64_weight": 0.09636913239955902,
+        "deployment_upgd_low_noise_weight": 0.3929673433303833,
+        "deployment_dynamic_sparse_weight": 0.01682453230023384
+      }
+    }
+  ],
+  "aggregate": {
+    "permuted_mnist_like": {
+      "mixture": {
+        "deployment_dynamic_sparse_weight": {
+          "mean": 0.05887051050861677,
+          "stderr": 0.028639139564730094,
+          "values": [
+            0.04620815068483353,
+            0.11357884854078293,
+            0.01682453230023384
+          ]
+        },
+        "deployment_mlp_h128_weight": {
+          "mean": 0.27054303387800854,
+          "stderr": 0.047407618761183865,
+          "values": [
+            0.21594388782978058,
+            0.36497417092323303,
+            0.23071104288101196
+          ]
+        },
+        "deployment_mlp_h64_64_weight": {
+          "mean": 0.08420564482609431,
+          "stderr": 0.00942083025524087,
+          "values": [
+            0.06566222757101059,
+            0.09058557450771332,
+            0.09636913239955902
+          ]
+        },
+        "deployment_mlp_h64_weight": {
+          "mean": 0.22747730712095895,
+          "stderr": 0.02151527422414722,
+          "values": [
+            0.1887834519147873,
+            0.23052054643630981,
+            0.2631279230117798
+          ]
+        },
+        "deployment_upgd_low_noise_weight": {
+          "mean": 0.35890349249045056,
+          "stderr": 0.08346894488968147,
+          "values": [
+            0.4834022521972656,
+            0.2003408819437027,
+            0.3929673433303833
+          ]
+        },
+        "final_accuracy_dynamic_sparse_weight": {
+          "mean": 6.202150801826178e-06,
+          "stderr": 5.731138130958436e-06,
+          "values": [
+            1.765196066116914e-05,
+            9.40088682455098e-07,
+            1.4403061854295629e-08
+          ]
+        },
+        "final_accuracy_mlp_h128_weight": {
+          "mean": 0.987331489721934,
+          "stderr": 0.0070700797240685394,
+          "values": [
+            0.9753598570823669,
+            0.9998340606689453,
+            0.9868005514144897
+          ]
+        },
+        "final_accuracy_mlp_h64_64_weight": {
+          "mean": 2.632350319942134e-07,
+          "stderr": 2.3062236065875237e-07,
+          "values": [
+            7.235170187414042e-07,
+            7.29889926276428e-09,
+            5.888917797847171e-08
+          ]
+        },
+        "final_accuracy_mlp_h64_weight": {
+          "mean": 0.012329612975008786,
+          "stderr": 0.006786719206230501,
+          "values": [
+            0.02362683229148388,
+            0.00016499997582286596,
+            0.013197006657719612
+          ]
+        },
+        "final_accuracy_upgd_low_noise_weight": {
+          "mean": 0.00033243521440847373,
+          "stderr": 0.0003312450419801678,
+          "values": [
+            0.0009949238738045096,
+            1.0788180349052823e-09,
+            2.3806906028767116e-06
+          ]
+        },
+        "final_dynamic_sparse_weight": {
+          "mean": 0.05887051050861677,
+          "stderr": 0.028639139564730094,
+          "values": [
+            0.04620815068483353,
+            0.11357884854078293,
+            0.01682453230023384
+          ]
+        },
+        "final_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "final_mlp_guard_mlp_h128_weight": {
+          "mean": 0.4606475532054901,
+          "stderr": 0.040731607944209505,
+          "values": [
+            0.45907461643218994,
+            0.5319700837135315,
+            0.3908979594707489
+          ]
+        },
+        "final_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.1449681669473648,
+          "stderr": 0.009412165382657931,
+          "values": [
+            0.139591246843338,
+            0.13203346729278564,
+            0.16327978670597076
+          ]
+        },
+        "final_mlp_guard_mlp_h64_weight": {
+          "mean": 0.3943842550118764,
+          "stderr": 0.03189381577954626,
+          "values": [
+            0.40133410692214966,
+            0.33599647879600525,
+            0.44582217931747437
+          ]
+        },
+        "final_mlp_h128_weight": {
+          "mean": 0.27054303387800854,
+          "stderr": 0.047407618761183865,
+          "values": [
+            0.21594388782978058,
+            0.36497417092323303,
+            0.23071104288101196
+          ]
+        },
+        "final_mlp_h64_64_weight": {
+          "mean": 0.08420564482609431,
+          "stderr": 0.00942083025524087,
+          "values": [
+            0.06566222757101059,
+            0.09058557450771332,
+            0.09636913239955902
+          ]
+        },
+        "final_mlp_h64_weight": {
+          "mean": 0.22747730712095895,
+          "stderr": 0.02151527422414722,
+          "values": [
+            0.1887834519147873,
+            0.23052054643630981,
+            0.2631279230117798
+          ]
+        },
+        "final_upgd_low_noise_weight": {
+          "mean": 0.35890349249045056,
+          "stderr": 0.08346894488968147,
+          "values": [
+            0.4834022521972656,
+            0.2003408819437027,
+            0.3929673433303833
+          ]
+        },
+        "final_window_accuracy": {
+          "mean": 0.48888888888888893,
+          "stderr": 0.004444444444444455,
+          "values": [
+            0.49333333333333335,
+            0.48,
+            0.49333333333333335
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.07169632116953532,
+          "stderr": 0.0003181944068655372,
+          "values": [
+            0.0723319947719574,
+            0.07135236263275146,
+            0.0714046061038971
+          ]
+        },
+        "mean_accuracy_dynamic_sparse_weight": {
+          "mean": 0.014399321749806404,
+          "stderr": 0.007185750900203524,
+          "values": [
+            0.007535605225712061,
+            0.028766082599759102,
+            0.0068962774239480495
+          ]
+        },
+        "mean_accuracy_mlp_h128_weight": {
+          "mean": 0.6852646072705587,
+          "stderr": 0.07950691764186002,
+          "values": [
+            0.8236426711082458,
+            0.6839186549186707,
+            0.5482324957847595
+          ]
+        },
+        "mean_accuracy_mlp_h64_64_weight": {
+          "mean": 0.006792795999596517,
+          "stderr": 0.000896533055844188,
+          "values": [
+            0.005015236791223288,
+            0.007885357365012169,
+            0.007477793842554092
+          ]
+        },
+        "mean_accuracy_mlp_h64_weight": {
+          "mean": 0.26723045110702515,
+          "stderr": 0.06752046413167971,
+          "values": [
+            0.15473532676696777,
+            0.25878122448921204,
+            0.38817480206489563
+          ]
+        },
+        "mean_accuracy_upgd_low_noise_weight": {
+          "mean": 0.026312798572083313,
+          "stderr": 0.011930617357595832,
+          "values": [
+            0.00907109770923853,
+            0.02064863219857216,
+            0.049218665808439255
+          ]
+        },
+        "mean_dynamic_sparse_weight": {
+          "mean": 0.03495945781469345,
+          "stderr": 0.00929222267391611,
+          "values": [
+            0.0254033412784338,
+            0.053541380912065506,
+            0.025933651253581047
+          ]
+        },
+        "mean_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_mlp_guard_mlp_h128_weight": {
+          "mean": 0.40641385316848755,
+          "stderr": 0.00939536044261722,
+          "values": [
+            0.4231209456920624,
+            0.39061227440834045,
+            0.4055083394050598
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.21371894081433615,
+          "stderr": 0.015674667958138898,
+          "values": [
+            0.19748695194721222,
+            0.19860827922821045,
+            0.24506159126758575
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_weight": {
+          "mean": 0.37986720601717633,
+          "stderr": 0.017711654196385835,
+          "values": [
+            0.3793921172618866,
+            0.4107794761657715,
+            0.34943002462387085
+          ]
+        },
+        "mean_mlp_h128_weight": {
+          "mean": 0.2584620664517085,
+          "stderr": 0.014474934102862455,
+          "values": [
+            0.24642232060432434,
+            0.287282258272171,
+            0.24168162047863007
+          ]
+        },
+        "mean_mlp_h64_64_weight": {
+          "mean": 0.13706248253583908,
+          "stderr": 0.00980419850119652,
+          "values": [
+            0.11754734069108963,
+            0.14516586065292358,
+            0.14847424626350403
+          ]
+        },
+        "mean_mlp_h64_weight": {
+          "mean": 0.24157028396924338,
+          "stderr": 0.029065907726075292,
+          "values": [
+            0.21987782418727875,
+            0.2991236746311188,
+            0.20570935308933258
+          ]
+        },
+        "mean_upgd_low_noise_weight": {
+          "mean": 0.3279457241296768,
+          "stderr": 0.05664538497509815,
+          "values": [
+            0.3907492160797119,
+            0.2148868292570114,
+            0.37820112705230713
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.4316666666666667,
+          "stderr": 0.005853140973807083,
+          "values": [
+            0.4266666666666667,
+            0.44333333333333336,
+            0.425
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.07729286203781764,
+          "stderr": 0.00033185911425074937,
+          "values": [
+            0.07769764214754105,
+            0.07663494348526001,
+            0.07754600048065186
+          ]
+        },
+        "retention_hazard": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.5507407519552444,
+          "stderr": 0.00910236593222098,
+          "values": [
+            0.5366666913032532,
+            0.547777791817983,
+            0.5677777727444967
+          ]
+        },
+        "test_mse": {
+          "mean": 0.06931206377016175,
+          "stderr": 0.0006955751124104991,
+          "values": [
+            0.06857988486687343,
+            0.07070256024599075,
+            0.06865374619762103
+          ]
+        }
+      },
+      "mlp_h64": {
+        "final_window_accuracy": {
+          "mean": 0.4177777777777778,
+          "stderr": 0.00888888888888889,
+          "values": [
+            0.4266666666666667,
+            0.4,
+            0.4266666666666667
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.0882725069920222,
+          "stderr": 0.0013610303245821366,
+          "values": [
+            0.0896923691034317,
+            0.08957384526729584,
+            0.08555130660533905
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.3772222222222223,
+          "stderr": 0.009638528651609711,
+          "values": [
+            0.35833333333333334,
+            0.38333333333333336,
+            0.39
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.09715973337491353,
+          "stderr": 0.0008187469150696935,
+          "values": [
+            0.09823399782180786,
+            0.09555231779813766,
+            0.09769288450479507
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.37592593000994784,
+          "stderr": 0.020289405458912738,
+          "values": [
+            0.33666666348775226,
+            0.40444445610046387,
+            0.3866666704416275
+          ]
+        },
+        "test_mse": {
+          "mean": 0.09236927661630844,
+          "stderr": 0.0023636089631435537,
+          "values": [
+            0.09400794158379237,
+            0.08770988881587982,
+            0.09538999944925308
+          ]
+        }
+      },
+      "mlp_h128": {
+        "final_window_accuracy": {
+          "mean": 0.44,
+          "stderr": 0.02,
+          "values": [
+            0.4,
+            0.46,
+            0.46
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.08691718429327011,
+          "stderr": 0.0015676833295726964,
+          "values": [
+            0.09002390503883362,
+            0.08499761670827866,
+            0.08573003113269806
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.3988888888888889,
+          "stderr": 0.006758625033664685,
+          "values": [
+            0.38666666666666666,
+            0.41,
+            0.4
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.09653856108585994,
+          "stderr": 0.0007359895711878801,
+          "values": [
+            0.09738510847091675,
+            0.0950724259018898,
+            0.09715814888477325
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.46370370851622683,
+          "stderr": 0.012411550746148468,
+          "values": [
+            0.43888889749844867,
+            0.4766666690508525,
+            0.47555555899937946
+          ]
+        },
+        "test_mse": {
+          "mean": 0.0889691710472107,
+          "stderr": 0.00110154350161999,
+          "values": [
+            0.0905712420741717,
+            0.08947779983282089,
+            0.08685847123463948
+          ]
+        }
+      },
+      "mlp_h64_64": {
+        "final_window_accuracy": {
+          "mean": 0.3688888888888889,
+          "stderr": 0.00968644209675705,
+          "values": [
+            0.36666666666666664,
+            0.35333333333333333,
+            0.38666666666666666
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.09329136957724889,
+          "stderr": 0.0012744402929203522,
+          "values": [
+            0.09526567906141281,
+            0.0937003418803215,
+            0.09090808779001236
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.3116666666666667,
+          "stderr": 0.003333333333333336,
+          "values": [
+            0.30833333333333335,
+            0.31833333333333336,
+            0.30833333333333335
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.1018153578042984,
+          "stderr": 0.0007759823522662005,
+          "values": [
+            0.10335949808359146,
+            0.10090849548578262,
+            0.10117807984352112
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.29925926195250613,
+          "stderr": 0.03240899475539542,
+          "values": [
+            0.3122222274541855,
+            0.23777777949968973,
+            0.3477777789036433
+          ]
+        },
+        "test_mse": {
+          "mean": 0.10240225659476386,
+          "stderr": 0.00399013940971216,
+          "values": [
+            0.09696037322282791,
+            0.11017820239067078,
+            0.10006819417079289
+          ]
+        }
+      },
+      "upgd_low_noise": {
+        "final_window_accuracy": {
+          "mean": 0.3622222222222222,
+          "stderr": 0.018189672826383226,
+          "values": [
+            0.38666666666666666,
+            0.32666666666666666,
+            0.37333333333333335
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.0865275834997495,
+          "stderr": 0.0008944490529791866,
+          "values": [
+            0.08541694283485413,
+            0.08829738944768906,
+            0.08586841821670532
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.3322222222222222,
+          "stderr": 0.0045474182065958135,
+          "values": [
+            0.335,
+            0.3233333333333333,
+            0.3383333333333333
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.0950889140367508,
+          "stderr": 0.0012486431043769058,
+          "values": [
+            0.0936959832906723,
+            0.09758041054010391,
+            0.09399034827947617
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.44777778784434,
+          "stderr": 0.024062675351887317,
+          "values": [
+            0.448888897895813,
+            0.40555556615193683,
+            0.4888888994852702
+          ]
+        },
+        "test_mse": {
+          "mean": 0.07911429140302871,
+          "stderr": 0.0023019003968800223,
+          "values": [
+            0.07844081024328868,
+            0.08339514831701915,
+            0.07550691564877827
+          ]
+        }
+      },
+      "dynamic_sparse": {
+        "final_window_accuracy": {
+          "mean": 0.38666666666666666,
+          "stderr": 0.011547005383792526,
+          "values": [
+            0.36666666666666664,
+            0.4066666666666667,
+            0.38666666666666666
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.09310009330511093,
+          "stderr": 0.0036016846401539164,
+          "values": [
+            0.09414773434400558,
+            0.08640430122613907,
+            0.09874824434518814
+          ]
+        },
+        "online_mean_accuracy": {
+          "mean": 0.3133333333333333,
+          "stderr": 0.011344765475923408,
+          "values": [
+            0.30833333333333335,
+            0.335,
+            0.2966666666666667
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.11025267094373703,
+          "stderr": 0.0023097483980321584,
+          "values": [
+            0.11176583915948868,
+            0.10571619868278503,
+            0.11327597498893738
+          ]
+        },
+        "test_accuracy": {
+          "mean": 0.43962964084413314,
+          "stderr": 0.016105790287796976,
+          "values": [
+            0.46888889869054157,
+            0.41333333651224774,
+            0.43666668732961017
+          ]
+        },
+        "test_mse": {
+          "mean": 0.08563923256264794,
+          "stderr": 0.0004321700742425454,
+          "values": [
+            0.08516444265842438,
+            0.08650212238232295,
+            0.08525113264719646
+          ]
+        }
+      },
+      "comparisons": {
+        "final_window_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.015050776302814484,
+            "paired_diff_stderr": 0.0011638362456416382,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.017360374331474304,
+              0.013645254075527191,
+              0.014146700501441956
+            ],
+            "best_baseline_counts": {
+              "mlp_h64": 2,
+              "mlp_h128": 1
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.013625634213288626,
+            "paired_diff_stderr": 0.00030665847693858565,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.013084948062896729,
+              0.013645254075527191,
+              0.014146700501441956
+            ],
+            "best_baseline_counts": {
+              "upgd_low_noise": 1,
+              "mlp_h128": 1,
+              "mlp_h64": 1
+            }
+          }
+        },
+        "online_mean_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.019245699048042297,
+            "paired_diff_stderr": 0.00040469280106809967,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.019687466323375702,
+              0.01843748241662979,
+              0.0196121484041214
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 3
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.016960057119528454,
+            "paired_diff_stderr": 0.0007498487882270799,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.015998341143131256,
+              0.01843748241662979,
+              0.01644434779882431
+            ],
+            "best_baseline_counts": {
+              "upgd_low_noise": 2,
+              "mlp_h128": 1
+            }
+          }
+        },
+        "test_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "test_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.019067803604735267,
+            "paired_diff_stderr": 0.0015020889704195134,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.02199135720729828,
+              0.01700732856988907,
+              0.01820472503701845
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 2,
+              "mlp_h64": 1
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "test_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.009802227632866964,
+            "paired_diff_stderr": 0.0016859504266483962,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.009860925376415253,
+              0.012692588071028396,
+              0.006853169451157243
+            ],
+            "best_baseline_counts": {
+              "upgd_low_noise": 3
+            }
+          }
+        },
+        "final_window_accuracy": {
+          "mixture_vs_best_mlp": {
+            "metric": "final_window_accuracy",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.03999999999999998,
+            "paired_diff_stderr": 0.013877773329774225,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.06666666666666665,
+              0.019999999999999962,
+              0.033333333333333326
+            ],
+            "best_baseline_counts": {
+              "mlp_h64": 1,
+              "mlp_h128": 2
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "final_window_accuracy",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.03999999999999998,
+            "paired_diff_stderr": 0.013877773329774225,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.06666666666666665,
+              0.019999999999999962,
+              0.033333333333333326
+            ],
+            "best_baseline_counts": {
+              "mlp_h64": 1,
+              "mlp_h128": 2
+            }
+          }
+        },
+        "online_mean_accuracy": {
+          "mixture_vs_best_mlp": {
+            "metric": "online_mean_accuracy",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.032777777777777795,
+            "paired_diff_stderr": 0.00433902759772594,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.040000000000000036,
+              0.03333333333333338,
+              0.024999999999999967
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 3
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "online_mean_accuracy",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.032777777777777795,
+            "paired_diff_stderr": 0.00433902759772594,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.040000000000000036,
+              0.03333333333333338,
+              0.024999999999999967
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 3
+            }
+          }
+        },
+        "test_accuracy": {
+          "mixture_vs_best_mlp": {
+            "metric": "test_accuracy",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": 0.08703704343901743,
+            "paired_diff_stderr": 0.0081228551914813,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.0977777938048045,
+              0.07111112276713055,
+              0.09222221374511724
+            ],
+            "best_baseline_counts": {
+              "mlp_h128": 3
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "test_accuracy",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": 0.07259259621302289,
+            "paired_diff_stderr": 0.003291914385354037,
+            "wins_for_mixture": 3,
+            "wins_for_baseline": 0,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              0.06777779261271161,
+              0.07111112276713055,
+              0.0788888732592265
+            ],
+            "best_baseline_counts": {
+              "dynamic_sparse": 1,
+              "mlp_h128": 1,
+              "upgd_low_noise": 1
+            }
+          }
+        }
+      },
+      "best_expert_regret": {
+        "final_window_mse": {
+          "metric": "final_window_mse",
+          "mean_regret_positive_favors_best_expert": -0.013625634213288626,
+          "stderr": 0.00030665847693858565,
+          "values": [
+            -0.013084948062896729,
+            -0.013645254075527191,
+            -0.014146700501441956
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "upgd_low_noise": 1,
+            "mlp_h128": 1,
+            "mlp_h64": 1
+          }
+        },
+        "online_mean_mse": {
+          "metric": "online_mean_mse",
+          "mean_regret_positive_favors_best_expert": -0.016960057119528454,
+          "stderr": 0.0007498487882270799,
+          "values": [
+            -0.015998341143131256,
+            -0.01843748241662979,
+            -0.01644434779882431
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "upgd_low_noise": 2,
+            "mlp_h128": 1
+          }
+        },
+        "test_mse": {
+          "metric": "test_mse",
+          "mean_regret_positive_favors_best_expert": -0.009802227632866964,
+          "stderr": 0.0016859504266483962,
+          "values": [
+            -0.009860925376415253,
+            -0.012692588071028396,
+            -0.006853169451157243
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "upgd_low_noise": 3
+          }
+        },
+        "final_window_accuracy": {
+          "metric": "final_window_accuracy",
+          "mean_regret_positive_favors_best_expert": -0.03999999999999998,
+          "stderr": 0.013877773329774225,
+          "values": [
+            -0.06666666666666665,
+            -0.019999999999999962,
+            -0.033333333333333326
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "mlp_h64": 1,
+            "mlp_h128": 2
+          }
+        },
+        "online_mean_accuracy": {
+          "metric": "online_mean_accuracy",
+          "mean_regret_positive_favors_best_expert": -0.032777777777777795,
+          "stderr": 0.00433902759772594,
+          "values": [
+            -0.040000000000000036,
+            -0.03333333333333338,
+            -0.024999999999999967
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "mlp_h128": 3
+          }
+        },
+        "test_accuracy": {
+          "metric": "test_accuracy",
+          "mean_regret_positive_favors_best_expert": -0.07259259621302289,
+          "stderr": 0.003291914385354037,
+          "values": [
+            -0.06777779261271161,
+            -0.07111112276713055,
+            -0.0788888732592265
+          ],
+          "failures": 0,
+          "ties_or_beats_best": 3,
+          "best_expert_counts": {
+            "dynamic_sparse": 1,
+            "mlp_h128": 1,
+            "upgd_low_noise": 1
+          }
+        }
+      }
+    }
+  },
+  "status": {
+    "all_primary_nonnegative_vs_best_mlp": true,
+    "uses_true_mnist": true,
+    "uses_true_openml_mnist": true,
+    "uses_torchvision_mnist": false,
+    "uses_full_mnist_split": false,
+    "uses_full_openml_mnist_split": false,
+    "uses_full_mnist_task_blocks": false,
+    "task_id_provided_to_learner": false,
+    "single_pass_examples_within_task": false,
+    "uses_random_pixel_permutations_for_all_tasks": true,
+    "matches_dohare_opmnist_core_protocol": false,
+    "matches_dohare_opmnist_published_task_count": false,
+    "opmnist_steps": 600,
+    "opmnist_n_permutations": 3,
+    "uses_dohare_public_scr_config": false,
+    "scr_steps": 0,
+    "published_scale_external_claim_supported": false,
+    "checks": {
+      "permuted_mnist_like": {
+        "final_window_mse": {
+          "paired_diff_mean_positive_favors_portfolio": 0.015050776302814484,
+          "wins_for_portfolio": 3,
+          "wins_for_best_mlp": 0,
+          "ties": 0
+        },
+        "test_accuracy": {
+          "paired_diff_mean_positive_favors_portfolio": 0.08703704343901743,
+          "wins_for_portfolio": 3,
+          "wins_for_best_mlp": 0,
+          "ties": 0
+        }
+      }
+    }
+  },
+  "references": [
+    {
+      "name": "Dohare et al. 2024 Nature: Loss of plasticity in deep continual learning",
+      "url": "https://www.nature.com/articles/s41586-024-07711-7",
+      "relevance": "Online Permuted MNIST and Slowly-Changing Regression protocols."
+    },
+    {
+      "name": "shibhansh/loss-of-plasticity",
+      "url": "https://github.com/shibhansh/loss-of-plasticity",
+      "relevance": "Public reproduction repository for the loss-of-plasticity paper."
+    }
+  ],
+  "wall_clock_s": 29.25521492958069,
+  "evidence_level": "compact_published_style_external_stressors"
+}

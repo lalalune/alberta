@@ -1,0 +1,78 @@
+{
+  "boundary": "security-gym is locally available, but required rlsecd/chronos-sec daemon repositories and rollout logs are not available to this framework checkout",
+  "claim_scope": "external_active_defense_daemon_availability",
+  "generated_at": "2026-05-22T17:30:28.142389+00:00",
+  "github_exact": {
+    "shawwalters/chronos-sec": {
+      "available": false,
+      "command": [
+        "gh",
+        "repo",
+        "view",
+        "shawwalters/chronos-sec",
+        "--json",
+        "nameWithOwner,url"
+      ],
+      "returncode": 1,
+      "stderr": "GraphQL: Could not resolve to a Repository with the name 'shawwalters/chronos-sec'. (repository)",
+      "stdout": ""
+    },
+    "shawwalters/rlsecd": {
+      "available": false,
+      "command": [
+        "gh",
+        "repo",
+        "view",
+        "shawwalters/rlsecd",
+        "--json",
+        "nameWithOwner,url"
+      ],
+      "returncode": 1,
+      "stderr": "GraphQL: Could not resolve to a Repository with the name 'shawwalters/rlsecd'. (repository)",
+      "stdout": ""
+    }
+  },
+  "github_search": {
+    "available": true,
+    "command": [
+      "gh",
+      "search",
+      "repos",
+      "rlsecd",
+      "chronos-sec",
+      "--json",
+      "fullName,url,description",
+      "--limit",
+      "30"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "[]"
+  },
+  "local_checkouts": {
+    "chronos-sec": [],
+    "rlsecd": [],
+    "security-gym": [
+      "/Users/shawwalters/Desktop/nca_fun/security-gym"
+    ]
+  },
+  "missing_required_repos": [
+    "rlsecd",
+    "chronos-sec"
+  ],
+  "passed": false,
+  "required_repos": [
+    "rlsecd",
+    "chronos-sec"
+  ],
+  "rlsecd_available": false,
+  "roots": [
+    "/Users/shawwalters/Desktop/nca_fun",
+    "/Users/shawwalters/Desktop",
+    "/Users/shawwalters/src",
+    "/Users/shawwalters/Code",
+    "/Users/shawwalters/projects"
+  ],
+  "schema": "alberta.rlsecd_external_audit.v1",
+  "security_gym_available": true
+}

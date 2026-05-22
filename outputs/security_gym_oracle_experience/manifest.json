@@ -1,0 +1,34 @@
+{
+  "boundary": "exports local security-gym oracle experience records; does not prove unavailable rlsecd daemon or production-log integration",
+  "claim_scope": "local_security_gym_oracle_experience_export",
+  "feature_schema": {
+    "dtype": "float32",
+    "feature_dim": 12,
+    "names": [
+      "auth_chars_norm",
+      "syslog_chars_norm",
+      "web_chars_norm",
+      "process_chars_norm",
+      "network_chars_norm",
+      "file_chars_norm",
+      "system_load",
+      "system_mem_used",
+      "system_disk_used",
+      "n_blocked_ips",
+      "n_throttled_ips",
+      "is_isolated"
+    ],
+    "version": "security-gym-v1"
+  },
+  "n_records": 25,
+  "outcome_counts": {
+    "true_negative": 24,
+    "true_positive": 1
+  },
+  "passed": true,
+  "policy": "oracle_block_malicious",
+  "records_path": "outputs/security_gym_oracle_experience/records.jsonl",
+  "schema": "alberta.security_gym.oracle_experience_manifest.v1",
+  "source_rollout_passed": true,
+  "source_rollout_schema": "alberta.security_gym.counterfactual_rollout.v1"
+}

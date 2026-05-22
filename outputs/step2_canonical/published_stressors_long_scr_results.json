@@ -1,0 +1,1010 @@
+{
+  "config": {
+    "benchmarks": [
+      "slowly_changing_regression"
+    ],
+    "steps": 20000,
+    "n_seeds": 3,
+    "seed": 0,
+    "final_window": 5000,
+    "mnist_source": "auto",
+    "allow_openml_download": false,
+    "mnist_split": "stratified",
+    "openml_data_home": null,
+    "openml_n_retries": 2,
+    "openml_retry_delay": 1.0,
+    "train_fraction": 0.7,
+    "max_train_examples": 4000,
+    "max_test_examples": 1000,
+    "n_permutations": 5,
+    "task_block_size": 300,
+    "sample_with_replacement": false,
+    "task_sampling": "random",
+    "mnist_published_scale": false,
+    "scr_preset": "dohare_small",
+    "long_scr": true,
+    "regression_bits": 20,
+    "regression_slow_bits": 15,
+    "regression_flip_interval": 1000,
+    "regression_target_hidden": 100,
+    "regression_beta": 0.7,
+    "regression_noise_std": 0.01,
+    "expert_names": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64",
+      "upgd_low_noise",
+      "dynamic_sparse"
+    ],
+    "mlp_comparator_methods": [
+      "mlp_h64",
+      "mlp_h128",
+      "mlp_h64_64"
+    ],
+    "step_size": 0.03,
+    "sparsity": 0.5,
+    "perturbation_sigma": 0.0001,
+    "perturbation_warmup_steps": 0,
+    "perturbation_ramp_steps": 0,
+    "dynamic_hidden_size": 64,
+    "dynamic_utility_decay": 0.99,
+    "dynamic_rewire_interval": 500,
+    "dynamic_unit_replacement_rate": 0.05,
+    "hedge_eta": 1.0,
+    "hedge_discount": 0.995,
+    "router_policy": "convex",
+    "router_decay": 0.02,
+    "guard_tolerance": 0.0,
+    "digits_deployment_objective": "mse",
+    "online_retention_mse_guard": true,
+    "online_retention_min_lifetime_class_fraction": 0.7,
+    "online_retention_max_recent_class_fraction": 0.5,
+    "retention_router": "none",
+    "retention_upgd_deployment_weight": 1.0,
+    "retention_min_lifetime_class_fraction": 0.8,
+    "retention_max_recent_class_fraction": 0.4,
+    "output_dir": "outputs/step2_canonical",
+    "result_prefix": "published_stressors_long_scr"
+  },
+  "datasets": {
+    "slowly_changing_regression": {
+      "benchmark": "slowly_changing_regression",
+      "protocol": "lightweight_slowly_changing_binary_regression",
+      "steps": 20000,
+      "sequence_seed": 20002,
+      "feature_dim": 21,
+      "n_heads": 1,
+      "m_bits": 20,
+      "slow_bits": 15,
+      "random_bits": 5,
+      "flip_interval": 1000,
+      "target_hidden": 100,
+      "beta": 0.7,
+      "noise_std": 0.01,
+      "n_flips": 19,
+      "first_flips": [
+        {
+          "step": 1000,
+          "bit": 11
+        },
+        {
+          "step": 2000,
+          "bit": 7
+        },
+        {
+          "step": 3000,
+          "bit": 13
+        },
+        {
+          "step": 4000,
+          "bit": 7
+        },
+        {
+          "step": 5000,
+          "bit": 7
+        },
+        {
+          "step": 6000,
+          "bit": 8
+        },
+        {
+          "step": 7000,
+          "bit": 3
+        },
+        {
+          "step": 8000,
+          "bit": 6
+        },
+        {
+          "step": 9000,
+          "bit": 10
+        },
+        {
+          "step": 10000,
+          "bit": 6
+        }
+      ],
+      "matches_dohare_public_config": false,
+      "matches_dohare_target_family": true,
+      "published_protocol_delta": "Matches the main structure described by Dohare et al.: binary inputs with slow-changing bits, iid random bits, a constant bias, and a fixed LTU target network. This local run is far shorter than the paper/reproduction repository's million-plus-example runs and uses the Step 2 portfolio architecture rather than the paper's learner architecture."
+    }
+  },
+  "records": [
+    {
+      "dataset_name": "slowly_changing_regression",
+      "seed": 0,
+      "dataset": {
+        "benchmark": "slowly_changing_regression",
+        "protocol": "lightweight_slowly_changing_binary_regression",
+        "steps": 20000,
+        "sequence_seed": 20000,
+        "feature_dim": 21,
+        "n_heads": 1,
+        "m_bits": 20,
+        "slow_bits": 15,
+        "random_bits": 5,
+        "flip_interval": 1000,
+        "target_hidden": 100,
+        "beta": 0.7,
+        "noise_std": 0.01,
+        "n_flips": 19,
+        "first_flips": [
+          {
+            "step": 1000,
+            "bit": 13
+          },
+          {
+            "step": 2000,
+            "bit": 10
+          },
+          {
+            "step": 3000,
+            "bit": 4
+          },
+          {
+            "step": 4000,
+            "bit": 13
+          },
+          {
+            "step": 5000,
+            "bit": 5
+          },
+          {
+            "step": 6000,
+            "bit": 14
+          },
+          {
+            "step": 7000,
+            "bit": 6
+          },
+          {
+            "step": 8000,
+            "bit": 10
+          },
+          {
+            "step": 9000,
+            "bit": 0
+          },
+          {
+            "step": 10000,
+            "bit": 9
+          }
+        ],
+        "matches_dohare_public_config": false,
+        "matches_dohare_target_family": true,
+        "published_protocol_delta": "Matches the main structure described by Dohare et al.: binary inputs with slow-changing bits, iid random bits, a constant bias, and a fixed LTU target network. This local run is far shorter than the paper/reproduction repository's million-plus-example runs and uses the Step 2 portfolio architecture rather than the paper's learner architecture."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.009986957535147667,
+          "final_window_mse": 0.005018290132284164,
+          "mean_mlp_h64_weight": 0.20729756355285645,
+          "final_mlp_h64_weight": 0.1840941160917282,
+          "mean_mlp_h128_weight": 0.19325053691864014,
+          "final_mlp_h128_weight": 0.202948659658432,
+          "mean_mlp_h64_64_weight": 0.3056868016719818,
+          "final_mlp_h64_64_weight": 0.2863236665725708,
+          "mean_upgd_low_noise_weight": 0.18307209014892578,
+          "final_upgd_low_noise_weight": 0.19547970592975616,
+          "mean_dynamic_sparse_weight": 0.11069299280643463,
+          "final_dynamic_sparse_weight": 0.1311538964509964,
+          "mean_mlp_guard_mlp_h64_weight": 0.295055091381073,
+          "final_mlp_guard_mlp_h64_weight": 0.2733936607837677,
+          "mean_mlp_guard_mlp_h128_weight": 0.2746356427669525,
+          "final_mlp_guard_mlp_h128_weight": 0.3013940751552582,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.4303092658519745,
+          "final_mlp_guard_mlp_h64_64_weight": 0.4252122640609741,
+          "mean_accuracy_mlp_h64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h128_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h128_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h64_64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_64_weight": 0.20000000298023224,
+          "mean_accuracy_upgd_low_noise_weight": 0.20000001788139343,
+          "final_accuracy_upgd_low_noise_weight": 0.20000000298023224,
+          "mean_accuracy_dynamic_sparse_weight": 0.20000001788139343,
+          "final_accuracy_dynamic_sparse_weight": 0.20000000298023224,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.011157473549246788,
+          "final_window_mse": 0.005523168947547674
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.01152497436851263,
+          "final_window_mse": 0.006096483673900366
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.009243057109415531,
+          "final_window_mse": 0.004466794431209564
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.011746924370527267,
+          "final_window_mse": 0.006017980165779591
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.014480526559054852,
+          "final_window_mse": 0.007112786173820496
+        }
+      }
+    },
+    {
+      "dataset_name": "slowly_changing_regression",
+      "seed": 1,
+      "dataset": {
+        "benchmark": "slowly_changing_regression",
+        "protocol": "lightweight_slowly_changing_binary_regression",
+        "steps": 20000,
+        "sequence_seed": 20001,
+        "feature_dim": 21,
+        "n_heads": 1,
+        "m_bits": 20,
+        "slow_bits": 15,
+        "random_bits": 5,
+        "flip_interval": 1000,
+        "target_hidden": 100,
+        "beta": 0.7,
+        "noise_std": 0.01,
+        "n_flips": 19,
+        "first_flips": [
+          {
+            "step": 1000,
+            "bit": 12
+          },
+          {
+            "step": 2000,
+            "bit": 5
+          },
+          {
+            "step": 3000,
+            "bit": 13
+          },
+          {
+            "step": 4000,
+            "bit": 2
+          },
+          {
+            "step": 5000,
+            "bit": 12
+          },
+          {
+            "step": 6000,
+            "bit": 9
+          },
+          {
+            "step": 7000,
+            "bit": 14
+          },
+          {
+            "step": 8000,
+            "bit": 5
+          },
+          {
+            "step": 9000,
+            "bit": 0
+          },
+          {
+            "step": 10000,
+            "bit": 2
+          }
+        ],
+        "matches_dohare_public_config": false,
+        "matches_dohare_target_family": true,
+        "published_protocol_delta": "Matches the main structure described by Dohare et al.: binary inputs with slow-changing bits, iid random bits, a constant bias, and a fixed LTU target network. This local run is far shorter than the paper/reproduction repository's million-plus-example runs and uses the Step 2 portfolio architecture rather than the paper's learner architecture."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.009330409578979015,
+          "final_window_mse": 0.005034430883824825,
+          "mean_mlp_h64_weight": 0.18618471920490265,
+          "final_mlp_h64_weight": 0.18780794739723206,
+          "mean_mlp_h128_weight": 0.1592361032962799,
+          "final_mlp_h128_weight": 0.16209079325199127,
+          "mean_mlp_h64_64_weight": 0.3407050371170044,
+          "final_mlp_h64_64_weight": 0.285783052444458,
+          "mean_upgd_low_noise_weight": 0.18452219665050507,
+          "final_upgd_low_noise_weight": 0.21312715113162994,
+          "mean_dynamic_sparse_weight": 0.12935194373130798,
+          "final_dynamic_sparse_weight": 0.15119099617004395,
+          "mean_mlp_guard_mlp_h64_weight": 0.27281370759010315,
+          "final_mlp_guard_mlp_h64_weight": 0.2954433262348175,
+          "mean_mlp_guard_mlp_h128_weight": 0.2334989309310913,
+          "final_mlp_guard_mlp_h128_weight": 0.25498732924461365,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.49368736147880554,
+          "final_mlp_guard_mlp_h64_64_weight": 0.44956934452056885,
+          "mean_accuracy_mlp_h64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h128_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h128_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h64_64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_64_weight": 0.20000000298023224,
+          "mean_accuracy_upgd_low_noise_weight": 0.20000001788139343,
+          "final_accuracy_upgd_low_noise_weight": 0.20000000298023224,
+          "mean_accuracy_dynamic_sparse_weight": 0.20000001788139343,
+          "final_accuracy_dynamic_sparse_weight": 0.20000000298023224,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.011012908071279526,
+          "final_window_mse": 0.006526158191263676
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.011800156906247139,
+          "final_window_mse": 0.00834124255925417
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.00798009056597948,
+          "final_window_mse": 0.0037117733154445887
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.011035931296646595,
+          "final_window_mse": 0.006392530631273985
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.012986520305275917,
+          "final_window_mse": 0.007811904884874821
+        }
+      }
+    },
+    {
+      "dataset_name": "slowly_changing_regression",
+      "seed": 2,
+      "dataset": {
+        "benchmark": "slowly_changing_regression",
+        "protocol": "lightweight_slowly_changing_binary_regression",
+        "steps": 20000,
+        "sequence_seed": 20002,
+        "feature_dim": 21,
+        "n_heads": 1,
+        "m_bits": 20,
+        "slow_bits": 15,
+        "random_bits": 5,
+        "flip_interval": 1000,
+        "target_hidden": 100,
+        "beta": 0.7,
+        "noise_std": 0.01,
+        "n_flips": 19,
+        "first_flips": [
+          {
+            "step": 1000,
+            "bit": 11
+          },
+          {
+            "step": 2000,
+            "bit": 7
+          },
+          {
+            "step": 3000,
+            "bit": 13
+          },
+          {
+            "step": 4000,
+            "bit": 7
+          },
+          {
+            "step": 5000,
+            "bit": 7
+          },
+          {
+            "step": 6000,
+            "bit": 8
+          },
+          {
+            "step": 7000,
+            "bit": 3
+          },
+          {
+            "step": 8000,
+            "bit": 6
+          },
+          {
+            "step": 9000,
+            "bit": 10
+          },
+          {
+            "step": 10000,
+            "bit": 6
+          }
+        ],
+        "matches_dohare_public_config": false,
+        "matches_dohare_target_family": true,
+        "published_protocol_delta": "Matches the main structure described by Dohare et al.: binary inputs with slow-changing bits, iid random bits, a constant bias, and a fixed LTU target network. This local run is far shorter than the paper/reproduction repository's million-plus-example runs and uses the Step 2 portfolio architecture rather than the paper's learner architecture."
+      },
+      "methods": {
+        "mixture": {
+          "online_mean_mse": 0.007025436498224735,
+          "final_window_mse": 0.006140669342130423,
+          "mean_mlp_h64_weight": 0.19195884466171265,
+          "final_mlp_h64_weight": 0.15718841552734375,
+          "mean_mlp_h128_weight": 0.17003946006298065,
+          "final_mlp_h128_weight": 0.15010415017604828,
+          "mean_mlp_h64_64_weight": 0.3029896020889282,
+          "final_mlp_h64_64_weight": 0.37777796387672424,
+          "mean_upgd_low_noise_weight": 0.21224458515644073,
+          "final_upgd_low_noise_weight": 0.1972890943288803,
+          "mean_dynamic_sparse_weight": 0.12276755273342133,
+          "final_dynamic_sparse_weight": 0.11764034628868103,
+          "mean_mlp_guard_mlp_h64_weight": 0.2889963686466217,
+          "final_mlp_guard_mlp_h64_weight": 0.22944851219654083,
+          "mean_mlp_guard_mlp_h128_weight": 0.2566862404346466,
+          "final_mlp_guard_mlp_h128_weight": 0.21910759806632996,
+          "mean_mlp_guard_mlp_h64_64_weight": 0.4543173909187317,
+          "final_mlp_guard_mlp_h64_64_weight": 0.551443874835968,
+          "mean_accuracy_mlp_h64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h128_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h128_weight": 0.20000000298023224,
+          "mean_accuracy_mlp_h64_64_weight": 0.20000001788139343,
+          "final_accuracy_mlp_h64_64_weight": 0.20000000298023224,
+          "mean_accuracy_upgd_low_noise_weight": 0.20000001788139343,
+          "final_accuracy_upgd_low_noise_weight": 0.20000000298023224,
+          "mean_accuracy_dynamic_sparse_weight": 0.20000001788139343,
+          "final_accuracy_dynamic_sparse_weight": 0.20000000298023224,
+          "mean_meta_route_id": 0.0,
+          "final_meta_route_id": 0.0
+        },
+        "mlp_h64": {
+          "online_mean_mse": 0.008219508454203606,
+          "final_window_mse": 0.007333735469728708
+        },
+        "mlp_h128": {
+          "online_mean_mse": 0.008817886002361774,
+          "final_window_mse": 0.008096221834421158
+        },
+        "mlp_h64_64": {
+          "online_mean_mse": 0.005913807079195976,
+          "final_window_mse": 0.004807584453374147
+        },
+        "upgd_low_noise": {
+          "online_mean_mse": 0.007689131889492273,
+          "final_window_mse": 0.0069891540333628654
+        },
+        "dynamic_sparse": {
+          "online_mean_mse": 0.010514359921216965,
+          "final_window_mse": 0.00927281379699707
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "slowly_changing_regression": {
+      "mixture": {
+        "final_accuracy_dynamic_sparse_weight": {
+          "mean": 0.20000000298023224,
+          "stderr": 0.0,
+          "values": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ]
+        },
+        "final_accuracy_mlp_h128_weight": {
+          "mean": 0.20000000298023224,
+          "stderr": 0.0,
+          "values": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ]
+        },
+        "final_accuracy_mlp_h64_64_weight": {
+          "mean": 0.20000000298023224,
+          "stderr": 0.0,
+          "values": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ]
+        },
+        "final_accuracy_mlp_h64_weight": {
+          "mean": 0.20000000298023224,
+          "stderr": 0.0,
+          "values": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ]
+        },
+        "final_accuracy_upgd_low_noise_weight": {
+          "mean": 0.20000000298023224,
+          "stderr": 0.0,
+          "values": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ]
+        },
+        "final_dynamic_sparse_weight": {
+          "mean": 0.13332841296990713,
+          "stderr": 0.009746074738644118,
+          "values": [
+            0.1311538964509964,
+            0.15119099617004395,
+            0.11764034628868103
+          ]
+        },
+        "final_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "final_mlp_guard_mlp_h128_weight": {
+          "mean": 0.2584963341554006,
+          "stderr": 0.023818766512455555,
+          "values": [
+            0.3013940751552582,
+            0.25498732924461365,
+            0.21910759806632996
+          ]
+        },
+        "final_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.47540849447250366,
+          "stderr": 0.03866243285322898,
+          "values": [
+            0.4252122640609741,
+            0.44956934452056885,
+            0.551443874835968
+          ]
+        },
+        "final_mlp_guard_mlp_h64_weight": {
+          "mean": 0.266095166405042,
+          "stderr": 0.019397421522235867,
+          "values": [
+            0.2733936607837677,
+            0.2954433262348175,
+            0.22944851219654083
+          ]
+        },
+        "final_mlp_h128_weight": {
+          "mean": 0.1717145343621572,
+          "stderr": 0.0159958102881667,
+          "values": [
+            0.202948659658432,
+            0.16209079325199127,
+            0.15010415017604828
+          ]
+        },
+        "final_mlp_h64_64_weight": {
+          "mean": 0.31662822763125104,
+          "stderr": 0.030575266409725608,
+          "values": [
+            0.2863236665725708,
+            0.285783052444458,
+            0.37777796387672424
+          ]
+        },
+        "final_mlp_h64_weight": {
+          "mean": 0.17636349300543466,
+          "stderr": 0.009647293799463963,
+          "values": [
+            0.1840941160917282,
+            0.18780794739723206,
+            0.15718841552734375
+          ]
+        },
+        "final_upgd_low_noise_weight": {
+          "mean": 0.2019653171300888,
+          "stderr": 0.005605306274807565,
+          "values": [
+            0.19547970592975616,
+            0.21312715113162994,
+            0.1972890943288803
+          ]
+        },
+        "final_window_mse": {
+          "mean": 0.005397796786079804,
+          "stderr": 0.00037146550170236034,
+          "values": [
+            0.005018290132284164,
+            0.005034430883824825,
+            0.006140669342130423
+          ]
+        },
+        "mean_accuracy_dynamic_sparse_weight": {
+          "mean": 0.20000001788139343,
+          "stderr": 0.0,
+          "values": [
+            0.20000001788139343,
+            0.20000001788139343,
+            0.20000001788139343
+          ]
+        },
+        "mean_accuracy_mlp_h128_weight": {
+          "mean": 0.20000001788139343,
+          "stderr": 0.0,
+          "values": [
+            0.20000001788139343,
+            0.20000001788139343,
+            0.20000001788139343
+          ]
+        },
+        "mean_accuracy_mlp_h64_64_weight": {
+          "mean": 0.20000001788139343,
+          "stderr": 0.0,
+          "values": [
+            0.20000001788139343,
+            0.20000001788139343,
+            0.20000001788139343
+          ]
+        },
+        "mean_accuracy_mlp_h64_weight": {
+          "mean": 0.20000001788139343,
+          "stderr": 0.0,
+          "values": [
+            0.20000001788139343,
+            0.20000001788139343,
+            0.20000001788139343
+          ]
+        },
+        "mean_accuracy_upgd_low_noise_weight": {
+          "mean": 0.20000001788139343,
+          "stderr": 0.0,
+          "values": [
+            0.20000001788139343,
+            0.20000001788139343,
+            0.20000001788139343
+          ]
+        },
+        "mean_dynamic_sparse_weight": {
+          "mean": 0.12093749642372131,
+          "stderr": 0.005463544087150533,
+          "values": [
+            0.11069299280643463,
+            0.12935194373130798,
+            0.12276755273342133
+          ]
+        },
+        "mean_meta_route_id": {
+          "mean": 0.0,
+          "stderr": 0.0,
+          "values": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_mlp_guard_mlp_h128_weight": {
+          "mean": 0.2549402713775635,
+          "stderr": 0.01190719070041138,
+          "values": [
+            0.2746356427669525,
+            0.2334989309310913,
+            0.2566862404346466
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_64_weight": {
+          "mean": 0.4594380060831706,
+          "stderr": 0.018473957129498512,
+          "values": [
+            0.4303092658519745,
+            0.49368736147880554,
+            0.4543173909187317
+          ]
+        },
+        "mean_mlp_guard_mlp_h64_weight": {
+          "mean": 0.28562172253926593,
+          "stderr": 0.006638548172020812,
+          "values": [
+            0.295055091381073,
+            0.27281370759010315,
+            0.2889963686466217
+          ]
+        },
+        "mean_mlp_h128_weight": {
+          "mean": 0.17417536675930023,
+          "stderr": 0.010034519035359615,
+          "values": [
+            0.19325053691864014,
+            0.1592361032962799,
+            0.17003946006298065
+          ]
+        },
+        "mean_mlp_h64_64_weight": {
+          "mean": 0.3164604802926381,
+          "stderr": 0.012147257895030593,
+          "values": [
+            0.3056868016719818,
+            0.3407050371170044,
+            0.3029896020889282
+          ]
+        },
+        "mean_mlp_h64_weight": {
+          "mean": 0.19514704247315726,
+          "stderr": 0.006299775209717307,
+          "values": [
+            0.20729756355285645,
+            0.18618471920490265,
+            0.19195884466171265
+          ]
+        },
+        "mean_upgd_low_noise_weight": {
+          "mean": 0.19327962398529053,
+          "stderr": 0.009491715973835763,
+          "values": [
+            0.18307209014892578,
+            0.18452219665050507,
+            0.21224458515644073
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.008780934537450472,
+          "stderr": 0.0008979780674718369,
+          "values": [
+            0.009986957535147667,
+            0.009330409578979015,
+            0.007025436498224735
+          ]
+        }
+      },
+      "mlp_h64": {
+        "final_window_mse": {
+          "mean": 0.006461020869513352,
+          "stderr": 0.0005236792707450764,
+          "values": [
+            0.005523168947547674,
+            0.006526158191263676,
+            0.007333735469728708
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.010129963358243307,
+          "stderr": 0.0009561386317949197,
+          "values": [
+            0.011157473549246788,
+            0.011012908071279526,
+            0.008219508454203606
+          ]
+        }
+      },
+      "mlp_h128": {
+        "final_window_mse": {
+          "mean": 0.007511316022525231,
+          "stderr": 0.000710943438897905,
+          "values": [
+            0.006096483673900366,
+            0.00834124255925417,
+            0.008096221834421158
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.010714339092373848,
+          "stderr": 0.0009515482295064813,
+          "values": [
+            0.01152497436851263,
+            0.011800156906247139,
+            0.008817886002361774
+          ]
+        }
+      },
+      "mlp_h64_64": {
+        "final_window_mse": {
+          "mean": 0.004328717400009434,
+          "stderr": 0.0003237794838113332,
+          "values": [
+            0.004466794431209564,
+            0.0037117733154445887,
+            0.004807584453374147
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.00771231825153033,
+          "stderr": 0.0009703526764735796,
+          "values": [
+            0.009243057109415531,
+            0.00798009056597948,
+            0.005913807079195976
+          ]
+        }
+      },
+      "upgd_low_noise": {
+        "final_window_mse": {
+          "mean": 0.006466554943472147,
+          "stderr": 0.0002827863559688788,
+          "values": [
+            0.006017980165779591,
+            0.006392530631273985,
+            0.0069891540333628654
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.010157329185555378,
+          "stderr": 0.0012510497201678932,
+          "values": [
+            0.011746924370527267,
+            0.011035931296646595,
+            0.007689131889492273
+          ]
+        }
+      },
+      "dynamic_sparse": {
+        "final_window_mse": {
+          "mean": 0.008065834951897463,
+          "stderr": 0.0006363411538959935,
+          "values": [
+            0.007112786173820496,
+            0.007811904884874821,
+            0.00927281379699707
+          ]
+        },
+        "online_mean_mse": {
+          "mean": 0.012660468928515911,
+          "stderr": 0.0011564819605150056,
+          "values": [
+            0.014480526559054852,
+            0.012986520305275917,
+            0.010514359921216965
+          ]
+        }
+      },
+      "comparisons": {
+        "final_window_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": -0.0010690793860703707,
+            "paired_diff_stderr": 0.0002588093477722593,
+            "wins_for_mixture": 0,
+            "wins_for_baseline": 3,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              -0.0005514957010746002,
+              -0.0013226575683802366,
+              -0.0013330848887562752
+            ],
+            "best_baseline_counts": {
+              "mlp_h64_64": 3
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "final_window_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": -0.0010690793860703707,
+            "paired_diff_stderr": 0.0002588093477722593,
+            "wins_for_mixture": 0,
+            "wins_for_baseline": 3,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              -0.0005514957010746002,
+              -0.0013226575683802366,
+              -0.0013330848887562752
+            ],
+            "best_baseline_counts": {
+              "mlp_h64_64": 3
+            }
+          }
+        },
+        "online_mean_mse": {
+          "mixture_vs_best_mlp": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_mlp",
+            "paired_diff_mean_positive_favors_mixture": -0.0010686162859201431,
+            "paired_diff_stderr": 0.00017637410331518968,
+            "wins_for_mixture": 0,
+            "wins_for_baseline": 3,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              -0.0007439004257321358,
+              -0.0013503190129995346,
+              -0.001111629419028759
+            ],
+            "best_baseline_counts": {
+              "mlp_h64_64": 3
+            }
+          },
+          "mixture_vs_best_expert": {
+            "metric": "online_mean_mse",
+            "baseline_group": "best_expert",
+            "paired_diff_mean_positive_favors_mixture": -0.0010686162859201431,
+            "paired_diff_stderr": 0.00017637410331518968,
+            "wins_for_mixture": 0,
+            "wins_for_baseline": 3,
+            "ties": 0,
+            "n": 3,
+            "diffs": [
+              -0.0007439004257321358,
+              -0.0013503190129995346,
+              -0.001111629419028759
+            ],
+            "best_baseline_counts": {
+              "mlp_h64_64": 3
+            }
+          }
+        }
+      },
+      "best_expert_regret": {
+        "final_window_mse": {
+          "metric": "final_window_mse",
+          "mean_regret_positive_favors_best_expert": 0.0010690793860703707,
+          "stderr": 0.0002588093477722593,
+          "values": [
+            0.0005514957010746002,
+            0.0013226575683802366,
+            0.0013330848887562752
+          ],
+          "failures": 3,
+          "ties_or_beats_best": 0,
+          "best_expert_counts": {
+            "mlp_h64_64": 3
+          }
+        },
+        "online_mean_mse": {
+          "metric": "online_mean_mse",
+          "mean_regret_positive_favors_best_expert": 0.0010686162859201431,
+          "stderr": 0.00017637410331518968,
+          "values": [
+            0.0007439004257321358,
+            0.0013503190129995346,
+            0.001111629419028759
+          ],
+          "failures": 3,
+          "ties_or_beats_best": 0,
+          "best_expert_counts": {
+            "mlp_h64_64": 3
+          }
+        }
+      }
+    }
+  },
+  "status": {
+    "all_primary_nonnegative_vs_best_mlp": false,
+    "uses_true_openml_mnist": false,
+    "uses_full_openml_mnist_split": false,
+    "uses_full_mnist_task_blocks": false,
+    "uses_dohare_public_scr_config": false,
+    "scr_steps": 20000,
+    "published_scale_external_claim_supported": false,
+    "checks": {
+      "slowly_changing_regression": {
+        "final_window_mse": {
+          "paired_diff_mean_positive_favors_portfolio": -0.0010690793860703707,
+          "wins_for_portfolio": 0,
+          "wins_for_best_mlp": 3,
+          "ties": 0
+        }
+      }
+    }
+  },
+  "references": [
+    {
+      "name": "Dohare et al. 2024 Nature: Loss of plasticity in deep continual learning",
+      "url": "https://www.nature.com/articles/s41586-024-07711-7",
+      "relevance": "Online Permuted MNIST and Slowly-Changing Regression protocols."
+    },
+    {
+      "name": "shibhansh/loss-of-plasticity",
+      "url": "https://github.com/shibhansh/loss-of-plasticity",
+      "relevance": "Public reproduction repository for the loss-of-plasticity paper."
+    }
+  ],
+  "wall_clock_s": 21.452306270599365,
+  "evidence_level": "compact_published_style_external_stressors"
+}

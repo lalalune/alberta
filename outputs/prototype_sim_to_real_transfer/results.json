@@ -1,0 +1,69 @@
+{
+  "accepted_sim_to_real_transfer": true,
+  "boundary": "This is a local sim-to-real surrogate using shifted simulated target dynamics; it does not prove deployment on a physical robot.",
+  "claim_scope": "sim_to_shifted_target_surrogate_not_real_robot",
+  "elapsed_s": 17.362786769866943,
+  "eval_window": 200,
+  "evidence": {
+    "all_numeric_state_finite": true,
+    "per_seed": [
+      {
+        "final_step_count": 1200,
+        "seed": 0,
+        "source_final_reward": 0.6026681661605835,
+        "target_failures": 0,
+        "target_final_reward": 0.48501884937286377,
+        "target_initial_reward": 0.4857901632785797,
+        "target_reward_delta": -0.0007713139057159424
+      },
+      {
+        "final_step_count": 1200,
+        "seed": 1,
+        "source_final_reward": 0.5738850235939026,
+        "target_failures": 0,
+        "target_final_reward": 0.6281175017356873,
+        "target_initial_reward": 0.7637872099876404,
+        "target_reward_delta": -0.13566970825195312
+      },
+      {
+        "final_step_count": 1200,
+        "seed": 2,
+        "source_final_reward": 0.9727450013160706,
+        "target_failures": 0,
+        "target_final_reward": 0.9140098094940186,
+        "target_initial_reward": 0.9880387187004089,
+        "target_reward_delta": -0.07402890920639038
+      }
+    ],
+    "source_final_mean_reward": 0.7164327303568522,
+    "target_delta_mean_reward": -0.07015664378801978,
+    "target_final_mean_reward": 0.6757153868675232,
+    "target_initial_mean_reward": 0.745872030655543,
+    "target_positive_seed_count": 3,
+    "transferred_state_updated_for_all_steps": true
+  },
+  "n_seeds": 3,
+  "schema": "alberta.prototype.sim_to_real_transfer.v1",
+  "source_plant": {
+    "damping": 0.92,
+    "dt": 0.08,
+    "failure_angle": 0.9,
+    "force_scale": 0.115,
+    "gravity_gain": 0.055,
+    "initial_angle_scale": 0.18,
+    "obs_scale": 1.0,
+    "sensor_noise": 0.0
+  },
+  "source_steps": 600,
+  "target_plant": {
+    "damping": 0.86,
+    "dt": 0.08,
+    "failure_angle": 0.9,
+    "force_scale": 0.082,
+    "gravity_gain": 0.072,
+    "initial_angle_scale": 0.18,
+    "obs_scale": 1.18,
+    "sensor_noise": 0.01
+  },
+  "target_steps": 600
+}

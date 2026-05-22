@@ -1,0 +1,178 @@
+{
+  "accepted": false,
+  "artifact_root": ".",
+  "boundary": "external rlsecd acceptance artifacts are missing or incomplete",
+  "items": [
+    {
+      "claim_scope": "rlsecd_gym_control_horde_sarsa_daemon",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_gym_control/rollouts.jsonl",
+        "outputs/rlsecd_gym_control/metrics.json",
+        "outputs/rlsecd_gym_control/config.json"
+      ],
+      "missing_metrics": [
+        "n_prediction_demons",
+        "n_control_actions",
+        "n_transitions",
+        "mean_reward",
+        "sarsa_td_error_final_window",
+        "uses_framework_sarsa_agent",
+        "uses_framework_horde_learner"
+      ],
+      "passed": false,
+      "todo_text": "External: rlsecd `--gym-control` mode: existing 5 prediction demons + SARSA control demon"
+    },
+    {
+      "claim_scope": "rlsecd_end_to_end_daemon_throughput",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_throughput/metrics.json"
+      ],
+      "missing_metrics": [
+        "n_events",
+        "events_per_second",
+        "wall_clock_s",
+        "parse_ms_p50",
+        "feature_ms_p50",
+        "learner_update_ms_p50",
+        "checkpoint_reporting_ms_p50",
+        "action_dispatch_ms_p50",
+        "stage_event_counts",
+        "measured_real_daemon_path"
+      ],
+      "passed": false,
+      "todo_text": "External: rlsecd end-to-end throughput must include parsing, feature extraction, learner update, checkpoint/reporting, and action dispatch"
+    },
+    {
+      "claim_scope": "rlsecd_oracle_experience_export",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_oracle_experience/records.jsonl",
+        "outputs/rlsecd_oracle_experience/manifest.json"
+      ],
+      "missing_metrics": [
+        "n_records",
+        "schema",
+        "source_rollout_log",
+        "source_rollout_record_count",
+        "exported_from_production_rollout"
+      ],
+      "passed": false,
+      "todo_text": "External: generate `(state, action, reward, outcome)` experience for autoresearch LLM oracle pipeline from rlsecd/security-gym rollouts"
+    },
+    {
+      "claim_scope": "rlsecd_idbd_mlp_100k_replay",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/idbd_mlp_100k/checkpoint",
+        "outputs/idbd_mlp_100k/metrics.json"
+      ],
+      "missing_metrics": [
+        "n_events",
+        "final_window_loss",
+        "all_finite",
+        "finite_components",
+        "mean_step_size",
+        "validation_batch_size",
+        "checkpoint_roundtrip_max_abs_diff"
+      ],
+      "passed": false,
+      "todo_text": "External: AF-2 IDBD-MLP 100k-event replay test in rlsecd"
+    },
+    {
+      "claim_scope": "rlsecd_idbd_mlp_full_log_stability",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/idbd_mlp_1_6m/checkpoints",
+        "outputs/idbd_mlp_1_6m/metrics.json"
+      ],
+      "missing_metrics": [
+        "n_events",
+        "resumed_from_midpoint",
+        "all_finite",
+        "finite_components",
+        "events_per_second",
+        "max_rss_mb",
+        "final_window_loss",
+        "checkpoint_count",
+        "resume_final_loss_abs_diff"
+      ],
+      "passed": false,
+      "todo_text": "External: AF-2 IDBD-MLP full 1.6M log stability test"
+    },
+    {
+      "claim_scope": "rlsecd_security_agent_orbax_checkpoint_v2",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_checkpoint_v2",
+        "outputs/rlsecd_checkpoint_v2/metrics.json",
+        "outputs/rlsecd_checkpoint_v2/metadata.json"
+      ],
+      "missing_metrics": [
+        "format_version",
+        "metadata_present",
+        "learner_state_present",
+        "optimizer_state_present",
+        "normalizer_state_present",
+        "restored_step_count_matches",
+        "prediction_roundtrip_max_abs_diff"
+      ],
+      "passed": false,
+      "todo_text": "External: simplify rlsecd SecurityAgent to use Orbax checkpoint utilities (format v2)"
+    },
+    {
+      "claim_scope": "rlsecd_security_agent_framework_config_serialization",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_config_roundtrip/metrics.json"
+      ],
+      "missing_metrics": [
+        "learner_config_roundtrip",
+        "optimizer_config_roundtrip",
+        "normalizer_config_roundtrip",
+        "feature_schema_roundtrip",
+        "security_agent_config_roundtrip",
+        "serialized_component_types",
+        "unknown_config_keys",
+        "dropped_config_keys",
+        "restored_schema_version_matches",
+        "prediction_roundtrip_max_abs_diff"
+      ],
+      "passed": false,
+      "todo_text": "External: simplify rlsecd SecurityAgent to use framework config serialization"
+    },
+    {
+      "claim_scope": "rlsecd_feature_relevance_periodic_reporting",
+      "condition_message": "metrics missing",
+      "condition_passed": false,
+      "missing_artifacts": [
+        "outputs/rlsecd_feature_relevance/metrics.jsonl"
+      ],
+      "missing_metrics": [
+        "feature_relevance_report_count",
+        "feature_relevance_interval_s",
+        "report_timestamp_s",
+        "top_feature_names",
+        "top_feature_relevance_values",
+        "report_nonblocking",
+        "learner_updates_skipped_for_reporting",
+        "uses_framework_compute_feature_relevance",
+        "latest_report_latency_ms"
+      ],
+      "passed": false,
+      "todo_text": "External: integrate `compute_feature_relevance` into rlsecd periodic reporting (60s interval)"
+    }
+  ],
+  "n_items": 8,
+  "n_passed": 0,
+  "schema": "alberta.rlsecd_external_acceptance_status.v1",
+  "spec_exists": true
+}

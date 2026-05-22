@@ -1,0 +1,318 @@
+{
+  "boundary": "uses real local security-gym environment and framework rollout records; does not prove unavailable rlsecd daemon integration",
+  "claim_scope": "local_security_gym_counterfactual_action_rollout",
+  "comparison": {
+    "oracle_false_positives": 0,
+    "oracle_precision": 1.0,
+    "recall_lift": 1.0,
+    "reward_lift": 31.8
+  },
+  "feature_schema": {
+    "dtype": "float32",
+    "feature_dim": 12,
+    "names": [
+      "auth_chars_norm",
+      "syslog_chars_norm",
+      "web_chars_norm",
+      "process_chars_norm",
+      "network_chars_norm",
+      "file_chars_norm",
+      "system_load",
+      "system_mem_used",
+      "system_disk_used",
+      "n_blocked_ips",
+      "n_throttled_ips",
+      "is_isolated"
+    ],
+    "version": "security-gym-v1"
+  },
+  "passed": true,
+  "policies": {
+    "oracle_block_malicious": {
+      "elapsed_s": 0.0005577090050792322,
+      "events_per_second": 44719.3588559087,
+      "f1": 1.0,
+      "false_negatives": 0,
+      "false_positives": 0,
+      "mean_reward": -0.16799999999999993,
+      "n_rollout_records": 25,
+      "name": "oracle_block_malicious",
+      "precision": 1.0,
+      "recall": 1.0,
+      "steps": 25,
+      "total_reward": -4.199999999999998,
+      "true_negatives": 24,
+      "true_positives": 1
+    },
+    "pass_only": {
+      "elapsed_s": 0.0009036249975906685,
+      "events_per_second": 27628.125658947072,
+      "f1": 0.0,
+      "false_negatives": 12,
+      "false_positives": 0,
+      "mean_reward": -1.44,
+      "n_rollout_records": 25,
+      "name": "pass_only",
+      "precision": 0.0,
+      "recall": 0.0,
+      "steps": 25,
+      "total_reward": -36.0,
+      "true_negatives": 13,
+      "true_positives": 0
+    }
+  },
+  "sample_rollout_records": {
+    "oracle_block_malicious": [
+      {
+        "action": 0,
+        "action_name": "pass",
+        "next_state": [
+          0.181,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": false,
+          "policy": "oracle_block_malicious",
+          "risk_score": 0.0,
+          "src_ip": "10.0.0.5"
+        },
+        "reward": 0.0,
+        "state": [
+          0.09,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      },
+      {
+        "action": 0,
+        "action_name": "pass",
+        "next_state": [
+          0.273,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": false,
+          "policy": "oracle_block_malicious",
+          "risk_score": 0.0,
+          "src_ip": "10.0.0.5"
+        },
+        "reward": -3.0,
+        "state": [
+          0.181,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      },
+      {
+        "action": 3,
+        "action_name": "block",
+        "next_state": [
+          0.364,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": true,
+          "policy": "oracle_block_malicious",
+          "risk_score": 5.0,
+          "src_ip": "192.168.1.50"
+        },
+        "reward": -3.4,
+        "state": [
+          0.273,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      }
+    ],
+    "pass_only": [
+      {
+        "action": 0,
+        "action_name": "pass",
+        "next_state": [
+          0.181,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": false,
+          "policy": "pass_only",
+          "risk_score": 0.0,
+          "src_ip": "10.0.0.5"
+        },
+        "reward": 0.0,
+        "state": [
+          0.09,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      },
+      {
+        "action": 0,
+        "action_name": "pass",
+        "next_state": [
+          0.273,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": false,
+          "policy": "pass_only",
+          "risk_score": 0.0,
+          "src_ip": "10.0.0.5"
+        },
+        "reward": -3.0,
+        "state": [
+          0.181,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      },
+      {
+        "action": 0,
+        "action_name": "pass",
+        "next_state": [
+          0.365,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "policy_metadata": {
+          "is_malicious": true,
+          "policy": "pass_only",
+          "risk_score": 0.0,
+          "src_ip": "192.168.1.50"
+        },
+        "reward": -3.0,
+        "state": [
+          0.273,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.30000001192092896,
+          0.20000000298023224,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "terminated": false,
+        "truncated": false
+      }
+    ]
+  },
+  "schema": "alberta.security_gym.counterfactual_rollout.v1",
+  "security_gym_root": "/Users/shawwalters/Desktop/nca_fun/security-gym"
+}
