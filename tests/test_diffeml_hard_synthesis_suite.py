@@ -15,7 +15,7 @@ def load_suite_module() -> Any:
     repo_root = Path(__file__).resolve().parents[1]
     module_path = (
         repo_root
-        / "alberta_framework" / "examples"
+        / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_diffeml_hard_synthesis_suite.py"

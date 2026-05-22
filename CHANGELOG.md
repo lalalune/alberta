@@ -15,29 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zero hidden init, pure-functional `_gru_step`. Controlled via
   `GRUPerceptionConfig(observation_dim, hidden_dim)` in `PrototypeAgentConfig`.
   12 new tests cover config validation, weight shapes, hidden dynamics, and
-  augmented-obs routing. (`src/alberta_framework/core/prototype_agent.py`,
-  `src/alberta_framework/core/__init__.py`)
+  augmented-obs routing. (`alberta_framework/core/prototype_agent.py`,
+  `alberta_framework/core/__init__.py`)
 
 - **Step 9 prioritized dreaming** — multi-step imagined rollouts with scored
   candidate selection. `score_dream_candidates` picks the most surprising/useful
   anchor state from `dream_candidate_count` random candidates; rollouts proceed
   for `dream_rollout_horizon` steps under the behavior model. BehaviorModel now
   tracked in `Step9DreamingState` and updated every real step.
-  (`src/alberta_framework/steps/step9.py`)
+  (`alberta_framework/steps/step9.py`)
 
 - **Intelligence Amplification (Step 12) now exported from public API** —
   `ExoCerebellumAgent/Config/State`, `ExoCortexAgent`, `IAAgent/Config/State/
   UpdateResult/ArrayResult`, `RecommendationProtocolConfig/State/Result`,
   `init_recommendation_protocol_state`, and `update_recommendation_protocol`
   are now importable directly from `alberta_framework.core`.
-  (`src/alberta_framework/core/__init__.py`)
+  (`alberta_framework/core/__init__.py`)
 
 ### Fixed
 
 - **`PrototypeAgentConfig` now validates `world_model.observation_dim`** when
   `gru_perception` is set, ensuring the world model's observation dimension
   matches `gru_perception.augmented_dim()`. Previously only `oak.observation_dim`
-  was validated. (`src/alberta_framework/core/prototype_agent.py`)
+  was validated. (`alberta_framework/core/prototype_agent.py`)
 
 - **`out_of_class_results.json` artifact restored** — reconstructed from the
   completed `out_of_class_SUMMARY.md` (30 seeds, 3 streams; original JSON was

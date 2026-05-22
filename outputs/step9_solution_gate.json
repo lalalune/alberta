@@ -4,9 +4,9 @@
   "claim_scope": "guarded_multi_step_behavior_model_dreaming_completion",
   "evidence": {
     "implementation_files": {
-      "src/alberta_framework/steps/step9.py": true,
-      "src/alberta_framework/core/dreaming.py": true,
-      "src/alberta_framework/core/behavior_model.py": true,
+      "alberta_framework/steps/step9.py": true,
+      "alberta_framework/core/dreaming.py": true,
+      "alberta_framework/core/behavior_model.py": true,
       "tests/test_step9_production.py": true,
       "tests/test_dreaming.py": true,
       "tests/test_behavior_model.py": true,

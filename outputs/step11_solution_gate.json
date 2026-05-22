@@ -4,8 +4,8 @@
   "claim_scope": "oak_curation_feature_construction_keyboard_learning_completion",
   "evidence": {
     "implementation_files": {
-      "src/alberta_framework/core/oak.py": true,
-      "src/alberta_framework/steps/step11.py": true,
+      "alberta_framework/core/oak.py": true,
+      "alberta_framework/steps/step11.py": true,
       "tests/test_step11_production.py": true,
       "benchmarks/step11_oak_curation.py": true
     },

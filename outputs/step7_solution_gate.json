@@ -4,7 +4,7 @@
   "claim_scope": "bounded_dyna_average_reward_control_local_completion",
   "evidence": {
     "implementation_files": {
-      "src/alberta_framework/steps/step7.py": true,
+      "alberta_framework/steps/step7.py": true,
       "tests/test_step5_step6_production.py": true,
       "docs/research/step7_dyna_planning.md": true,
       "benchmarks/step7_dyna_sample_efficiency.py": true,

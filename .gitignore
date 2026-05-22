@@ -107,28 +107,8 @@ output/
 docs/_build/
 site/
 
-# Experiment outputs (default ignored)
+# Experiment outputs — only solution-gate evidence files are tracked
 outputs/*
-!outputs/step1_canonical/
-!outputs/step2_canonical/
-!outputs/daemon_throughput/
-!outputs/bsuite/
-outputs/bsuite/**
-!outputs/bsuite/**/
-!outputs/bsuite/**/*.md
-# Solution gates and benchmark evidence
 !outputs/*_solution_gate.json
-!outputs/step6_riverswim/
-!outputs/step7_chain_planning/
-!outputs/step7_dyna/
-!outputs/step9_dreaming/
-!outputs/step10_stomp/
-!outputs/step11_oak/
-!outputs/step12_ia/
-!outputs/prototype_end_to_end/
 results/
 logs/
-*.png
-*.pdf
-!docs/*.png
-!docs/*.pdf

@@ -5,8 +5,8 @@
   "evidence": {
     "implementation_files": {
       "files": {
-        "src/alberta_framework/core/average_reward.py": true,
-        "src/alberta_framework/steps/step6.py": true,
+        "alberta_framework/core/average_reward.py": true,
+        "alberta_framework/steps/step6.py": true,
         "tests/test_average_reward.py": true,
         "tests/test_step5_step6_production.py": true,
         "benchmarks/step6_continuing_control.py": true,

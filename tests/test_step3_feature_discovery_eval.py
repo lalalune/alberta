@@ -11,7 +11,7 @@ import numpy as np
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
-    / "alberta_framework" / "examples"
+    / "examples"
     / "The Alberta Plan"
     / "Step3"
     / "step3_feature_discovery_eval.py"

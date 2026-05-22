@@ -18,8 +18,8 @@
       "passed": true,
       "claim_scope": "one_step_reward_and_next_state_prediction",
       "files": {
-        "src/alberta_framework/core/world_model.py": true,
-        "src/alberta_framework/steps/step8.py": true,
+        "alberta_framework/core/world_model.py": true,
+        "alberta_framework/steps/step8.py": true,
         "tests/test_action_conditioned_world_model.py": true,
         "tests/test_step8_production.py": true
       }
@@ -31,7 +31,7 @@
       "commit": "485331d",
       "n_tests": 50,
       "files": {
-        "src/alberta_framework/core/prototype_agent.py": true,
+        "alberta_framework/core/prototype_agent.py": true,
         "tests/test_prototype_agent.py": true,
         "tests/test_prototype_features.py": true,
         "tests/test_prototype_basis.py": true

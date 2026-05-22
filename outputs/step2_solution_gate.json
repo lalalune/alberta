@@ -83,7 +83,7 @@
       "passed": true,
       "claim_scope": "generate_test_rank_replace_lifecycle_implemented_and_tested",
       "files": {
-        "src/alberta_framework/core/feature_discovery.py": true
+        "alberta_framework/core/feature_discovery.py": true
       },
       "verified": [
         "FixedBudgetFeatureLearner: active + candidate feature banks",

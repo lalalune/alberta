@@ -19,7 +19,7 @@ def load_module() -> ModuleType:
     """Load the published-stressors example module."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "alberta_framework" / "examples"
+        / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_published_stressors.py"

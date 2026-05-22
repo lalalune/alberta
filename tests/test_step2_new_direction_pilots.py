@@ -15,7 +15,7 @@ def load_pilots_module() -> ModuleType:
     """Load the Step 2 pilot script from its examples path."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "alberta_framework" / "examples"
+        / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_new_direction_pilots.py"

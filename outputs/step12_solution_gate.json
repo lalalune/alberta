@@ -4,8 +4,8 @@
   "claim_scope": "prototype_ia_recommendation_protocol_completion",
   "evidence": {
     "implementation_files": {
-      "src/alberta_framework/core/intelligence_amplification.py": true,
-      "src/alberta_framework/steps/step12.py": true,
+      "alberta_framework/core/intelligence_amplification.py": true,
+      "alberta_framework/steps/step12.py": true,
       "tests/test_step12_production.py": true,
       "benchmarks/step12_ia_augmentation.py": true
     },

@@ -13,7 +13,7 @@ import pytest
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "alberta_framework" / "examples"
+    / "examples"
     / "The Alberta Plan"
     / "Step2"
     / "new_directions"

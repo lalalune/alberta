@@ -79,7 +79,6 @@ alberta-evidence-gate = "alberta_framework.cli:evidence_gate_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["alberta_framework"]
-exclude = ["alberta_framework/examples*", "alberta_framework/scripts*"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -133,6 +132,7 @@ warn_unused_ignores = true
 strict = true
 files = ["alberta_framework"]
 exclude = [
+    "^alberta_framework/benchmarks/",
     "^alberta_framework/examples/",
     "^alberta_framework/scripts/",
 ]

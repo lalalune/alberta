@@ -7,7 +7,7 @@ Steps 5 and 6.
 
 ## What Was Added
 
-`src/alberta_framework/core/average_reward.py` now provides two temporally
+`alberta_framework/core/average_reward.py` now provides two temporally
 uniform continuing-learning primitives:
 
 - `DifferentialTDLearner`: linear differential TD prediction.
@@ -30,8 +30,8 @@ array loops:
 
 Production facades were added:
 
-- `src/alberta_framework/steps/step5.py`
-- `src/alberta_framework/steps/step6.py`
+- `alberta_framework/steps/step5.py`
+- `alberta_framework/steps/step6.py`
 
 These expose smoke-testable, stable imports through `alberta_framework.steps`
 without requiring downstream users to depend directly on exploratory modules.

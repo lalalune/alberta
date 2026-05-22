@@ -13,7 +13,7 @@ def load_performance_module() -> Any:
     repo_root = Path(__file__).resolve().parents[1]
     module_path = (
         repo_root
-        / "alberta_framework" / "examples"
+        / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_continuous_diffeml_performance.py"

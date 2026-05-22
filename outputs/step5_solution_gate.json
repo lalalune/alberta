@@ -32,8 +32,8 @@
     "implementation_and_tests": {
       "files": {
         "docs/research/step5_step6_average_reward.md": true,
-        "src/alberta_framework/core/average_reward.py": true,
-        "src/alberta_framework/steps/step5.py": true,
+        "alberta_framework/core/average_reward.py": true,
+        "alberta_framework/steps/step5.py": true,
         "tests/test_average_reward.py": true,
         "tests/test_step5_step6_production.py": true
       },

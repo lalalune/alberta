@@ -165,7 +165,7 @@
       "claim_scope": "production_facing_corrected_off_policy_horde_backend",
       "files": {
         "core_export": true,
-        "src/alberta_framework/core/off_policy_horde.py": true,
+        "alberta_framework/core/off_policy_horde.py": true,
         "tests/test_off_policy_horde.py": true,
         "top_level_export": true
       },

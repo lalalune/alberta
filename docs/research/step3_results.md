@@ -12,7 +12,7 @@ local-core throughput. It is not a claim that general temporal feature discovery
 or nonlinear shared-trunk forward-view traces are solved.
 
 The production-facing surface is intentionally narrow:
-`src/alberta_framework/steps/step3.py` exposes `Step3HordeConfig`,
+`alberta_framework/steps/step3.py` exposes `Step3HordeConfig`,
 `make_step3_horde()`, `build_step2_to_step3_arrays()`, and
 `run_step3_smoke()`. These helpers package the existing given-feature Horde path
 and the Step 2 constructed-feature handoff. They are smoke/integration helpers,

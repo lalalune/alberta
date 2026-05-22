@@ -6,7 +6,7 @@ This note records the first production planning slice for Alberta Plan Step 7.
 
 ## What Was Added
 
-`src/alberta_framework/steps/step7.py` provides a small Dyna-style facade over
+`alberta_framework/steps/step7.py` provides a small Dyna-style facade over
 existing production primitives:
 
 - Step 6 `DifferentialSARSAAgent` for continuing average-reward control.

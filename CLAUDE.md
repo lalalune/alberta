@@ -20,7 +20,7 @@ Implements the Alberta Plan for AI Research, progressing through increasingly co
 
 ## Package Structure
 ```
-src/alberta_framework/
+alberta_framework/
 ├── core/
 │   ├── types.py            # TimeStep, LearnerState, optimizer states, MLP types, TD types, lifecycle utilities
 │   ├── optimizers.py       # LMS, IDBD, Autostep, ObGD, TDIDBD, AutoTDIDBD; Bounder ABC, ObGDBounding, AGCBounding

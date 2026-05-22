@@ -14,7 +14,7 @@ def load_module() -> Any:
     """Load the example module despite spaces in its path."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "alberta_framework" / "examples"
+        / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_conclusive_learner.py"

@@ -11,7 +11,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = (
     REPO_ROOT
-    / "alberta_framework" / "examples"
+    / "examples"
     / "The Alberta Plan"
     / "Step2"
     / "step2_upgd_ablation.py"

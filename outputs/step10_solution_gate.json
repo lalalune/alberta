@@ -4,8 +4,8 @@
   "claim_scope": "stomp_auto_discovery_semidp_planning_off_policy_completion",
   "evidence": {
     "implementation_files": {
-      "src/alberta_framework/core/options.py": true,
-      "src/alberta_framework/steps/step10.py": true,
+      "alberta_framework/core/options.py": true,
+      "alberta_framework/steps/step10.py": true,
       "tests/test_step10_production.py": true,
       "benchmarks/step10_stomp_options.py": true,
       "benchmarks/step10_feature_autodiscovery.py": true
