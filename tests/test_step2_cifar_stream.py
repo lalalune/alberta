@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import numpy as np
 
-SCRIPT_PATH = (
+from conftest import load_script
+
+_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "examples"
     / "The Alberta Plan"
@@ -18,15 +18,8 @@ SCRIPT_PATH = (
 )
 
 
-def load_module() -> Any:
-    """Load the example module by path because the directory contains spaces."""
-    spec = importlib.util.spec_from_file_location("step2_cifar_stream", SCRIPT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["step2_cifar_stream"] = module
-    spec.loader.exec_module(module)
-    return module
+def load_module() -> ModuleType:
+    return load_script(_SCRIPT_PATH, "step2_cifar_stream")
 
 
 def test_one_hot_targets_are_cifar_shaped() -> None:
