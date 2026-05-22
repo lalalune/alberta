@@ -786,6 +786,84 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "against Q but does not beat SARSA or reliably clear catch"
         ),
     }
+    nlqhorde_expected_variant_path = (
+        root / "outputs/bsuite/nlqhorde_ac_expected_adv_variant_catch3_500/report.md"
+    )
+    nlqhorde_expected_variant_exists = nlqhorde_expected_variant_path.exists()
+    nlqhorde_expected_variant_rows = (
+        parse_markdown_summary_table(read_text(nlqhorde_expected_variant_path))
+        if nlqhorde_expected_variant_exists
+        else {}
+    )
+    variant_catch_values = nlqhorde_expected_variant_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    # Table columns after n: SARSA mean/wins, then each expected-advantage variant.
+    expected_variant_means = (
+        variant_catch_values[3::2] if len(variant_catch_values) >= 5 else []
+    )
+    expected_variant_best_mean = (
+        max(expected_variant_means) if expected_variant_means else None
+    )
+    expected_variant_sarsa_mean = (
+        variant_catch_values[1] if len(variant_catch_values) >= 2 else None
+    )
+    evidence["nonlinear_q_horde_expected_advantage_variant_search"] = {
+        "path": str(nlqhorde_expected_variant_path),
+        "exists": nlqhorde_expected_variant_exists,
+        "summary": nlqhorde_expected_variant_rows.get("catch", {}),
+        "best_mean_improvement_vs_q": expected_variant_best_mean,
+        "sarsa_mean_improvement_vs_q": expected_variant_sarsa_mean,
+        "passed": nlqhorde_expected_variant_exists,
+        "promotion_vs_q_passed": bool(
+            expected_variant_best_mean is not None and expected_variant_best_mean > 0.0
+        ),
+        "promotion_vs_sarsa_passed": bool(
+            expected_variant_best_mean is not None
+            and expected_variant_sarsa_mean is not None
+            and expected_variant_best_mean > expected_variant_sarsa_mean
+        ),
+        "boundary": (
+            "3-seed catch/0 expected-advantage variant search found a "
+            "gradient-clip 0.5 candidate that beat Q and SARSA on mean catch "
+            "improvement, requiring 10-seed confirmation"
+        ),
+    }
+    nlqhorde_expected_g05_path = (
+        root / "outputs/bsuite/nlqhorde_ac_expected_adv_g05_10seed_500/report.md"
+    )
+    nlqhorde_expected_g05_exists = nlqhorde_expected_g05_path.exists()
+    nlqhorde_expected_g05_rows = (
+        parse_markdown_summary_table(read_text(nlqhorde_expected_g05_path))
+        if nlqhorde_expected_g05_exists
+        else {}
+    )
+    g05_overall_values = nlqhorde_expected_g05_rows.get("overall", {}).get(
+        "numeric_values", []
+    )
+    g05_catch_values = nlqhorde_expected_g05_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    evidence["nonlinear_q_horde_expected_advantage_g05_10seed_probe"] = {
+        "path": str(nlqhorde_expected_g05_path),
+        "exists": nlqhorde_expected_g05_exists,
+        "overall": nlqhorde_expected_g05_rows.get("overall", {}),
+        "catch": nlqhorde_expected_g05_rows.get("catch", {}),
+        "cartpole": nlqhorde_expected_g05_rows.get("cartpole", {}),
+        "passed": nlqhorde_expected_g05_exists,
+        "promotion_vs_q_passed": bool(
+            len(g05_overall_values) >= 5
+            and g05_overall_values[3] > 0.0
+            and len(g05_catch_values) >= 5
+            and g05_catch_values[3] > 0.0
+        ),
+        "promotion_vs_sarsa_passed": False,
+        "boundary": (
+            "10-seed confirmation of the best 3-seed expected-advantage "
+            "variant did not hold: it improved cartpole but regressed catch "
+            "and trailed SARSA overall"
+        ),
+    }
 
     tests = {
         "tests/test_sarsa.py": (root / "tests/test_sarsa.py").exists(),
@@ -856,7 +934,9 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "steps, but SARSA remains stronger; the action-value NLQHorde "
             "actor-critic search did not improve the catch boundary; the "
             "nonlinear expected-advantage Q-Horde actor update improves the "
-            "small 3-seed overall probe against Q but still does not beat SARSA; "
+            "small 3-seed overall probe against Q, and a 3-seed catch variant "
+            "wins on mean, but the 10-seed confirmation regresses catch and "
+            "still does not beat SARSA; "
             "adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps "
             "but regressed catch"
         ),

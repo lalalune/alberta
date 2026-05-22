@@ -513,6 +513,56 @@
         ]
       }
     },
+    "nonlinear_q_horde_expected_advantage_g05_10seed_probe": {
+      "boundary": "10-seed confirmation of the best 3-seed expected-advantage variant did not hold: it improved cartpole but regressed catch and trailed SARSA overall",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": 20.4,
+        "col_4": 6.0,
+        "col_5": 11.1,
+        "col_6": 4.0,
+        "numeric_values": [
+          10.0,
+          20.4,
+          6.0,
+          11.1,
+          4.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 1.2,
+        "col_4": 6.0,
+        "col_5": -3.4,
+        "col_6": 3.0,
+        "numeric_values": [
+          10.0,
+          1.2,
+          6.0,
+          -3.4,
+          3.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 10.8,
+        "col_4": 12.0,
+        "col_5": 3.85,
+        "col_6": 7.0,
+        "numeric_values": [
+          20.0,
+          10.8,
+          12.0,
+          3.85,
+          7.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlqhorde_ac_expected_adv_g05_10seed_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false
+    },
     "nonlinear_q_horde_expected_advantage_probe": {
       "boundary": "nonlinear Q-Horde expected-advantage actor update is implemented and passes a 3-seed catch/cartpole smoke; it improves overall against Q but does not beat SARSA or reliably clear catch",
       "cartpole": {
@@ -562,6 +612,42 @@
       "path": "outputs/bsuite/nlqhorde_ac_expected_adv_3seed_500/step4_report.md",
       "promotion_vs_q_passed": false,
       "promotion_vs_sarsa_passed": false
+    },
+    "nonlinear_q_horde_expected_advantage_variant_search": {
+      "best_mean_improvement_vs_q": 6.66667,
+      "boundary": "3-seed catch/0 expected-advantage variant search found a gradient-clip 0.5 candidate that beat Q and SARSA on mean catch improvement, requiring 10-seed confirmation",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlqhorde_ac_expected_adv_variant_catch3_500/report.md",
+      "promotion_vs_q_passed": true,
+      "promotion_vs_sarsa_passed": true,
+      "sarsa_mean_improvement_vs_q": -2.66667,
+      "summary": {
+        "col_1": 3.0,
+        "col_10": 1.0,
+        "col_11": 6.66667,
+        "col_12": 2.0,
+        "col_3": -2.66667,
+        "col_4": 2.0,
+        "col_5": 4.0,
+        "col_6": 2.0,
+        "col_7": 3.33333,
+        "col_8": 1.0,
+        "col_9": -0.666667,
+        "numeric_values": [
+          3.0,
+          -2.66667,
+          2.0,
+          4.0,
+          2.0,
+          3.33333,
+          1.0,
+          -0.666667,
+          1.0,
+          6.66667,
+          2.0
+        ]
+      }
     },
     "q_sarsa_actor_critic_report": {
       "boundary": "actor-critic is implemented and evidenced but underperforms the canonical Q/SARSA baselines in this report",
@@ -809,7 +895,7 @@
     }
   },
   "open_boundaries": [
-    "Horde actor-critic positive control passes, but bsuite promotion over SARSA remains unproven; gradient-clipped NLHAC now beats the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 steps, but SARSA remains stronger; the action-value NLQHorde actor-critic search did not improve the catch boundary; the nonlinear expected-advantage Q-Horde actor update improves the small 3-seed overall probe against Q but still does not beat SARSA; adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps but regressed catch",
+    "Horde actor-critic positive control passes, but bsuite promotion over SARSA remains unproven; gradient-clipped NLHAC now beats the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 steps, but SARSA remains stronger; the action-value NLQHorde actor-critic search did not improve the catch boundary; the nonlinear expected-advantage Q-Horde actor update improves the small 3-seed overall probe against Q, and a 3-seed catch variant wins on mean, but the 10-seed confirmation regresses catch and still does not beat SARSA; adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps but regressed catch",
     "local security-gym counterfactual rollout passes, but active-defense rlsecd daemon deployment remains external"
   ],
   "schema": "alberta.step4.solution_gate.v1",

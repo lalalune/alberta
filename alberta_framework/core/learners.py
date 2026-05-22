@@ -297,12 +297,13 @@ def _maybe_record(
     """
     if history is None:
         return None
-    return jax.lax.cond(
+    result: Array = jax.lax.cond(
         should_record,
         lambda _: history.at[recording_idx].set(value),
         lambda _: history,
         None,
     )
+    return result
 
 
 def run_learning_loop[StreamStateT](
@@ -1430,7 +1431,7 @@ def run_mlp_learning_loop[StreamStateT](
         new_n_vars = _maybe_record(should_record, n_vars, recording_idx, norm_state.var)
         new_n_rec = _maybe_record(should_record, n_rec, recording_idx, idx)
 
-        return (
+        return (  # type: ignore[return-value]  # n_* are non-None when tracking is enabled
             result.state,
             new_s_state,
             new_n_means,
