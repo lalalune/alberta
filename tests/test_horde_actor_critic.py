@@ -970,9 +970,66 @@ class TestNonlinearQHordeActorCritic:
             hidden_sizes=(32, 16),
             actor_gradient_clip_norm=0.25,
             critic_target="sampled_sarsa",
+            actor_update="expected_advantage",
         )
         restored = NonlinearQHordeActorCriticConfig.from_config(cfg.to_config())
         assert restored.n_actions == 4
         assert restored.hidden_sizes == (32, 16)
         assert restored.actor_gradient_clip_norm == pytest.approx(0.25)
         assert restored.critic_target == "sampled_sarsa"
+        assert restored.actor_update == "expected_advantage"
+
+    def test_expected_advantage_actor_update_moves_toward_better_action(self) -> None:
+        demons = [
+            GVFSpec(  # type: ignore[call-arg]
+                name=f"q_{action}",
+                demon_type=DemonType.CONTROL,
+                gamma=0.0,
+                lamda=0.0,
+                cumulant_index=-1,
+            )
+            for action in range(2)
+        ]
+        critic = HordeLearner(
+            create_horde_spec(demons),
+            hidden_sizes=(),
+            step_size=0.03,
+        )
+        cfg = NonlinearQHordeActorCriticConfig(
+            n_actions=2,
+            hidden_sizes=(),
+            actor_sparsity=0.0,
+            actor_update="expected_advantage",
+        )
+        agent = NonlinearQHordeActorCriticAgent(
+            cfg,
+            critic,
+            actor_optimizer=Autostep(initial_step_size=0.1),
+        )
+        obs = jnp.array([1.0, 0.0], dtype=jnp.float32)
+        state = agent.init(2, jr.key(18)).replace(  # type: ignore[attr-defined]
+            last_observation=obs,
+            last_action=jnp.array(0, dtype=jnp.int32),
+        )
+        head_weights = state.critic_state.head_params.weights
+        critic_state = state.critic_state.replace(  # type: ignore[attr-defined]
+            head_params=state.critic_state.head_params.replace(  # type: ignore[attr-defined]
+                weights=(
+                    head_weights[0],
+                    head_weights[1].at[0, 0].set(2.0),
+                )
+            )
+        )
+        state = state.replace(critic_state=critic_state)  # type: ignore[attr-defined]
+
+        before = agent.policy(state, obs)
+        result = agent.update(
+            state,
+            jnp.array(0.0, dtype=jnp.float32),
+            obs,
+            jnp.array(0.0, dtype=jnp.float32),
+        )
+        after = agent.policy(result.state, obs)
+
+        assert after[1] > before[1]
+        assert after[0] < before[0]

@@ -284,6 +284,27 @@ class LinearLearner:
         )
 
 
+def _maybe_record(
+    should_record: Array,
+    history: Array | None,
+    recording_idx: Array,
+    value: Array,
+) -> Array | None:
+    """Conditionally write *value* into *history* at *recording_idx*.
+
+    Returns *history* unchanged when it is ``None`` or when *should_record* is
+    ``False``.  Intended for use inside ``jax.lax.scan`` bodies.
+    """
+    if history is None:
+        return None
+    return jax.lax.cond(
+        should_record,
+        lambda _: history.at[recording_idx].set(value),
+        lambda _: history,
+        None,
+    )
+
+
 def run_learning_loop[StreamStateT](
     learner: LinearLearner,
     stream: ScanStream[StreamStateT],
@@ -493,36 +514,15 @@ def run_learning_loop[StreamStateT](
                 weight_ss = jnp.full(feature_dim, opt_state.step_size)
                 bias_ss = opt_state.step_size
 
-            new_ss_hist = jax.lax.cond(
-                should_record_ss,
-                lambda _: ss_hist.at[recording_idx].set(weight_ss),
-                lambda _: ss_hist,
-                None,
+            new_ss_hist = _maybe_record(should_record_ss, ss_hist, recording_idx, weight_ss)
+            new_ss_bias_hist = _maybe_record(
+                should_record_ss, ss_bias_hist, recording_idx, bias_ss
             )
-
-            if ss_bias_hist is not None:
-                new_ss_bias_hist = jax.lax.cond(
-                    should_record_ss,
-                    lambda _: ss_bias_hist.at[recording_idx].set(bias_ss),
-                    lambda _: ss_bias_hist,
-                    None,
-                )
-
-            if ss_rec is not None:
-                new_ss_rec = jax.lax.cond(
-                    should_record_ss,
-                    lambda _: ss_rec.at[recording_idx].set(idx),
-                    lambda _: ss_rec,
-                    None,
-                )
-
+            new_ss_rec = _maybe_record(should_record_ss, ss_rec, recording_idx, idx)
             # Track Autostep normalizers (v_i) if applicable
             if ss_norm is not None and hasattr(opt_state, "normalizers"):
-                new_ss_norm = jax.lax.cond(
-                    should_record_ss,
-                    lambda _: ss_norm.at[recording_idx].set(opt_state.normalizers),
-                    lambda _: ss_norm,
-                    None,
+                new_ss_norm = _maybe_record(
+                    should_record_ss, ss_norm, recording_idx, opt_state.normalizers
                 )
 
         # Normalizer state tracking
@@ -535,29 +535,13 @@ def run_learning_loop[StreamStateT](
             norm_recording_idx = idx // norm_interval
 
             norm_state = result.state.normalizer_state
-
-            new_n_means = jax.lax.cond(
-                should_record_norm,
-                lambda _: n_means.at[norm_recording_idx].set(norm_state.mean),
-                lambda _: n_means,
-                None,
+            new_n_means = _maybe_record(
+                should_record_norm, n_means, norm_recording_idx, norm_state.mean
             )
-
-            if n_vars is not None:
-                new_n_vars = jax.lax.cond(
-                    should_record_norm,
-                    lambda _: n_vars.at[norm_recording_idx].set(norm_state.var),
-                    lambda _: n_vars,
-                    None,
-                )
-
-            if n_rec is not None:
-                new_n_rec = jax.lax.cond(
-                    should_record_norm,
-                    lambda _: n_rec.at[norm_recording_idx].set(idx),
-                    lambda _: n_rec,
-                    None,
-                )
+            new_n_vars = _maybe_record(
+                should_record_norm, n_vars, norm_recording_idx, norm_state.var
+            )
+            new_n_rec = _maybe_record(should_record_norm, n_rec, norm_recording_idx, idx)
 
         return (
             result.state,
@@ -1442,27 +1426,9 @@ def run_mlp_learning_loop[StreamStateT](
         recording_idx = idx // norm_interval
 
         norm_state = result.state.normalizer_state
-
-        new_n_means = jax.lax.cond(
-            should_record,
-            lambda _: n_means.at[recording_idx].set(norm_state.mean),
-            lambda _: n_means,
-            None,
-        )
-
-        new_n_vars = jax.lax.cond(
-            should_record,
-            lambda _: n_vars.at[recording_idx].set(norm_state.var),
-            lambda _: n_vars,
-            None,
-        )
-
-        new_n_rec = jax.lax.cond(
-            should_record,
-            lambda _: n_rec.at[recording_idx].set(idx),
-            lambda _: n_rec,
-            None,
-        )
+        new_n_means = _maybe_record(should_record, n_means, recording_idx, norm_state.mean)
+        new_n_vars = _maybe_record(should_record, n_vars, recording_idx, norm_state.var)
+        new_n_rec = _maybe_record(should_record, n_rec, recording_idx, idx)
 
         return (
             result.state,

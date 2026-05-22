@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -161,7 +162,14 @@ def run_command(command: Sequence[str], *, dry_run: bool) -> dict[str, Any]:
     command_list = [str(part) for part in command]
     if dry_run:
         return {"command": command_list, "returncode": None, "dry_run": True}
-    completed = subprocess.run(command_list, check=False)
+    env = dict(os.environ)
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        str(REPO_ROOT)
+        if not existing_pythonpath
+        else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+    )
+    completed = subprocess.run(command_list, check=False, cwd=REPO_ROOT, env=env)
     return {
         "command": command_list,
         "returncode": int(completed.returncode),

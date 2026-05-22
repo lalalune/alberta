@@ -751,6 +751,41 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "with the Q baseline"
         ),
     }
+    nlqhorde_expected_path = (
+        root / "outputs/bsuite/nlqhorde_ac_expected_adv_3seed_500/step4_report.md"
+    )
+    nlqhorde_expected_exists = nlqhorde_expected_path.exists()
+    nlqhorde_expected_rows = (
+        parse_markdown_summary_table(read_text(nlqhorde_expected_path))
+        if nlqhorde_expected_exists
+        else {}
+    )
+    nlqhorde_expected_overall_values = nlqhorde_expected_rows.get(
+        "overall", {}
+    ).get("numeric_values", [])
+    nlqhorde_expected_catch_values = nlqhorde_expected_rows.get("catch", {}).get(
+        "numeric_values", []
+    )
+    evidence["nonlinear_q_horde_expected_advantage_probe"] = {
+        "path": str(nlqhorde_expected_path),
+        "exists": nlqhorde_expected_exists,
+        "overall": nlqhorde_expected_rows.get("overall", {}),
+        "catch": nlqhorde_expected_rows.get("catch", {}),
+        "cartpole": nlqhorde_expected_rows.get("cartpole", {}),
+        "passed": nlqhorde_expected_exists,
+        "promotion_vs_q_passed": bool(
+            len(nlqhorde_expected_overall_values) >= 5
+            and nlqhorde_expected_overall_values[3] > 0.0
+            and len(nlqhorde_expected_catch_values) >= 5
+            and nlqhorde_expected_catch_values[3] > 0.0
+        ),
+        "promotion_vs_sarsa_passed": False,
+        "boundary": (
+            "nonlinear Q-Horde expected-advantage actor update is implemented "
+            "and passes a 3-seed catch/cartpole smoke; it improves overall "
+            "against Q but does not beat SARSA or reliably clear catch"
+        ),
+    }
 
     tests = {
         "tests/test_sarsa.py": (root / "tests/test_sarsa.py").exists(),
@@ -819,7 +854,9 @@ def audit_step4(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "over SARSA remains unproven; gradient-clipped NLHAC now beats "
             "the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 "
             "steps, but SARSA remains stronger; the action-value NLQHorde "
-            "actor-critic search did not improve the catch boundary; "
+            "actor-critic search did not improve the catch boundary; the "
+            "nonlinear expected-advantage Q-Horde actor update improves the "
+            "small 3-seed overall probe against Q but still does not beat SARSA; "
             "adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps "
             "but regressed catch"
         ),

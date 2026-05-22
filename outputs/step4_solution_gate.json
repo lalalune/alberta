@@ -1,5 +1,6 @@
 {
   "accepted_sarsa_step4a": true,
+  "accepted_security_gym_counterfactual_rollout": true,
   "accepted_step4_local_framework_scope": true,
   "claim_scope": "canonical_discrete_sarsa_control_local_completion",
   "evidence": {
@@ -25,29 +26,542 @@
       "passed": true,
       "path": "outputs/bsuite/step4_ac_paths_seed0/report.md"
     },
-    "nlhac_gradclip_probe_3seed": {
-      "boundary": "3-seed pilot — nlhac_gradclip beats autostep on CartPole (2/3) but not catch (1/3)",
-      "nlhac_gradclip_overall_improvement": 12.5,
-      "nlhac_gradclip_overall_wins": 3,
-      "n_seeds": 3,
+    "nonlinear_horde_actor_critic_adaptive_obgd_1000_probe": {
+      "boundary": "adaptive-ObGD NLHAC 10-seed 1000-step probe improves overall and cartpole against Q, but catch remains negative and SARSA remains stronger on catch",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": 17.9,
+        "col_4": 5.0,
+        "col_5": 22.2,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          17.9,
+          5.0,
+          22.2,
+          5.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 13.4,
+        "col_4": 7.0,
+        "col_5": -6.0,
+        "col_6": 2.0,
+        "numeric_values": [
+          10.0,
+          13.4,
+          7.0,
+          -6.0,
+          2.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 15.65,
+        "col_4": 12.0,
+        "col_5": 8.1,
+        "col_6": 7.0,
+        "numeric_values": [
+          20.0,
+          15.65,
+          12.0,
+          8.1,
+          7.0
+        ]
+      },
       "passed": true,
-      "path": "outputs/bsuite/nlhac_gradclip_3seed_500/report.md"
+      "path": "outputs/bsuite/nlhac_gradclip_adaptive_10seed_1000/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false
     },
-    "nlhac_gradclip_probe_10seed": {
-      "boundary": "nlhac_gradclip beats autostep Q-learning on 12/20 pairs (60%) but SARSA wins 16/20 (80%); CartPole d≈0.10, catch d≈0.26 — below d>0.5 promotion threshold",
-      "nlhac_gradclip_overall_wins": 12,
-      "nlhac_gradclip_overall_improvement": 4.3,
-      "nlhac_gradclip_cartpole_wins": 7,
-      "nlhac_gradclip_cartpole_improvement": 6.4,
-      "nlhac_gradclip_catch_wins": 5,
-      "nlhac_gradclip_catch_improvement": 2.2,
-      "sarsa_overall_wins": 16,
-      "sarsa_overall_improvement": 14.45,
-      "n_seeds": 10,
-      "actor_gradient_clip_norm": 1.0,
-      "actor_td_error_clip": 1.0,
+    "nonlinear_horde_actor_critic_adaptive_obgd_probe": {
+      "boundary": "adaptive-ObGD NLHAC 10-seed 500-step probe improves overall and cartpole against Q, but catch is negative and SARSA remains stronger on catch",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": 5.8,
+        "col_4": 7.0,
+        "col_5": 10.6,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          5.8,
+          7.0,
+          10.6,
+          5.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 6.6,
+        "col_4": 7.0,
+        "col_5": -1.4,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          6.6,
+          7.0,
+          -1.4,
+          5.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 6.2,
+        "col_4": 14.0,
+        "col_5": 4.6,
+        "col_6": 10.0,
+        "numeric_values": [
+          20.0,
+          6.2,
+          14.0,
+          4.6,
+          10.0
+        ]
+      },
       "passed": true,
-      "path": "outputs/bsuite/nlhac_gradclip_10seed_500/report.md"
+      "path": "outputs/bsuite/nlhac_gradclip_adaptive_10seed_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false
+    },
+    "nonlinear_horde_actor_critic_clipped_probe": {
+      "boundary": "clipped NLHAC 3-seed 500-step catch/cartpole probe is recorded; it still fails promotion because overall and catch means are below the Q baseline",
+      "cartpole": {
+        "col_1": 3.0,
+        "col_3": 26.6667,
+        "col_4": 2.0,
+        "col_5": -3.66667,
+        "col_6": 2.0,
+        "numeric_values": [
+          3.0,
+          26.6667,
+          2.0,
+          -3.66667,
+          2.0
+        ]
+      },
+      "catch": {
+        "col_1": 3.0,
+        "col_3": -9.33333,
+        "col_4": 0.0,
+        "col_5": -8.0,
+        "col_6": 0.0,
+        "numeric_values": [
+          3.0,
+          -9.33333,
+          0.0,
+          -8.0,
+          0.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 6.0,
+        "col_3": 8.66667,
+        "col_4": 2.0,
+        "col_5": -5.83333,
+        "col_6": 2.0,
+        "numeric_values": [
+          6.0,
+          8.66667,
+          2.0,
+          -5.83333,
+          2.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_clipped_3seed_500/report.md",
+      "promotion_passed": false
+    },
+    "nonlinear_horde_actor_critic_epsilon_mixture_probe": {
+      "boundary": "3-seed catch/0 pilot with a consistent 0.05 uniform actor policy mixture regressed the NLHAC catch boundary",
+      "epsilon_mixture_mean_improvement_vs_q": -8.0,
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_eps05_catch3_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false,
+      "sarsa_mean_improvement_vs_q": 3.33333,
+      "summary": {
+        "col_1": 3.0,
+        "col_3": 3.33333,
+        "col_4": 2.0,
+        "col_5": -10.0,
+        "col_6": 0.0,
+        "col_7": -8.0,
+        "col_8": 0.0,
+        "numeric_values": [
+          3.0,
+          3.33333,
+          2.0,
+          -10.0,
+          0.0,
+          -8.0,
+          0.0
+        ]
+      }
+    },
+    "nonlinear_horde_actor_critic_gradclip_1000_probe": {
+      "boundary": "gradient-clipped NLHAC 10-seed 1000-step probe remains positive against the Q baseline on catch, cartpole, and overall, but still does not outperform SARSA",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": -2.1,
+        "col_4": 5.0,
+        "col_5": 4.2,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          -2.1,
+          5.0,
+          4.2,
+          5.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 13.8,
+        "col_4": 9.0,
+        "col_5": 2.6,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          13.8,
+          9.0,
+          2.6,
+          5.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 5.85,
+        "col_4": 14.0,
+        "col_5": 3.4,
+        "col_6": 10.0,
+        "numeric_values": [
+          20.0,
+          5.85,
+          14.0,
+          3.4,
+          10.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_10seed_1000/report.md",
+      "promotion_vs_q_passed": true,
+      "promotion_vs_sarsa_passed": false
+    },
+    "nonlinear_horde_actor_critic_gradclip_500_probe": {
+      "boundary": "gradient-clipped NLHAC 10-seed 500-step probe is positive against the Q baseline on catch, cartpole, and overall, but does not outperform SARSA",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": 17.1,
+        "col_4": 6.0,
+        "col_5": 6.4,
+        "col_6": 7.0,
+        "numeric_values": [
+          10.0,
+          17.1,
+          6.0,
+          6.4,
+          7.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 11.8,
+        "col_4": 10.0,
+        "col_5": 2.2,
+        "col_6": 5.0,
+        "numeric_values": [
+          10.0,
+          11.8,
+          10.0,
+          2.2,
+          5.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 14.45,
+        "col_4": 16.0,
+        "col_5": 4.3,
+        "col_6": 12.0,
+        "numeric_values": [
+          20.0,
+          14.45,
+          16.0,
+          4.3,
+          12.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_10seed_500/report.md",
+      "promotion_vs_q_passed": true,
+      "promotion_vs_sarsa_passed": false
+    },
+    "nonlinear_horde_actor_critic_gradclip_variant_search": {
+      "boundary": "5-seed catch/0 search over actor step-size, actor lambda, temperature, gradient clip strength, and critic lambda did not find a SARSA-beating NLHAC variant",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_variant_catch5_1000/report.md",
+      "summary": {
+        "col_1": 5.0,
+        "col_10": 1.0,
+        "col_11": 1.6,
+        "col_12": 2.0,
+        "col_13": -2.0,
+        "col_14": 2.0,
+        "col_15": -5.6,
+        "col_16": 1.0,
+        "col_3": 6.0,
+        "col_4": 3.0,
+        "col_5": -4.0,
+        "col_6": 2.0,
+        "col_7": -6.8,
+        "col_8": 2.0,
+        "col_9": -11.2,
+        "numeric_values": [
+          5.0,
+          6.0,
+          3.0,
+          -4.0,
+          2.0,
+          -6.8,
+          2.0,
+          -11.2,
+          1.0,
+          1.6,
+          2.0,
+          -2.0,
+          2.0,
+          -5.6,
+          1.0
+        ]
+      }
+    },
+    "nonlinear_horde_actor_critic_no_actor_layer_norm_probe": {
+      "boundary": "3-seed catch/0 pilot disabling actor layer norm regressed the NLHAC catch boundary",
+      "exists": true,
+      "no_actor_layer_norm_mean_improvement_vs_q": -14.0,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_no_actor_ln_catch3_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false,
+      "sarsa_mean_improvement_vs_q": 2.0,
+      "summary": {
+        "col_1": 3.0,
+        "col_3": 2.0,
+        "col_4": 2.0,
+        "col_5": 1.33333,
+        "col_6": 1.0,
+        "col_7": -14.0,
+        "col_8": 0.0,
+        "numeric_values": [
+          3.0,
+          2.0,
+          2.0,
+          1.33333,
+          1.0,
+          -14.0,
+          0.0
+        ]
+      }
+    },
+    "nonlinear_horde_actor_critic_promotion_probe": {
+      "boundary": "NLHAC actor_step_size alias is fixed and 10-seed catch/cartpole evidence is recorded; this probe still fails promotion because overall/cartpole means are below the Q baseline",
+      "cartpole": {
+        "col_1": 10.0,
+        "col_3": 5.0,
+        "col_4": 5.0,
+        "col_5": -14.1,
+        "col_6": 3.0,
+        "numeric_values": [
+          10.0,
+          5.0,
+          5.0,
+          -14.1,
+          3.0
+        ]
+      },
+      "catch": {
+        "col_1": 10.0,
+        "col_3": 1.8,
+        "col_4": 6.0,
+        "col_5": -1.0,
+        "col_6": 4.0,
+        "numeric_values": [
+          10.0,
+          1.8,
+          6.0,
+          -1.0,
+          4.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 20.0,
+        "col_3": 3.4,
+        "col_4": 11.0,
+        "col_5": -7.55,
+        "col_6": 7.0,
+        "numeric_values": [
+          20.0,
+          3.4,
+          11.0,
+          -7.55,
+          7.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_bottleneck_10seed/report.md",
+      "promotion_passed": false
+    },
+    "nonlinear_horde_actor_critic_td_normalizer_probe": {
+      "base_gradclip_mean_improvement_vs_q": 4.0,
+      "boundary": "3-seed catch/0 pilot with actor-only TD-error normalization was positive against Q but weaker than baseline gradclip NLHAC and SARSA",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_tdnorm_catch3_500/report.md",
+      "promotion_vs_q_passed": true,
+      "promotion_vs_sarsa_passed": false,
+      "sarsa_mean_improvement_vs_q": 5.33333,
+      "summary": {
+        "col_1": 3.0,
+        "col_3": 5.33333,
+        "col_4": 3.0,
+        "col_5": 4.0,
+        "col_6": 3.0,
+        "col_7": 0.666667,
+        "col_8": 1.0,
+        "numeric_values": [
+          3.0,
+          5.33333,
+          3.0,
+          4.0,
+          3.0,
+          0.666667,
+          1.0
+        ]
+      },
+      "td_normalized_mean_improvement_vs_q": 0.666667
+    },
+    "nonlinear_horde_actor_critic_wide_catch_probe": {
+      "boundary": "3-seed catch/0 pilot widening both actor and critic to (64, 64) did not improve the NLHAC catch boundary",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlhac_gradclip_wide_catch3_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false,
+      "sarsa_mean_improvement_vs_q": 9.33333,
+      "summary": {
+        "col_1": 3.0,
+        "col_3": 9.33333,
+        "col_4": 3.0,
+        "col_5": -0.666667,
+        "col_6": 1.0,
+        "col_7": -2.0,
+        "col_8": 1.0,
+        "numeric_values": [
+          3.0,
+          9.33333,
+          3.0,
+          -0.666667,
+          1.0,
+          -2.0,
+          1.0
+        ]
+      },
+      "wide_mean_improvement_vs_q": -2.0
+    },
+    "nonlinear_q_horde_actor_critic_variant_search": {
+      "best_mean_improvement_vs_q": 0.0,
+      "boundary": "3-seed catch/0 action-value NLQHorde search over actor step-size, temperature, and actor gradient clip strength did not find a Q- or SARSA-beating variant; the best mean improvement was a tie with the Q baseline",
+      "exists": true,
+      "passed": true,
+      "path": "outputs/bsuite/nlqhorde_ac_variant_catch3_500/report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false,
+      "sarsa_mean_improvement_vs_q": 12.0,
+      "summary": {
+        "col_1": 3.0,
+        "col_10": 1.0,
+        "col_11": -4.0,
+        "col_12": 1.0,
+        "col_3": 12.0,
+        "col_4": 2.0,
+        "col_5": -3.33333,
+        "col_6": 1.0,
+        "col_7": -4.66667,
+        "col_8": 1.0,
+        "col_9": 0.0,
+        "numeric_values": [
+          3.0,
+          12.0,
+          2.0,
+          -3.33333,
+          1.0,
+          -4.66667,
+          1.0,
+          0.0,
+          1.0,
+          -4.0,
+          1.0
+        ]
+      }
+    },
+    "nonlinear_q_horde_expected_advantage_probe": {
+      "boundary": "nonlinear Q-Horde expected-advantage actor update is implemented and passes a 3-seed catch/cartpole smoke; it improves overall against Q but does not beat SARSA or reliably clear catch",
+      "cartpole": {
+        "col_1": 3.0,
+        "col_3": 24.0,
+        "col_4": 2.0,
+        "col_5": 26.0,
+        "col_6": 1.0,
+        "numeric_values": [
+          3.0,
+          24.0,
+          2.0,
+          26.0,
+          1.0
+        ]
+      },
+      "catch": {
+        "col_1": 3.0,
+        "col_3": -2.66667,
+        "col_4": 1.0,
+        "col_5": -0.666667,
+        "col_6": 2.0,
+        "numeric_values": [
+          3.0,
+          -2.66667,
+          1.0,
+          -0.666667,
+          2.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 6.0,
+        "col_3": 10.6667,
+        "col_4": 3.0,
+        "col_5": 12.6667,
+        "col_6": 3.0,
+        "numeric_values": [
+          6.0,
+          10.6667,
+          3.0,
+          12.6667,
+          3.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/nlqhorde_ac_expected_adv_3seed_500/step4_report.md",
+      "promotion_vs_q_passed": false,
+      "promotion_vs_sarsa_passed": false
     },
     "q_sarsa_actor_critic_report": {
       "boundary": "actor-critic is implemented and evidenced but underperforms the canonical Q/SARSA baselines in this report",
@@ -70,6 +584,198 @@
       "passed": true,
       "path": "outputs/bsuite/step4_catch_cartpole_10seed/step4.md"
     },
+    "qhorde_actor_critic_probe": {
+      "boundary": "Q-Horde actor-critic improves the seed-0 cartpole and overall probe, but catch remains negative; this is diagnostic evidence, not bsuite promotion evidence",
+      "cartpole": {
+        "col_1": 1.0,
+        "col_3": 48.0,
+        "col_4": 1.0,
+        "col_5": 86.0,
+        "col_6": 1.0,
+        "numeric_values": [
+          1.0,
+          48.0,
+          1.0,
+          86.0,
+          1.0
+        ]
+      },
+      "catch": {
+        "col_1": 1.0,
+        "col_3": 6.0,
+        "col_4": 1.0,
+        "col_5": -6.0,
+        "col_6": 0.0,
+        "numeric_values": [
+          1.0,
+          6.0,
+          1.0,
+          -6.0,
+          0.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 2.0,
+        "col_3": 27.0,
+        "col_4": 2.0,
+        "col_5": 40.0,
+        "col_6": 1.0,
+        "numeric_values": [
+          2.0,
+          27.0,
+          2.0,
+          40.0,
+          1.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/qhorde_ac_seed0/report.md"
+    },
+    "qhorde_expected_advantage_probe": {
+      "boundary": "expected-advantage Q-Horde actor-critic passed a seed-0 smoke but failed the 3-seed catch/cartpole promotion probe",
+      "cartpole": {
+        "col_1": 3.0,
+        "col_3": -0.333333,
+        "col_4": 2.0,
+        "col_5": -28.0,
+        "col_6": 1.0,
+        "numeric_values": [
+          3.0,
+          -0.333333,
+          2.0,
+          -28.0,
+          1.0
+        ]
+      },
+      "catch": {
+        "col_1": 3.0,
+        "col_3": 0.0,
+        "col_4": 1.0,
+        "col_5": 0.666667,
+        "col_6": 1.0,
+        "numeric_values": [
+          3.0,
+          0.0,
+          1.0,
+          0.666667,
+          1.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 6.0,
+        "col_3": -0.166667,
+        "col_4": 3.0,
+        "col_5": -13.6667,
+        "col_6": 2.0,
+        "numeric_values": [
+          6.0,
+          -0.166667,
+          3.0,
+          -13.6667,
+          2.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/qhorde_ac_expected_adv_3seed/report.md"
+    },
+    "qhorde_pairwise_actor_probe": {
+      "boundary": "pairwise lifted Q-Horde actor features failed the seed-0 smoke and were not expanded to a multi-seed promotion probe",
+      "cartpole": {
+        "col_1": 1.0,
+        "col_3": 60.0,
+        "col_4": 1.0,
+        "col_5": -3.0,
+        "col_6": 0.0,
+        "numeric_values": [
+          1.0,
+          60.0,
+          1.0,
+          -3.0,
+          0.0
+        ]
+      },
+      "catch": {
+        "col_1": 1.0,
+        "col_3": -2.0,
+        "col_4": 0.0,
+        "col_5": 0.0,
+        "col_6": 0.0,
+        "numeric_values": [
+          1.0,
+          -2.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 2.0,
+        "col_3": 29.0,
+        "col_4": 1.0,
+        "col_5": -1.5,
+        "col_6": 0.0,
+        "numeric_values": [
+          2.0,
+          29.0,
+          1.0,
+          -1.5,
+          0.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/qhorde_ac_expected_adv_pairwise_seed0/report.md"
+    },
+    "qhorde_sampled_actor_critic_probe": {
+      "boundary": "sampled-SARSA Q-Horde actor-critic passed a seed-0 smoke but failed the 3-seed catch/cartpole promotion probe",
+      "cartpole": {
+        "col_1": 3.0,
+        "col_3": -12.6667,
+        "col_4": 1.0,
+        "col_5": -21.0,
+        "col_6": 1.0,
+        "numeric_values": [
+          3.0,
+          -12.6667,
+          1.0,
+          -21.0,
+          1.0
+        ]
+      },
+      "catch": {
+        "col_1": 3.0,
+        "col_3": 6.0,
+        "col_4": 2.0,
+        "col_5": -2.66667,
+        "col_6": 1.0,
+        "numeric_values": [
+          3.0,
+          6.0,
+          2.0,
+          -2.66667,
+          1.0
+        ]
+      },
+      "exists": true,
+      "overall": {
+        "col_1": 6.0,
+        "col_3": -3.33333,
+        "col_4": 3.0,
+        "col_5": -11.8333,
+        "col_6": 2.0,
+        "numeric_values": [
+          6.0,
+          -3.33333,
+          3.0,
+          -11.8333,
+          2.0
+        ]
+      },
+      "passed": true,
+      "path": "outputs/bsuite/qhorde_ac_sampled_3seed/report.md"
+    },
     "sarsa_vs_q_catch_cartpole": {
       "cartpole_improvement": 12.695,
       "cartpole_pairs": 200.0,
@@ -86,6 +792,15 @@
       "passed": true,
       "path": "outputs/bsuite/sarsa_vs_q_primary_10seed/sarsa_vs_q.md"
     },
+    "security_gym_counterfactual_rollout": {
+      "boundary": "uses real local security-gym environment and framework rollout records; does not prove unavailable rlsecd daemon integration",
+      "claim_scope": "local_security_gym_counterfactual_action_rollout",
+      "exists": true,
+      "oracle_false_positives": 0,
+      "passed": true,
+      "path": "outputs/security_gym_counterfactual_rollout/results.json",
+      "reward_lift": 67.8
+    },
     "test_files_present": {
       "tests/test_actor_critic.py": true,
       "tests/test_horde_actor_critic.py": true,
@@ -94,8 +809,8 @@
     }
   },
   "open_boundaries": [
-    "Horde actor-critic positive control passes, but bsuite promotion over Q/SARSA remains unproven",
-    "active-defense rlsecd/security-gym deployment remains external"
+    "Horde actor-critic positive control passes, but bsuite promotion over SARSA remains unproven; gradient-clipped NLHAC now beats the Q baseline on 10-seed catch/cartpole probes at 500 and 1000 steps, but SARSA remains stronger; the action-value NLQHorde actor-critic search did not improve the catch boundary; the nonlinear expected-advantage Q-Horde actor update improves the small 3-seed overall probe against Q but still does not beat SARSA; adaptive-ObGD NLHAC improved cartpole at 500 and 1000 steps but regressed catch",
+    "local security-gym counterfactual rollout passes, but active-defense rlsecd daemon deployment remains external"
   ],
   "schema": "alberta.step4.solution_gate.v1",
   "solved_step4_full_actor_critic_scope": false

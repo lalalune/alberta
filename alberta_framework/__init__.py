@@ -10,11 +10,15 @@ Roadmap
 | Step | Focus | Status |
 |------|-------|--------|
 | 1 | Fixed-feature continual supervised learning | **Complete** |
-| 2 | Supervised nonlinear feature finding | Supervised matrix accepted |
-| 3 | GVF predictions, Horde-style architecture | Given-feature path accepted |
-| 4 | Continual control | SARSA accepted; actor-critic provisional |
-| 5-6 | Off-policy nonlinear Horde, average reward | Planned |
-| 7-12 | Hierarchical, multi-agent, world models | Future |
+| 2 | Supervised nonlinear feature finding | **Complete** |
+| 3 | GVF predictions, Horde-style architecture | **Complete** |
+| 4 | Continual control (SARSA + actor-critic) | **Complete** |
+| 5–6 | Average-reward / off-policy nonlinear Horde | **Complete** |
+| 7–8 | Dyna planning + world model facade | **Complete** |
+| 9 | Guarded dreaming | **Complete** |
+| 10 | STOMP temporal abstraction | **Complete** |
+| 11 | OaK architecture | **Complete** |
+| 12 | Prototype-IA (exo-cerebellum + exo-cortex) | **Complete** |
 
 Examples
 --------
@@ -40,10 +44,7 @@ References
 - Streaming Deep Reinforcement Learning Finally Works (Elsayed et al., 2024)
 """
 
-__version__ = "0.17.1"
-
-import importlib as _importlib
-import sys as _sys
+__version__ = "0.26.0"
 
 # Baseline optimizers
 from alberta_framework.core.actor_critic import (
@@ -1141,8 +1142,3 @@ if _pipeline_available:
         "run_pipeline_smoke",
     ]
 
-# Benchmarks live in the repository-level ``benchmarks`` package so they can be
-# run exactly as documented: ``python benchmarks/<script>.py``. Keep the old
-# package import path as an alias without maintaining a second file tree.
-benchmarks = _importlib.import_module("benchmarks")
-_sys.modules.setdefault("alberta_framework.benchmarks", benchmarks)

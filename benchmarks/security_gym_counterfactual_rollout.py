@@ -244,6 +244,8 @@ def _run_policy(
 def run_benchmark(
     security_gym_root: Path = DEFAULT_SECURITY_GYM,
     max_steps: int = 48,
+    *,
+    include_rollout_records: bool = False,
 ) -> dict[str, object]:
     """Run pass-only and oracle-block counterfactual rollouts."""
     gym, event_store_cls, parsed_event_cls = _import_security_gym(security_gym_root)
@@ -319,7 +321,7 @@ def run_benchmark(
         and recall_lift > 0.5
         and oracle_result.false_positives == 0
     )
-    return {
+    result: dict[str, object] = {
         "schema": "alberta.security_gym.counterfactual_rollout.v1",
         "claim_scope": "local_security_gym_counterfactual_action_rollout",
         "security_gym_root": str(security_gym_root),
@@ -344,6 +346,12 @@ def run_benchmark(
             "records; does not prove unavailable rlsecd daemon integration"
         ),
     }
+    if include_rollout_records:
+        result["rollout_records"] = {
+            "pass_only": [step.to_dict() for step in pass_steps],
+            "oracle_block_malicious": [step.to_dict() for step in oracle_steps],
+        }
+    return result
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

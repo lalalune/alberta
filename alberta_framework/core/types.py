@@ -333,42 +333,6 @@ class BatchedLearningResult:
     normalizer_history: NormalizerHistory | None = None
 
 
-def create_lms_state(step_size: float = 0.01) -> LMSState:
-    """Create initial LMS optimizer state.
-
-    Args:
-        step_size: Fixed learning rate
-
-    Returns:
-        Initial LMS state
-    """
-    return LMSState(step_size=jnp.array(step_size, dtype=jnp.float32))
-
-
-def create_idbd_state(
-    feature_dim: int,
-    initial_step_size: float = 0.01,
-    meta_step_size: float = 0.01,
-) -> IDBDState:
-    """Create initial IDBD optimizer state.
-
-    Args:
-        feature_dim: Dimension of the feature vector
-        initial_step_size: Initial per-weight step-size
-        meta_step_size: Meta learning rate for adapting step-sizes
-
-    Returns:
-        Initial IDBD state
-    """
-    return IDBDState(
-        log_step_sizes=jnp.full(feature_dim, jnp.log(initial_step_size), dtype=jnp.float32),
-        traces=jnp.zeros(feature_dim, dtype=jnp.float32),
-        meta_step_size=jnp.array(meta_step_size, dtype=jnp.float32),
-        bias_step_size=jnp.array(initial_step_size, dtype=jnp.float32),
-        bias_trace=jnp.array(0.0, dtype=jnp.float32),
-    )
-
-
 # =============================================================================
 # MLP Types (Step 2 of Alberta Plan)
 # =============================================================================
@@ -573,69 +537,6 @@ def create_obgd_state(
         bias_trace=jnp.array(0.0, dtype=jnp.float32),
         gamma=jnp.array(gamma, dtype=jnp.float32),
         lamda=jnp.array(lamda, dtype=jnp.float32),
-    )
-
-
-def create_autostep_state(
-    feature_dim: int,
-    initial_step_size: float = 0.01,
-    meta_step_size: float = 0.01,
-    tau: float = 10000.0,
-) -> AutostepState:
-    """Create initial Autostep optimizer state.
-
-    Args:
-        feature_dim: Dimension of the feature vector
-        initial_step_size: Initial per-weight step-size
-        meta_step_size: Meta learning rate for adapting step-sizes
-        tau: Time constant for normalizer adaptation (default: 10000)
-
-    Returns:
-        Initial Autostep state
-    """
-    return AutostepState(
-        step_sizes=jnp.full(feature_dim, initial_step_size, dtype=jnp.float32),
-        traces=jnp.zeros(feature_dim, dtype=jnp.float32),
-        normalizers=jnp.zeros(feature_dim, dtype=jnp.float32),
-        meta_step_size=jnp.array(meta_step_size, dtype=jnp.float32),
-        tau=jnp.array(tau, dtype=jnp.float32),
-        bias_step_size=jnp.array(initial_step_size, dtype=jnp.float32),
-        bias_trace=jnp.array(0.0, dtype=jnp.float32),
-        bias_normalizer=jnp.array(0.0, dtype=jnp.float32),
-    )
-
-
-def create_autostep_gtd_state(
-    feature_dim: int,
-    initial_step_size: float = 0.01,
-    meta_step_size: float = 0.01,
-    tau: float = 10000.0,
-    trace_decay: float = 0.0,
-) -> AutostepGTDLambdaState:
-    """Create initial Autostep-for-GTD(lambda) optimizer state.
-
-    Args:
-        feature_dim: Dimension of the feature vector
-        initial_step_size: Initial per-weight step-size
-        meta_step_size: Meta learning rate ``mu``
-        tau: Time constant for normalizer adaptation
-        trace_decay: Eligibility trace decay ``lamda`` (0 recovers Autostep)
-
-    Returns:
-        Initial AutostepGTDLambda state
-    """
-    return AutostepGTDLambdaState(
-        step_sizes=jnp.full(feature_dim, initial_step_size, dtype=jnp.float32),
-        traces=jnp.zeros(feature_dim, dtype=jnp.float32),
-        normalizers=jnp.zeros(feature_dim, dtype=jnp.float32),
-        eligibility_traces=jnp.zeros(feature_dim, dtype=jnp.float32),
-        meta_step_size=jnp.array(meta_step_size, dtype=jnp.float32),
-        tau=jnp.array(tau, dtype=jnp.float32),
-        trace_decay=jnp.array(trace_decay, dtype=jnp.float32),
-        bias_step_size=jnp.array(initial_step_size, dtype=jnp.float32),
-        bias_trace=jnp.array(0.0, dtype=jnp.float32),
-        bias_normalizer=jnp.array(0.0, dtype=jnp.float32),
-        bias_eligibility_trace=jnp.array(0.0, dtype=jnp.float32),
     )
 
 

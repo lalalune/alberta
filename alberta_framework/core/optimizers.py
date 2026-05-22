@@ -71,6 +71,21 @@ class Bounder(ABC):
         ...
 
 
+def _apply_obgd_bound(
+    steps: tuple[Array, ...],
+    error: Array,
+    kappa: float,
+) -> tuple[tuple[Array, ...], Array]:
+    """Apply the ObGD global bounding formula. Returns (bounded_steps, scale)."""
+    error_scalar = jnp.squeeze(error)
+    total_step = jnp.array(0.0)
+    for s in steps:
+        total_step = total_step + jnp.sum(jnp.abs(s))
+    delta_bar = jnp.maximum(jnp.abs(error_scalar), 1.0)
+    scale = 1.0 / jnp.maximum(kappa * delta_bar * total_step, 1.0)
+    return tuple(scale * s for s in steps), scale
+
+
 class ObGDBounding(Bounder):
     """ObGD-style global update bounding (Elsayed et al. 2024).
 
@@ -111,15 +126,7 @@ class ObGDBounding(Bounder):
             ``(bounded_steps, scale)`` where scale is the bounding factor
         """
         del params  # ObGD bounds based on step/error magnitude only
-        error_scalar = jnp.squeeze(error)
-        total_step = jnp.array(0.0)
-        for s in steps:
-            total_step = total_step + jnp.sum(jnp.abs(s))
-        delta_bar = jnp.maximum(jnp.abs(error_scalar), 1.0)
-        bound_magnitude = self._kappa * delta_bar * total_step
-        scale = 1.0 / jnp.maximum(bound_magnitude, 1.0)
-        bounded = tuple(scale * s for s in steps)
-        return bounded, scale
+        return _apply_obgd_bound(steps, error, self._kappa)
 
 
 def _unitwise_norm(x: Array) -> Array:
@@ -183,14 +190,7 @@ class AdaptiveObGDBounding(Bounder):
             ObGD bounding factor before the RMS stage
         """
         del params
-        error_scalar = jnp.squeeze(error)
-        total_step = jnp.array(0.0)
-        for s in steps:
-            total_step = total_step + jnp.sum(jnp.abs(s))
-        delta_bar = jnp.maximum(jnp.abs(error_scalar), 1.0)
-        bound_magnitude = self._kappa * delta_bar * total_step
-        scale = 1.0 / jnp.maximum(bound_magnitude, 1.0)
-        bounded = tuple(scale * s for s in steps)
+        bounded, scale = _apply_obgd_bound(steps, error, self._kappa)
 
         # Per-weight RMS normalization across all bounded steps.
         sum_sq = jnp.array(0.0)

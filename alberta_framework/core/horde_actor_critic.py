@@ -835,6 +835,36 @@ def _nlhac_log_prob(
 _nlhac_grad = jax.grad(_nlhac_log_prob, argnums=0)
 
 
+def _nlqhac_expected_advantage_objective(
+    actor_params: tuple[
+        tuple[Array, ...], tuple[Array, ...], Array, Array
+    ],
+    obs: Array,
+    advantages: Array,
+    leaky_relu_slope: float,
+    use_layer_norm: bool,
+    temperature: float,
+) -> Array:
+    """Expected action-value advantage under the MLP policy.
+
+    ``advantages`` is treated as a constant critic signal. Differentiating this
+    objective gives ``sum_a grad pi(a|s) A(s,a)``, the all-action analogue of
+    the sampled policy-gradient update.
+    """
+    trunk_weights, trunk_biases, head_w, head_b = actor_params
+    hidden = MultiHeadMLPLearner._trunk_forward(
+        trunk_weights, trunk_biases, obs, leaky_relu_slope, use_layer_norm
+    )
+    logits = head_w @ hidden + head_b
+    probs = jax.nn.softmax(logits / temperature)
+    return jnp.dot(probs, advantages)
+
+
+_nlqhac_expected_advantage_grad = jax.grad(
+    _nlqhac_expected_advantage_objective, argnums=0
+)
+
+
 def _clip_nlhac_actor_grads(
     grad_trunk_w: tuple[Array, ...],
     grad_trunk_b: tuple[Array, ...],
@@ -1505,6 +1535,7 @@ class NonlinearQHordeActorCriticConfig:
     actor_td_error_clip: float | None = None
     actor_gradient_clip_norm: float | None = None
     critic_target: str = "expected_sarsa"
+    actor_update: str = "td_error"
 
     def to_config(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
@@ -1563,6 +1594,10 @@ class NonlinearQHordeActorCriticAgent:
         if config.critic_target not in {"expected_sarsa", "sampled_sarsa"}:
             raise ValueError(
                 "critic_target must be 'expected_sarsa' or 'sampled_sarsa'"
+            )
+        if config.actor_update not in {"td_error", "expected_advantage"}:
+            raise ValueError(
+                "actor_update must be 'td_error' or 'expected_advantage'"
             )
         if critic.n_demons < config.n_actions:
             raise ValueError("critic must have at least one head per action")
@@ -1784,15 +1819,30 @@ class NonlinearQHordeActorCriticAgent:
             state.actor_head_w,
             state.actor_head_b,
         )
-        grads = _nlhac_grad(
-            actor_params,
-            prev_obs,
-            state.last_action,
-            cfg.leaky_relu_slope,
-            cfg.use_layer_norm,
-            cfg.temperature,
-            0.0,
-        )
+        if cfg.actor_update == "expected_advantage":
+            policy = self.policy(state, prev_obs)
+            state_value = jnp.dot(policy, q_previous)
+            advantages = q_previous - state_value
+            grads = _nlqhac_expected_advantage_grad(
+                actor_params,
+                prev_obs,
+                advantages,
+                cfg.leaky_relu_slope,
+                cfg.use_layer_norm,
+                cfg.temperature,
+            )
+            actor_signal = jnp.array(1.0, dtype=jnp.float32)
+        else:
+            grads = _nlhac_grad(
+                actor_params,
+                prev_obs,
+                state.last_action,
+                cfg.leaky_relu_slope,
+                cfg.use_layer_norm,
+                cfg.temperature,
+                0.0,
+            )
+            actor_signal = actor_td_error
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = grads
         grad_trunk_w, grad_trunk_b, grad_head_w, grad_head_b = (
             _clip_nlhac_actor_grads(
@@ -1824,25 +1874,25 @@ class NonlinearQHordeActorCriticAgent:
             raw_w, new_opt_w = self._actor_optimizer.update_from_gradient(
                 state.actor_trunk_opt_states[2 * i],
                 new_trunk_traces[2 * i],
-                error=actor_td_error,
+                error=actor_signal,
             )
             raw_b, new_opt_b = self._actor_optimizer.update_from_gradient(
                 state.actor_trunk_opt_states[2 * i + 1],
                 new_trunk_traces[2 * i + 1],
-                error=actor_td_error,
+                error=actor_signal,
             )
             new_trunk_opt_states.extend([new_opt_w, new_opt_b])
-            trunk_w_steps.append(actor_td_error * raw_w)
-            trunk_b_steps.append(actor_td_error * raw_b)
+            trunk_w_steps.append(actor_signal * raw_w)
+            trunk_b_steps.append(actor_signal * raw_b)
 
         raw_head_w, new_head_opt_w = self._actor_optimizer.update_from_gradient(
-            state.actor_head_opt_w, new_head_trace_w, error=actor_td_error
+            state.actor_head_opt_w, new_head_trace_w, error=actor_signal
         )
         raw_head_b, new_head_opt_b = self._actor_optimizer.update_from_gradient(
-            state.actor_head_opt_b, new_head_trace_b, error=actor_td_error
+            state.actor_head_opt_b, new_head_trace_b, error=actor_signal
         )
-        head_w_step = actor_td_error * raw_head_w
-        head_b_step = actor_td_error * raw_head_b
+        head_w_step = actor_signal * raw_head_w
+        head_b_step = actor_signal * raw_head_b
 
         bound_metric = jnp.array(1.0, dtype=jnp.float32)
         if self._actor_bounder is not None:
