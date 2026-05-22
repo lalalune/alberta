@@ -95,6 +95,17 @@ def run_step10_solution_gate(root: Path | None = None) -> dict[str, Any]:
         )
     )
 
+    prototype_source = (
+        project_root / "src/alberta_framework/core/prototype_agent.py"
+    ).read_text(encoding="utf-8")
+    live_lifecycle_surface = all(
+        marker in prototype_source
+        for marker in (
+            "auto_curate_every",
+            "def maybe_curate",
+        )
+    )
+
     stomp_benchmark_passed = bool(
         stomp_benchmark is not None
         and stomp_benchmark.get("schema") == "alberta.step10.stomp_benchmark.v1"
@@ -116,6 +127,7 @@ def run_step10_solution_gate(root: Path | None = None) -> dict[str, Any]:
         "implementation_files": implementation_files,
         "stomp_mechanics_surface": stomp_surface,
         "off_policy_intra_option_surface": off_policy_surface,
+        "live_lifecycle_surface": live_lifecycle_surface,
         "tests_present": tests_present,
         "stomp_accelerates_control_benchmark": {
             "path": str(stomp_benchmark_path),
@@ -144,6 +156,7 @@ def run_step10_solution_gate(root: Path | None = None) -> dict[str, Any]:
         all(implementation_files.values())
         and stomp_surface
         and off_policy_surface
+        and live_lifecycle_surface
         and tests_present
         and stomp_benchmark_passed
         and autodiscovery_passed
