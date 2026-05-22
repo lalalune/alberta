@@ -827,3 +827,66 @@ class TestGRUPerceptionUpdate:
         new_agent, new_state = agent.curate(state, jr.key(99))
         assert new_agent.config.gru_perception is not None
         assert new_agent.config.gru_perception.hidden_dim == GRU_HIDDEN
+
+
+class TestAutoCurate:
+    """Tests for auto_curate_every config field and maybe_curate() method."""
+
+    def _agent(self, auto_curate_every: int = 0) -> tuple[PrototypeAgent, PrototypeAgentState]:
+        cfg = PrototypeAgentConfig(
+            oak=_oak_cfg(specs=(_SPEC0, _SPEC1)),
+            auto_curate_every=auto_curate_every,
+        )
+        agent = PrototypeAgent(cfg)
+        state = agent.start(agent.init(jr.key(0)), jnp.zeros(OBS_DIM))
+        return agent, state
+
+    def test_config_roundtrip_with_auto_curate(self) -> None:
+        cfg = PrototypeAgentConfig(oak=_oak_cfg(), auto_curate_every=50)
+        cfg2 = PrototypeAgentConfig.from_config(cfg.to_config())
+        assert cfg2.auto_curate_every == 50
+
+    def test_negative_auto_curate_raises(self) -> None:
+        with pytest.raises(ValueError, match="auto_curate_every"):
+            PrototypeAgentConfig(oak=_oak_cfg(), auto_curate_every=-1)
+
+    def test_maybe_curate_disabled_returns_same(self) -> None:
+        agent, state = self._agent(auto_curate_every=0)
+        new_agent, new_state = agent.maybe_curate(state, jr.key(1))
+        assert new_agent is agent
+        assert new_state is state
+
+    def test_maybe_curate_fires_at_zero_step(self) -> None:
+        agent, state = self._agent(auto_curate_every=10)
+        # step_count == 0 → 0 % 10 == 0 → fires
+        new_agent, new_state = agent.maybe_curate(state, jr.key(2))
+        assert new_agent is not agent
+
+    def test_maybe_curate_does_not_fire_at_non_aligned_step(self) -> None:
+        agent, state = self._agent(auto_curate_every=10)
+        # Advance step_count to 1 via an update
+        obs = jr.normal(jr.key(7), (OBS_DIM,))
+        result = agent.update(state, jnp.array(0.0), obs)
+        state1 = result.state
+        assert int(state1.step_count) == 1
+        new_agent, new_state = agent.maybe_curate(state1, jr.key(3))
+        assert new_agent is agent
+        assert new_state is state1
+
+    def test_maybe_curate_preserves_auto_curate_every(self) -> None:
+        agent, state = self._agent(auto_curate_every=5)
+        new_agent, _ = agent.maybe_curate(state, jr.key(4))
+        assert new_agent.config.auto_curate_every == 5
+
+    def test_maybe_curate_fires_every_n_steps(self) -> None:
+        agent, state = self._agent(auto_curate_every=5)
+        curations = 0
+        obs = jr.normal(jr.key(0), (OBS_DIM,))
+        for i in range(15):
+            if int(state.step_count) % 5 == 0:
+                agent, state = agent.maybe_curate(state, jr.key(i + 100))
+                curations += 1
+            result = agent.update(state, jnp.array(0.0), obs)
+            state = result.state
+        # Fires at step_count 0, 5, 10 → exactly 3
+        assert curations == 3

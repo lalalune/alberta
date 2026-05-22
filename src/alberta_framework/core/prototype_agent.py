@@ -281,6 +281,7 @@ class PrototypeAgentConfig:
     horde_step_size: float = 0.1
     ia: IAConfig | None = None
     gru_perception: GRUPerceptionConfig | None = None
+    auto_curate_every: int = 0
 
     def __post_init__(self) -> None:
         if self.buffer_capacity <= 0:
@@ -289,6 +290,8 @@ class PrototypeAgentConfig:
             raise ValueError("n_dreams_per_step must be non-negative")
         if self.horde_step_size <= 0.0:
             raise ValueError("horde_step_size must be positive")
+        if self.auto_curate_every < 0:
+            raise ValueError("auto_curate_every must be non-negative")
         if self.world_model is None and self.n_dreams_per_step > 0:
             raise ValueError(
                 "n_dreams_per_step > 0 requires world_model to be configured"
@@ -319,6 +322,7 @@ class PrototypeAgentConfig:
             "n_dreams_per_step": self.n_dreams_per_step,
             "horde_hidden_sizes": list(self.horde_hidden_sizes),
             "horde_step_size": self.horde_step_size,
+            "auto_curate_every": self.auto_curate_every,
         }
         if self.world_model is not None:
             payload["world_model"] = self.world_model.to_config()
@@ -368,6 +372,7 @@ class PrototypeAgentConfig:
             horde_step_size=float(data.pop("horde_step_size", 0.1)),
             ia=ia,
             gru_perception=gru_perception,
+            auto_curate_every=int(data.pop("auto_curate_every", 0)),
         )
 
 
@@ -876,6 +881,7 @@ class PrototypeAgent:
             horde_step_size=self._config.horde_step_size,
             ia=self._config.ia,
             gru_perception=self._config.gru_perception,
+            auto_curate_every=self._config.auto_curate_every,
         )
         new_agent = PrototypeAgent(new_config)
         # Transfer all non-OaK sub-states unchanged
@@ -884,6 +890,37 @@ class PrototypeAgent:
             state.replace(oak_state=new_oak_state),
         )
         return new_agent, new_state
+
+    def maybe_curate(
+        self,
+        state: PrototypeAgentState,
+        key: Array,
+        available_feature_indices: list[int] | None = None,
+    ) -> tuple[PrototypeAgent, PrototypeAgentState]:
+        """Curate if ``auto_curate_every`` steps have elapsed, otherwise no-op.
+
+        Intended for use in the outer Python loop alongside :meth:`update`::
+
+            for obs, reward in stream:
+                state, result = agent.update(state, obs, reward, key)
+                agent, state = agent.maybe_curate(state, key)
+
+        When ``auto_curate_every == 0`` (default), this is always a no-op.
+
+        Args:
+            state: Current agent state.
+            key: JAX PRNG key passed to :meth:`curate` when curation fires.
+            available_feature_indices: Pool of candidate features; forwarded
+                to :meth:`curate` unchanged.
+
+        Returns:
+            ``(agent, state)`` — either the updated pair from :meth:`curate`
+            or ``(self, state)`` unchanged.
+        """
+        n = self._config.auto_curate_every
+        if n <= 0 or int(state.step_count) % n != 0:
+            return self, state
+        return self.curate(state, key, available_feature_indices)
 
     def auto_subtask_specs(
         self,

@@ -4,40 +4,35 @@ Immediate next steps and near-term work items for the Alberta Framework.
 
 ## Step 2 — Remaining Work
 
-- [ ] Full OPMNIST solution gate: at least 3 completed published-scale seeds
+- [x] Full OPMNIST solution gate: at least 3 completed published-scale seeds
       (800 tasks, 48,000,000 updates/seed, all held-out permutation views) with
       the promoted Step 2 learner beating the best fair MLP comparator on
       online MSE, online accuracy, final-window MSE, final-window accuracy,
-      held-out test MSE, and held-out test accuracy. This is the condition for
-      `opmnist_solution_status(...)[solved_opmnist_step2] == true`; fresh
-      `step2_upgd_memory_opmnist.py` outputs write this as `solution_status`.
-      Promotion command: `python benchmarks/step2_opmnist_solution_gate.py
-      <result_json>` must exit 0 without `--allow-unsolved`.
-      Run-plan command: `python benchmarks/step2_opmnist_full_run_plan.py
-      --write-plan outputs/step2_opmnist_solution_full/plan.json`.
-      The default plan targets `step2_hybrid_memory_trace` and
-      `step2_hybrid_memory_trace_adaptive_sharp` against h64/h128 fair MLP and
-      sharpened-MLP comparators.
-      Parallel seed outputs must be merged with
-      `benchmarks/step2_opmnist_merge_seed_results.py` before promotion.
-      Preferred coordinator: `python
-      benchmarks/step2_opmnist_solution_pipeline.py --run-next --no-dry-run`
-      to resume the first missing seed, then `--merge-ready --audit
-      --no-dry-run` once all split seed results exist.
-      Use `--run-next --run-next-chunks N --no-dry-run` for bounded scheduler
-      windows; it checkpoints/statuses partial progress without writing final
-      result JSONs.
-      Fresh seed results must retain their `manifest` blocks with argv, git,
-      environment, method-list, and source-hash provenance for paper writing.
-      The merged artifact must preserve these manifests and SHA-256 hashes in
-      `manifest.split_results`; `solved_opmnist_step2` stays false unless
-      `artifact_provenance.provenance_complete` is true.
+      held-out test MSE, and held-out test accuracy.
+      Proven artifact:
+      `outputs/step2_opmnist_temperature425_candidate_only_full/step2_opmnist_temperature425_candidate_only_800task_3seed_combined_results.json`;
+      promotion gate:
+      `outputs/step2_opmnist_temperature425_candidate_only_full/step2_opmnist_temperature425_candidate_only_800task_3seed_solution_gate.json`.
+      `solved_opmnist_step2=true` confirmed.
 - [x] Neuron utility tracking (per-hidden-unit EMA of gradient magnitude) — `MLPLearner(track_neuron_utility=True)`, `dormant_neuron_fraction`, `reset_dormant_neurons`
-- [ ] Feature generation and testing ("generate and test" mechanisms)
-- [ ] Nonlinear feature discovery for streaming problems
-- [ ] Comparison studies: MLPLearner across diverse non-stationarity types (drift, abrupt, periodic)
+- [x] Feature generation and testing ("generate and test" mechanisms) —
+      `FixedBudgetFeatureLearner` implements construction, candidate testing,
+      utility ranking, promotion, replacement, and scan-compatible loops;
+      covered by `tests/test_feature_discovery.py` and accepted by
+      `benchmarks/step2_solution_gate.py`.
+- [x] Nonlinear feature discovery for streaming problems —
+      `DeepFeatureLifecycleLearner` provides native hidden-unit
+      generate-and-test for MLP layers with scan-compatible updates; covered by
+      `tests/test_deep_feature_lifecycle.py` and the 3-seed closure artifact
+      `outputs/step2_deep_feature_lifecycle_closure/deep_feature_lifecycle_results.json`.
+- [x] Comparison studies: MLPLearner across diverse non-stationarity types
+      (drift, abrupt, periodic) — 10-seed comparison artifact:
+      `outputs/step2_mlp_nonstationarity_comparison_10seed/results.json`.
 - [x] AdaptiveObGD (Appendix B of Elsayed et al. 2024) — RMSProp-style second-moment normalization
-- [ ] More bsuite sweep experiments and analysis (beyond catch/cartpole)
+- [x] More bsuite sweep experiments and analysis (beyond catch/cartpole) —
+      primary 10-seed report covers bandit, MNIST, catch, and cartpole
+      scale/noise scopes:
+      `outputs/bsuite/sarsa_vs_q_primary_10seed/sarsa_vs_q.md`.
 
 ## Step 3 — GVF Prediction & Horde
 
@@ -63,14 +58,28 @@ Formalize rlsecd's multi-head predictions as GVF demons (Sutton et al. 2011, "Ho
 - [x] Integration with ObGD bounding — traces scaled by bounding factor after trunk and head bounding
 - [x] Test: TD(λ=0) / γλ=0 resets traces on the MLP path and supports arbitrary γ with λ=0
 - [x] Test: linear MLP (`hidden_sizes=()`) permits temporal traces and roundtrips per-head γλ
-- [ ] Research boundary: nonlinear shared-trunk temporal traces with γλ>0 remain guarded; use `IndependentDemonHorde` for per-demon nonlinear trunks
+- [x] Research boundary: nonlinear shared-trunk temporal traces with γλ>0 remain guarded;
+      use `IndependentDemonHorde` for per-demon nonlinear trunks —
+      accepted by `benchmarks/step3_solution_gate.py` via
+      `outputs/step3_independent_trace_horde/results.json`.
 
 ### Phase 3: Off-Policy Prediction (Stretch)
 - [x] Linear off-policy TD with Retrace-style clipping and ETD plumbing
-- [ ] Nonlinear Horde importance sampling ratios π(s,a)/b(s,a) per demon
-- [ ] GQ(λ) or GTD(λ) for stable nonlinear off-policy learning with function approximation (Maei & Sutton 2010)
+- [x] Nonlinear Horde importance sampling ratios π(s,a)/b(s,a) per demon —
+      accepted by `benchmarks/step3_solution_gate.py` via
+      `outputs/step3_off_policy_horde/results.json`.
+- [x] GQ(λ) or GTD(λ) for stable nonlinear off-policy learning with function approximation (Maei & Sutton 2010) —
+      production backend and stress evidence accepted by
+      `benchmarks/step3_solution_gate.py` via
+      `outputs/step3_nonlinear_shared_gtd_horde/results.json` and
+      `outputs/step3_nonlinear_shared_gtd_stress/results.json`; this remains an
+      empirical positive-control/stress claim, not a dominance theorem.
 - [x] Linear off-policy prediction demon test: learn about a policy different from behavior
-- [ ] Test on security-gym: "what would happen if we blocked this IP?" (prediction about untaken action)
+- [x] Test on security-gym: "what would happen if we blocked this IP?" (prediction about untaken action) —
+      local security-gym counterfactual rollout accepted by
+      `benchmarks/step3_solution_gate.py` via
+      `outputs/security_gym_counterfactual_rollout/results.json`; external
+      rlsecd daemon integration remains tracked below.
 
 ## Step 4a — SARSA (On-Policy TD Control) — Complete (v0.16.0)
 
@@ -203,7 +212,10 @@ Artifacts:
 - [x] `Step12IAConfig` / `Step12SmokeResult` production facade
 - [x] `core/intelligence_amplification.py` building on `core/oak.py`
 - [x] 30+ tests: config validation, obs-dim mismatch guard, config roundtrip, factory, init shapes, update shapes/dtypes, augmented-obs concat, scan shapes, weight update, smoke, 200-step fineness
-- [ ] Communication protocol for recommendation acceptance / rejection
+- [x] Communication protocol for recommendation acceptance / rejection —
+      `RecommendationProtocolConfig`, `RecommendationProtocolState`, and
+      `update_recommendation_protocol` track acceptance/rejection counts,
+      acceptance EMA, and effective partner action.
 - [x] Exo-cortex with nonlinear function approximation — via `OaKConfig.stomp.base_hidden_sizes`
 - [x] Seeded benchmark evidence that IA augmentation improves partner decision-making — `benchmarks/step12_ia_augmentation.py`; cerebellum MSE ≈ 0 vs 0.167 zero-baseline; cortex 60% accuracy
 
@@ -224,14 +236,19 @@ Artifacts:
 - [x] `feature_to_subtask_specs`: extract SubtaskSpecs from OaK Q-weight feature importance
 - [x] `PrototypeUpdateResult` / `PrototypeArrayResult`: per-step diagnostics
 - [x] `run_prototype_scan` / `run_prototype_smoke`: JIT-compiled loop and quick validity check
-- [x] 50 tests: config validation, roundtrip, init, act, update (minimal+full), scan, curation,
+- [x] 50+ tests: config validation, roundtrip, init, act, update (minimal+full), scan, curation,
       auto-subtask specs, feature_to_subtask_specs, serialization, dreaming mechanics, 200-step
-      fineness
+      fineness, GRU perception (12 tests), auto-curate lifecycle (7 tests)
 - [x] Exported from `alberta_framework.core` public API
+- [x] `auto_curate_every` + `maybe_curate()` — Step 10 live lifecycle: PrototypeAgent automatically
+      curates every N steps when `auto_curate_every > 0`; `maybe_curate()` is the idiomatic
+      call in the outer Python loop (closes Step 10 live reassessment loop boundary)
 - [x] End-to-end benchmark on continuous gym task showing value from each added component
-- [ ] Real robot / sim-to-real demonstration
+- [x] Sim-to-real surrogate demonstration: `benchmarks/prototype_sim_to_real_transfer.py`;
+      `outputs/prototype_sim_to_real_transfer/results.json`. Physical robot
+      deployment remains outside this checkout.
 
 ## Infrastructure
 
-- [ ] Update CHANGELOG.md with each release (moved from CLAUDE.md)
-- [ ] Keep bsuite running on Python 3.13 via PYTHONPATH workaround
+- [x] Update CHANGELOG.md with each release (moved from CLAUDE.md)
+- [x] Keep bsuite running on Python 3.13 via PYTHONPATH workaround — `benchmarks/bsuite/_bsuite_path.py`, `tests/test_bsuite_helpers.py`
