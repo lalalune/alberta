@@ -17,7 +17,7 @@ def load_module() -> ModuleType:
     """Load the universal portfolio example module."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_universal_portfolio.py"

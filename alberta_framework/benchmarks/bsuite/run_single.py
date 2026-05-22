@@ -32,11 +32,11 @@ for import_path in (PROJECT_ROOT / "src", PROJECT_ROOT):
         sys.path.insert(0, str(import_path))
 
 from alberta_framework import Timer  # noqa: E402
-from benchmarks.bsuite._bsuite_path import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite._bsuite_path import (  # noqa: E402
     add_bsuite_to_path,
     bsuite_missing_message,
 )
-from benchmarks.bsuite.agents import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite.agents import (  # noqa: E402
     actor_critic,
     adam_dqn,
     autostep_dqn,
@@ -47,8 +47,8 @@ from benchmarks.bsuite.agents import (  # noqa: E402
     qhorde_ac,
     sarsa,
 )
-from benchmarks.bsuite.configs import CONFIGS  # noqa: E402
-from benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
+from alberta_framework.benchmarks.bsuite.configs import CONFIGS  # noqa: E402
+from alberta_framework.benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ for import_path in (PROJECT_ROOT / "src", PROJECT_ROOT):
     if str(import_path) not in sys.path:
         sys.path.insert(0, str(import_path))
 
-from benchmarks.bsuite.analysis import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite.analysis import (  # noqa: E402
     LOWER_IS_BETTER,
     final_preferred_metric_rows,
     load_results,

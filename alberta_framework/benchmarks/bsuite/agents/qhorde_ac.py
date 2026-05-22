@@ -23,8 +23,8 @@ from alberta_framework import (
     QHordeActorCriticConfig,
     create_horde_spec,
 )
-from benchmarks.bsuite._bsuite_path import add_bsuite_to_path, bsuite_missing_message
-from benchmarks.bsuite.agents.horde_actor_critic import _FeatureLift
+from alberta_framework.benchmarks.bsuite._bsuite_path import add_bsuite_to_path, bsuite_missing_message
+from alberta_framework.benchmarks.bsuite.agents.horde_actor_critic import _FeatureLift
 
 add_bsuite_to_path()
 try:

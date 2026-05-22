@@ -7,7 +7,7 @@ from typing import Any
 import dm_env
 
 from alberta_framework import EMANormalizer, MultiHeadMLPLearner, ObGDBounding
-from benchmarks.bsuite.agents.base import AlbertaAgent
+from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
 
 
 def make_framework_q_agent(

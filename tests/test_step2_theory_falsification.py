@@ -14,7 +14,7 @@ def load_module() -> ModuleType:
     """Load the falsification example module."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_theory_falsification.py"

@@ -20,19 +20,19 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import numpy as np  # noqa: E402
 
-from benchmarks.bsuite._bsuite_path import add_bsuite_to_path  # noqa: E402
+from alberta_framework.benchmarks.bsuite._bsuite_path import add_bsuite_to_path  # noqa: E402
 
 add_bsuite_to_path()
 import bsuite  # noqa: E402
 
-from benchmarks.bsuite.agents import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite.agents import (  # noqa: E402
     actor_critic,
     autostep_dqn,
 )
-from benchmarks.bsuite.agents import (
+from alberta_framework.benchmarks.bsuite.agents import (
     sarsa as sarsa_agent,
 )
-from benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
+from alberta_framework.benchmarks.bsuite.wrappers import ContinuingWrapper  # noqa: E402
 
 # Default actor-critic config
 DEFAULT_AC = dict(

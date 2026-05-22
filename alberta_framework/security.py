@@ -191,6 +191,75 @@ class SecurityRolloutStep:
         )
 
 
+@dataclasses.dataclass(frozen=True)
+class SecurityOracleExperience:
+    """Serializable oracle-review record derived from a security rollout step."""
+
+    state: tuple[float, ...]
+    action: SecurityAction
+    reward: float
+    outcome: Mapping[str, Any]
+    policy_metadata: Mapping[str, Any] = dataclasses.field(default_factory=dict)
+    schema: str = "alberta.security_gym.oracle_experience.v1"
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable oracle experience mapping."""
+        return {
+            "schema": self.schema,
+            "state": list(self.state),
+            "action": int(self.action),
+            "action_name": security_gym_action_name(self.action),
+            "reward": self.reward,
+            "outcome": dict(self.outcome),
+            "policy_metadata": dict(self.policy_metadata),
+        }
+
+
+def security_rollout_step_to_oracle_experience(
+    step: SecurityRolloutStep,
+) -> SecurityOracleExperience:
+    """Convert a rollout transition to a compact oracle-review record."""
+    is_malicious = bool(step.policy_metadata.get("is_malicious", False))
+    defensive_action = step.action in (
+        SecurityAction.THROTTLE,
+        SecurityAction.BLOCK,
+        SecurityAction.ISOLATE,
+    )
+    if is_malicious and defensive_action:
+        label = "true_positive"
+    elif is_malicious:
+        label = "false_negative"
+    elif defensive_action:
+        label = "false_positive"
+    else:
+        label = "true_negative"
+    return SecurityOracleExperience(
+        state=step.state,
+        action=step.action,
+        reward=step.reward,
+        outcome={
+            "label": label,
+            "terminated": step.terminated,
+            "truncated": step.truncated,
+        },
+        policy_metadata=step.policy_metadata,
+    )
+
+
+def validate_security_oracle_experience(
+    records: Sequence[SecurityOracleExperience],
+    schema: SecurityFeatureSchema,
+) -> None:
+    """Validate oracle-review records against a feature schema."""
+    for idx, record in enumerate(records):
+        try:
+            schema.validate_observation(record.state)
+        except ValueError as exc:
+            raise ValueError(f"invalid oracle experience {idx}: {exc}") from exc
+        if not isinstance(record.outcome.get("label"), str) or not record.outcome["label"]:
+            raise ValueError(f"invalid oracle experience {idx}: missing outcome label")
+
+
 def coerce_security_action(action: SecurityAction | int | str) -> SecurityAction:
     """Coerce an integer or name to ``SecurityAction``."""
     if isinstance(action, SecurityAction):
@@ -301,6 +370,7 @@ __all__ = [
     "SECURITY_ACTION_NAMES",
     "SecurityAction",
     "SecurityFeatureSchema",
+    "SecurityOracleExperience",
     "SecurityRewardWeights",
     "SecurityRolloutStep",
     "ThroughputMeasurement",
@@ -308,7 +378,9 @@ __all__ = [
     "coerce_security_action",
     "security_gym_action_name",
     "security_gym_action_reward",
+    "security_rollout_step_to_oracle_experience",
     "security_reward",
     "to_security_gym_action",
+    "validate_security_oracle_experience",
     "validate_security_rollout",
 ]

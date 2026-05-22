@@ -21,7 +21,7 @@ import pytest
 @pytest.fixture
 def tiny_horde(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Return the horde_throughput module with grids reduced to one config."""
-    mod = importlib.import_module("benchmarks.horde_throughput")
+    mod = importlib.import_module("alberta_framework.benchmarks.horde_throughput")
     monkeypatch.setattr(mod, "N_DEMONS_GRID", [3])
     monkeypatch.setattr(mod, "HIDDEN_SIZES_GRID", [(8,)])
     monkeypatch.setattr(mod, "TRACES_GRID", [False])
@@ -32,7 +32,7 @@ def tiny_horde(monkeypatch: pytest.MonkeyPatch) -> Any:
 @pytest.fixture
 def tiny_sarsa(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Return the sarsa_throughput module with grids reduced to one config."""
-    mod = importlib.import_module("benchmarks.sarsa_throughput")
+    mod = importlib.import_module("alberta_framework.benchmarks.sarsa_throughput")
     monkeypatch.setattr(mod, "N_ACTIONS_GRID", [2])
     monkeypatch.setattr(mod, "HIDDEN_SIZES_GRID", [(8,)])
     monkeypatch.setattr(mod, "TRACES_GRID", [False])
@@ -42,7 +42,7 @@ def tiny_sarsa(monkeypatch: pytest.MonkeyPatch) -> Any:
 @pytest.fixture
 def tiny_step1(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Return the step1_throughput module with grids reduced to one config."""
-    mod = importlib.import_module("benchmarks.step1_throughput")
+    mod = importlib.import_module("alberta_framework.benchmarks.step1_throughput")
     monkeypatch.setattr(mod, "OPTIMIZER_FACTORIES", {"LMS": mod.OPTIMIZER_FACTORIES["LMS"]})
     monkeypatch.setattr(
         mod, "NORMALIZER_FACTORIES", {"none": mod.NORMALIZER_FACTORIES["none"]}
@@ -55,7 +55,7 @@ class TestStep1ThroughputSmoke:
 
     def test_imports_cleanly(self) -> None:
         """The module imports without side effects beyond what's expected."""
-        mod = importlib.import_module("benchmarks.step1_throughput")
+        mod = importlib.import_module("alberta_framework.benchmarks.step1_throughput")
         assert hasattr(mod, "run_all_benchmarks")
         assert hasattr(mod, "print_results_table")
         assert hasattr(mod, "save_results_csv")
@@ -174,7 +174,7 @@ class TestHordeThroughputSmoke:
 
     def test_imports_cleanly(self) -> None:
         """The module imports without side effects beyond what's expected."""
-        mod = importlib.import_module("benchmarks.horde_throughput")
+        mod = importlib.import_module("alberta_framework.benchmarks.horde_throughput")
         # Public functions
         assert hasattr(mod, "run_all_benchmarks")
         assert hasattr(mod, "print_results_table")
@@ -248,7 +248,7 @@ class TestSARSAThroughputSmoke:
 
     def test_imports_cleanly(self) -> None:
         """The module imports without side effects beyond what's expected."""
-        mod = importlib.import_module("benchmarks.sarsa_throughput")
+        mod = importlib.import_module("alberta_framework.benchmarks.sarsa_throughput")
         assert hasattr(mod, "run_all_benchmarks")
         assert hasattr(mod, "print_results_table")
         assert hasattr(mod, "save_results_csv")

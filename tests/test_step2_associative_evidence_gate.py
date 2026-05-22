@@ -126,7 +126,8 @@ def test_associative_hybrid_artifact_is_positive_implementation_evidence() -> No
 def test_sparse_kv_focus_artifact_is_mechanism_evidence_not_universality() -> None:
     results = _load_json(SPARSE_KV_FOCUS_PATH)
     config = results["config"]
-    benchmark = results["benchmark"]
+    benchmark_payload = results["benchmark"]
+    benchmark = benchmark_payload[0] if isinstance(benchmark_payload, list) else benchmark_payload
 
     assert benchmark["name"] == "sparse_kv_recall"
     assert config["seeds"] == 30
@@ -138,9 +139,10 @@ def test_sparse_kv_focus_artifact_is_mechanism_evidence_not_universality() -> No
 
     by_key = _records_by_key(cast(list[dict[str, Any]], results["records"]))
     diffs: list[float] = []
+    row_benchmark = cast(str | None, results["records"][0].get("benchmark"))
     for seed in range(int(config["seeds"])):
-        baseline = by_key[(None, seed, "baseline_ffn_transformer")]
-        associative = by_key[(None, seed, "suffix_pair_utility_norm4")]
+        baseline = by_key[(row_benchmark, seed, "baseline_ffn_transformer")]
+        associative = by_key[(row_benchmark, seed, "suffix_pair_utility_norm4")]
         diffs.append(float(baseline["eval_nll"]) - float(associative["eval_nll"]))
 
     assert all(diff > 0.0 for diff in diffs)

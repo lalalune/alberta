@@ -17,11 +17,11 @@ for import_path in (PROJECT_ROOT / "src", PROJECT_ROOT):
         sys.path.insert(0, str(import_path))
 
 from alberta_framework import Timer  # noqa: E402
-from benchmarks.bsuite._bsuite_path import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite._bsuite_path import (  # noqa: E402
     add_bsuite_to_path,
     bsuite_missing_message,
 )
-from benchmarks.bsuite.configs import (  # noqa: E402
+from alberta_framework.benchmarks.bsuite.configs import (  # noqa: E402
     ALL_EXPERIMENTS,
     BOTTLENECK_AGENTS,
     PRIMARY_EXPERIMENTS,
@@ -142,8 +142,8 @@ def run_agent_on_id(
 ) -> None:
     """Run a single agent on a single bsuite_id."""
     bsuite, sweep, experiment = require_bsuite()
-    from benchmarks.bsuite.run_single import make_agent, run_continuing
-    from benchmarks.bsuite.wrappers import ContinuingWrapper
+    from alberta_framework.benchmarks.bsuite.run_single import make_agent, run_continuing
+    from alberta_framework.benchmarks.bsuite.wrappers import ContinuingWrapper
 
     agent_save_path = str(Path(save_path) / (output_agent_name or agent_name))
 
@@ -199,8 +199,8 @@ def run_continual_sequence(
 ) -> None:
     """Run a single persistent agent across a sequence of environments."""
     bsuite, _, _ = require_bsuite()
-    from benchmarks.bsuite.run_single import make_agent, run_continuing
-    from benchmarks.bsuite.wrappers import ContinuingWrapper
+    from alberta_framework.benchmarks.bsuite.run_single import make_agent, run_continuing
+    from alberta_framework.benchmarks.bsuite.wrappers import ContinuingWrapper
 
     agent_save_path = str(Path(save_path) / f"{agent_name}_continual")
     agent = None
@@ -445,7 +445,7 @@ def main() -> None:
     print(f"\nResults saved to {args.save_path}")
 
     if args.step4_comparison or args.horde_ac:
-        from benchmarks.bsuite.analysis import (
+        from alberta_framework.benchmarks.bsuite.analysis import (
             format_step4_control_report,
             load_results,
             write_markdown_report,
@@ -470,7 +470,7 @@ def main() -> None:
         if args.comparison_report:
             write_markdown_report(args.comparison_report, report)
     elif args.sarsa_vs_q or args.comparison_report:
-        from benchmarks.bsuite.analysis import (
+        from alberta_framework.benchmarks.bsuite.analysis import (
             format_sarsa_q_report,
             load_results,
             write_markdown_report,

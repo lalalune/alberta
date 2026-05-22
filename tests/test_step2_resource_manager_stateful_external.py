@@ -15,7 +15,7 @@ def load_module() -> ModuleType:
     """Load the resource-manager example module."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_resource_manager_stateful_external.py"

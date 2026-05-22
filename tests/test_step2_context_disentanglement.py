@@ -17,7 +17,7 @@ def load_experiment_module():
         sys.path.insert(0, str(src_path))
     module_path = (
         repo_root
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_context_disentanglement.py"

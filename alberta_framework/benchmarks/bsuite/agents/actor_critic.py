@@ -35,7 +35,7 @@ from alberta_framework import (
     ObGDBounding,
     create_horde_spec,
 )
-from benchmarks.bsuite._bsuite_path import add_bsuite_to_path, bsuite_missing_message
+from alberta_framework.benchmarks.bsuite._bsuite_path import add_bsuite_to_path, bsuite_missing_message
 
 add_bsuite_to_path()
 try:

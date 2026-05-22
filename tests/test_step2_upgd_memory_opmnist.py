@@ -13,7 +13,7 @@ import numpy as np
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
-    / "examples"
+    / "alberta_framework" / "examples"
     / "The Alberta Plan"
     / "Step2"
     / "step2_upgd_memory_opmnist.py"

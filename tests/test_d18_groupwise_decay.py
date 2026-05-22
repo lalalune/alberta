@@ -15,7 +15,7 @@ def load_d15_module() -> ModuleType:
     """Load the D15 groupwise basis module from the examples tree."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "new_directions"
@@ -34,7 +34,7 @@ def load_d18_module() -> ModuleType:
     """Load the D18 universal learner module from the examples tree."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "new_directions"

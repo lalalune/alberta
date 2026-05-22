@@ -132,9 +132,4 @@ logs/
 *.pdf
 !docs/*.png
 !docs/*.pdf
-!outputs/step1_canonical/*.png
-!outputs/step1_canonical/*.pdf
-!outputs/step2_canonical/*.png
-!outputs/step2_canonical/*.pdf
-!outputs/step7_cartpole_dyna/
-!outputs/step10_feature_autodiscovery/
+outputs/

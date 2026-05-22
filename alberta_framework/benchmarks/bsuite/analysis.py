@@ -20,7 +20,7 @@ import pandas as pd
 try:
     from bsuite.logging import csv_load
 except ModuleNotFoundError:
-    from benchmarks.bsuite._bsuite_path import bsuite_missing_message
+    from alberta_framework.benchmarks.bsuite._bsuite_path import bsuite_missing_message
 
     class _MissingCSVLoad:
         """Lazy bsuite CSV loader used when helper code runs without bsuite."""

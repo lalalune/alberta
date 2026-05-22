@@ -1,6 +1,6 @@
 """Regression tests for Step 1 canonical replication results.
 
-These tests load the JSON files written by ``examples/The Alberta Plan/Step1/
+These tests load the JSON files written by ``alberta_framework/examples/The Alberta Plan/Step1/
 step1_full_baselines.py`` (and friends) and assert that the canonical Step 1
 claims still hold.  They auto-skip when the JSON has not been generated yet,
 so a fresh checkout that never ran the experiments still passes the suite.
@@ -30,7 +30,7 @@ def _load_json_or_skip(filename: str) -> dict:
     if not path.exists():
         pytest.skip(
             f"{path} not generated yet; run "
-            "'examples/The Alberta Plan/Step1/step1_full_baselines.py' first."
+            "'alberta_framework/examples/The Alberta Plan/Step1/step1_full_baselines.py' first."
         )
     with path.open() as f:
         return json.load(f)

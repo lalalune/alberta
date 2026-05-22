@@ -8,7 +8,7 @@ import jax.random as jr
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-for import_path in (PROJECT_ROOT / "src", PROJECT_ROOT):
+for import_path in (PROJECT_ROOT,):
     if str(import_path) not in sys.path:
         sys.path.insert(0, str(import_path))
 

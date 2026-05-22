@@ -14,7 +14,7 @@ def load_module() -> ModuleType:
     """Load the example despite spaces in the path."""
     path = (
         Path(__file__).resolve().parents[1]
-        / "examples"
+        / "alberta_framework" / "examples"
         / "The Alberta Plan"
         / "Step2"
         / "step2_universal_sieve_probe.py"

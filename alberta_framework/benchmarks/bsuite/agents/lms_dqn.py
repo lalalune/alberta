@@ -14,7 +14,7 @@ from alberta_framework import (
     MultiHeadMLPLearner,
     ObGDBounding,
 )
-from benchmarks.bsuite.agents.base import AlbertaAgent
+from alberta_framework.benchmarks.bsuite.agents.base import AlbertaAgent
 
 
 def default_agent(
