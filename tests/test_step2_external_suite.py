@@ -2,30 +2,23 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from types import ModuleType
 
 import numpy as np
+from conftest import load_script
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_external_suite.py"
+)
 
 
 def load_module() -> ModuleType:
-    """Load the external-suite example module."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_external_suite.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_external_suite", path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_external_suite")
 
 
 def test_domain_matrix_specs_include_worker_c_stressors() -> None:

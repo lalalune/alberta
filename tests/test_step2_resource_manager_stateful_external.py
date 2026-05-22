@@ -2,34 +2,24 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from types import ModuleType
 
 import numpy as np
 import pytest
+from conftest import load_script
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_resource_manager_stateful_external.py"
+)
 
 
 def load_module() -> ModuleType:
-    """Load the resource-manager example module."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_resource_manager_stateful_external.py"
-    )
-    spec = importlib.util.spec_from_file_location(
-        "step2_resource_manager_stateful_external",
-        path,
-    )
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_resource_manager_stateful_external")
 
 
 def make_dummy_digits_data(module: ModuleType) -> object:

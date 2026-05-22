@@ -6,7 +6,6 @@ from pathlib import Path
 from types import ModuleType
 
 import numpy as np
-
 from conftest import load_script
 
 _SCRIPT_PATH = (

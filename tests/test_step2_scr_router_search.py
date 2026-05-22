@@ -2,30 +2,23 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+from conftest import load_script
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "examples"
+    / "The Alberta Plan"
+    / "Step2"
+    / "step2_scr_router_search.py"
+)
 
 
 def load_module() -> ModuleType:
-    """Load the SCR router-search example module."""
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "The Alberta Plan"
-        / "Step2"
-        / "step2_scr_router_search.py"
-    )
-    spec = importlib.util.spec_from_file_location("step2_scr_router_search", path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_script(_SCRIPT_PATH, "step2_scr_router_search")
 
 
 def test_expand_variant_names_accepts_all_and_rejects_unknown() -> None:
